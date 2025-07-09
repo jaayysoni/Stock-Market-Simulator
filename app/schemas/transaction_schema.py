@@ -1,0 +1,1 @@
+# Schema for transaction requests/responses

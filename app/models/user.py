@@ -1,0 +1,1 @@
+# User model with fields like id, email, password, etc.

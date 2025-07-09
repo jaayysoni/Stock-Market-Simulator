@@ -1,0 +1,1 @@
+# Handles registration, login, Gmail OAuth, guest sessions

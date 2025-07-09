@@ -1,0 +1,1 @@
+ # Stock model with symbol, name, latest price, sector, etc.

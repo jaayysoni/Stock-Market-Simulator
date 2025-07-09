@@ -1,0 +1,1 @@
+# User input/output models (e.g., LoginRequest, UserOut)

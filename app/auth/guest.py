@@ -1,0 +1,1 @@
+# Guest session handling with Starlette sessions

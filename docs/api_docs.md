@@ -1,0 +1,1 @@
+# API contract with endpoints and sample payloads

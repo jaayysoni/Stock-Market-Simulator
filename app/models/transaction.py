@@ -1,0 +1,1 @@
+# Model for buy/sell transactions with timestamps and details

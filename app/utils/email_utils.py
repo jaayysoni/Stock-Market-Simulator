@@ -1,0 +1,1 @@
+ # Sends emails via SMTP or other API (optional)
