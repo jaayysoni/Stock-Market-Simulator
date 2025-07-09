@@ -1,4 +1,4 @@
-'''
+```
 stock-simulator/
 │
 ├── app/                                # Main FastAPI application code
@@ -70,4 +70,4 @@ stock-simulator/
 ├── README.md                           # Project overview, setup steps, and feature list
 ├── alembic.ini                         # Alembic migration configuration
 └── alembic/                            # Alembic-generated DB migration scripts
-'''
+```
