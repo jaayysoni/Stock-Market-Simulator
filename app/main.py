@@ -2,11 +2,14 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
-import os
+from app.database.db import engine
+from sqlalchemy.exc import OperationalError
 from app.routers.auth_router import router as auth_router
 from app.routers.stock_router import router as stock_router
 from app.routers.transaction_router import router as transaction_router
 from app.routers.portfolio_router import router as portfolio_router
+from app.config import settings
+import os
 
 # Load environment variables
 load_dotenv()
@@ -35,20 +38,28 @@ app.include_router(portfolio_router, prefix="/portfolio", tags=["Portfolio"])
 
 # Root route
 @app.get("/")
-async def root():
+def root():
     return {"message": "Welcome to the Stock Market Simulator API"}
 
 # Startup event
 @app.on_event("startup")
-async def on_startup():
-    print("FASTAPI application Started!")
+def startup_event():
+    try:
+        #Testing DB connection startup
+        with engine.connect() as conn:
+            conn.execute("SELECT 1")
+            print("Database connected succesfully.")
+    except OperationalError as e:
+            print("Database connection failed:",e)
 
 # Shutdown event
 @app.on_event("shutdown")
-async def on_shutdown():
-    print("FASTAPI application shutting down!")
+def shutdown_event():
+     #you can close DB connection or clean up tasks here
+     print("Application is shutting dowm... clearimng up.")
 
-# Entry point for running via python app/main.py (optional)
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("app.main:app", host="127.0.0.1", port=8000, reload=True)
+# TEMP: Print settings to verify loading
+print("✅ DATABASE_URL:", settings.DATABASE_URL)
+print("✅ API_KEY:", settings.API_KEY)
+print("✅ DEBUG:", settings.DEBUG)
+    # between these two comments
