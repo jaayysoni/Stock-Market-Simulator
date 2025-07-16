@@ -1,12 +1,27 @@
-# Endpoints for portfolio view, summary, profit/loss
-from fastapi import APIRouter
+# app/routers/portfolio_router.py
 
-router = APIRouter()
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+from app.dependencies.auth import get_current_user
+from app.database.session import get_db
+from app.models.user import User
+
+router = APIRouter(prefix="/portfolio", tags=["Portfolio"])
 
 @router.get("/")
-async def get_portfolio_summary():
-    return{"message":"This is your portfolio summary."}
+async def get_portfolio_summary(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    return {
+        "message": f"Welcome {current_user.username}, this is your portfolio summary."
+    }
 
 @router.get("/holdings")
-async def get_portfolio_holdings():
-    return {"message":"These are yourt stock holdings."}
+async def get_portfolio_holdings(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    return {
+        "message": f"User {current_user.username}, here are your stock holdings."
+    }

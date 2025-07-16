@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+env/
+*.sqlite3
+*.db
+
+# Environment
+.env
+
+# VSCode/PyCharm/OS
+.vscode/
+.idea/
+.DS_Store
+
+# Alembic
+alembic/versions/*.pyc
