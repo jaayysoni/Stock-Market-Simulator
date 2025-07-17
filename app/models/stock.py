@@ -6,7 +6,7 @@ from app.database.db import Base
 class Stock(Base):
     __tablename__ = "stocks"
 
-    stock_id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True)
     name = Column(String,nullable = False)
     symbol = Column(String,unique = True, index = True, nullable = False)
     exchange = Column(String,index = True)
