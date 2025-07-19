@@ -1,0 +1,93 @@
+Stock-Market-Simulator/
+│
+├── app/                                # Main FastAPI application package
+│   ├── main.py                         # FastAPI entry point
+│   ├── config.py                       # App config (env vars, settings)
+│   ├── create_tables.py                # Script to create all DB tables (NEW)
+│
+│   ├── auth/                           # Authentication logic
+│   │   ├── guest.py                    # Guest session login
+│   │   └── oauth.py                    # Google OAuth2 login
+│
+│   ├── models/                         # SQLAlchemy ORM models
+│   │   ├── user.py
+│   │   ├── stock.py
+│   │   ├── transaction.py
+│   │   ├── portfolio.py
+│   │   └── watchlist.py
+│
+│   ├── schemas/                        # Pydantic request/response models
+│   │   ├── user_schema.py
+│   │   ├── stock_schema.py
+│   │   ├── transaction_schema.py
+│   │   ├── portfolio_schemas.py
+│   │   ├── token_schema.py             # NEW: Token response schema
+│   │   └── watchlist_schema.py         # NEW: Watchlist schema
+│
+│   ├── routers/                        # FastAPI routers (API endpoints)
+│   │   ├── auth_router.py
+│   │   ├── stock_router.py
+│   │   ├── transaction_router.py
+│   │   ├── portfolio_router.py
+│   │   └── watchlist_router.py
+│
+│   ├── services/                       # Business logic layer
+│   │   ├── auth_service.py
+│   │   ├── stock_data.py               # DEPRECATED: Moved to utils/ (see below)
+│   │   ├── transaction_services.py
+│   │   ├── tax_calculator.py
+│   │   ├── report_generator.py
+│   │   ├── notification.py
+│   │   ├── user_service.py
+│   │   ├── google_oauth.py             # NEW: Google OAuth token logic
+│   │   └── stock_service.py            # NEW: Stock logic (watchlist, prices, etc.)
+│
+│   ├── database/                       # DB configuration
+│   │   ├── db.py
+│   │   ├── session.py
+│   │   └── seed_data.py
+│
+│   ├── dependencies/                   # FastAPI dependencies
+│   │   └── auth.py
+│
+│   ├── tasks/                          # Background jobs
+│   │   ├── scheduler.py
+│   │   └── tasks.py
+│
+│   ├── templates/                      # Jinja2 templates
+│   │   └── report_template.html
+│
+│   └── utils/                          # Helper utilities
+│       ├── cache.py
+│       ├── limiter.py
+│       ├── email_utils.py              # NEW: Email sending logic
+│       ├── auth_utils.py               # NEW: Token/JWT/validation helpers
+│       └── stock_data.py               # NEW: yfinance or API calls (moved from services/)
+│
+├── static/                             # Static frontend assets
+│   ├── css/
+│   ├── images/
+│   └── Homepage.html
+│
+├── tests/                              # Unit tests
+│   ├── test_stocks.py
+│   ├── test_transactions.py
+│   └── test_auth.py
+│
+├── docs/                               # Documentation
+│   ├── api_docs.md
+│   └── setup_guide.md
+│
+├── alembic.ini                         # Alembic migration config
+├── alembic/                            # Alembic migration versions
+│
+├── .env                                # Environment variables
+├── .gitignore                          # Ignore file
+├── Dockerfile                          # Docker container config
+├── docker-compose.yml                  # Docker orchestration
+├── requirements.txt                    # Python dependencies
+├── README.md                           # Project overview
+├── project_structure.txt               # 📁 This structure (save/update this)
+├── stock_market.db                     # Main SQLite DB
+├── stock_simulator.db                  # Test DB (optional)
+└── venv/                               # Virtual environment (DO NOT COMMIT)
