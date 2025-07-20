@@ -12,8 +12,9 @@ class UserOut(BaseModel):
     virtual_balance: float = Field(..., ge=0, example=100000.0)
     is_guest: bool = Field(..., example=False)
 
-    class Config:
-        orm_mode = True
+    model_config = {
+    "from_attributes": True
+}
 
 class UserLogin(BaseModel):
     email: EmailStr = Field(..., example="jaysoni@example.com")

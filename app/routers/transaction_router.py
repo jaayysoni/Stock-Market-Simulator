@@ -8,6 +8,7 @@ from app.schemas.transaction_schema import TransactionCreate, TransactionRead
 from app.services.transaction_services import buy_stock, sell_stock
 from app.dependencies.auth import get_current_user
 from app.models.transaction import Transaction
+from app.models import User
 
 router = APIRouter()
 

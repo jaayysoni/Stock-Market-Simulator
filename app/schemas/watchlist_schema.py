@@ -10,8 +10,9 @@ class WatchlistOut(BaseModel):
     id: int
     stock_id: int
 
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }
 
 # Optional: detailed nested stock info if you're returning stock details in response
 class StockInWatchlist(BaseModel):
@@ -20,8 +21,9 @@ class StockInWatchlist(BaseModel):
     name: str
     price: float
 
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }
 
 # Full watchlist read schema with nested stock and user info (optional)
 class WatchlistRead(BaseModel):
@@ -29,5 +31,6 @@ class WatchlistRead(BaseModel):
     user_id: int
     stock: Optional[StockInWatchlist]  # nested stock info if joined in query
 
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }

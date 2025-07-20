@@ -12,5 +12,6 @@ class PortfolioRead(BaseModel):
     quantity: int
     average_price: float
 
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }

@@ -15,6 +15,7 @@ class StockRead(BaseModel):
     price: float = Field(..., alias="current_price", gt=0, example=185.67)
     updated_at: datetime | None = Field(None, example="2025-07-16T12:00:00Z")
 
-    class Config:
-        orm_mode = True
-        allow_population_by_field_name = True
+    model_config = {
+        "from_attributes": True,
+        "populate_by_name": True
+    }
