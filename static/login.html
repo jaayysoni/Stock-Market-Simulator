@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Trading Theme — Login</title>
+
+  <!-- External CSS -->
+  <link rel="stylesheet" href="./login.css" />
+
+  <!-- Lottie Animation (Background) -->
+  <script src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.6.2/dist/dotlottie-wc.js" type="module"></script>
+</head>
+<body>
+  
+  <!-- 🔁 Background Animation -->
+  <div class="bg-overlay">
+    <dotlottie-wc 
+      src="https://lottie.host/5f8842f7-a33b-4c3a-8b68-19a5200bac59/Vi2WYg85Db.lottie" 
+      speed="1" autoplay loop
+      style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover;">
+    </dotlottie-wc>
+  </div>
+
+  <!-- 🔲 Login Layout -->
+  <div class="login-page">
+    <div class="login-wrapper">
+      <div class="login-card">
+
+        <!-- Logo -->
+        <div class="logo-container">
+          <img src="/assets/Ankesh Profile Pic.png" alt="Logo" class="logo" />
+        </div>
+
+        <!-- Title -->
+        <h2 class="login-title">Login</h2>
+
+        <!-- Email -->
+        <div class="input-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" placeholder="Enter your email" />
+        </div>
+
+        <!-- Password -->
+        <div class="input-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" placeholder="Enter your password" />
+        </div>
+
+        <!-- Actions -->
+        <div class="actions">
+          <button class="login-btn">Let’s Get Started</button>
+          <a href="#" class="forgot-link">Forgot Password?</a>
+        </div>
+
+        <!-- Footer Signup -->
+        <div class="footer-links">
+          <p>Don't have an account? <a href="#">Sign Up</a></p>
+        </div>
+
+        <!-- Divider -->
+        <div class="divider"><span>OR</span></div>
+
+        <!-- Google Sign-in -->
+        <button class="google-btn">Sign in with Google</button>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

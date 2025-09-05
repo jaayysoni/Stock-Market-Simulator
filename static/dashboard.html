@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Dashboard – Nova V1</title>
+    <link rel="stylesheet" href="./dashboard.css">
+    <script src="./app.js"></script>
+</head>
+<body>
+    <!-- ======= HEADER ======= -->
+    <header class="header">
+        <div class="logo">NovaTrade</div>
+        <nav class="main-nav">
+            <ul>
+                <li><a href="#">Overview</a></li>
+                <li><a href="#">Watchlist</a></li>
+                <li><a href="#">Orders</a></li>
+                <li><a href="#">Portfolio</a></li>
+                <li><a href="#">Settings</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- ======= MAIN CONTAINER ======= -->
+    <div class="dashboard-container">
+        
+        <!-- ======= SIDEBAR ======= -->
+        <aside class="sidebar">
+            <ul>
+                <li class="active">📊 Dashboard</li>
+                <li>📈 Markets</li>
+                <li>💼 Portfolio</li>
+                <li>📝 Orders</li>
+                <li>⚙ Settings</li>
+            </ul>
+        </aside>
+
+        <!-- ======= CONTENT AREA ======= -->
+        <main class="content">
+
+            <!-- ======= MARKET CHART ======= -->
+            <section id="market-chart" class="card">
+                <h2>Market Overview</h2>
+                <canvas id="chartCanvas"></canvas>
+            </section>
+
+            <!-- ======= WATCHLIST ======= -->
+            <section id="watchlist" class="card">
+                <h2>Watchlist</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Symbol</th>
+                            <th>Price</th>
+                            <th>Change</th>
+                        </tr>
+                    </thead>
+                    <tbody id="watchlist-body">
+                        <!-- JS se populate hoga -->
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- ======= ORDERS ======= -->
+            <section id="orders" class="card">
+                <h2>Recent Orders</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Type</th>
+                            <th>Quantity</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orders-body">
+                        <!-- JS se populate hoga -->
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- ======= PORTFOLIO ======= -->
+            <section id="portfolio" class="card">
+                <h2>Portfolio Summary</h2>
+                <div id="portfolio-summary">
+                    <!-- JS se portfolio value, profit/loss show hoga -->
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- ======= SCRIPT FILE ======= -->
+    <script src="app.js"></script>
+</body>
+</html>

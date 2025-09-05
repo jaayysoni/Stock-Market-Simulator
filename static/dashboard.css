@@ -1,0 +1,130 @@
+/* ===== RESET & BASE STYLING ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+body {
+    font-family: Arial, sans-serif;
+    background-color: #0e1117;
+    color: #fff;
+    line-height: 1.5;
+}
+
+/* ===== HEADER ===== */
+.header {
+    background-color: #161b22;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #30363d;
+}
+.logo {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #58a6ff;
+}
+.main-nav ul {
+    display: flex;
+    list-style: none;
+    gap: 1.5rem;
+}
+.main-nav a {
+    text-decoration: none;
+    color: #c9d1d9;
+}
+.main-nav a:hover {
+    color: #58a6ff;
+}
+
+/* ===== DASHBOARD LAYOUT ===== */
+.dashboard-container {
+    display: flex;
+    min-height: calc(100vh - 70px);
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar {
+    background-color: #161b22;
+    width: 220px;
+    padding: 2rem 1rem;
+    border-right: 1px solid #30363d;
+}
+.sidebar ul {
+    list-style: none;
+}
+.sidebar li {
+    padding: 0.8rem;
+    margin-bottom: 0.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    color: #c9d1d9;
+}
+.sidebar li.active,
+.sidebar li:hover {
+    background-color: #21262d;
+    color: #58a6ff;
+}
+
+/* ===== CONTENT AREA ===== */
+.content {
+    flex: 1;
+    padding: 2rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+}
+
+/* ===== CARD COMPONENT ===== */
+.card {
+    background-color: #161b22;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 1px solid #30363d;
+    box-shadow: 0 0 10px rgba(0,0,0,0.2);
+}
+.card h2 {
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+    color: #58a6ff;
+}
+
+/* ===== TABLES ===== */
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+thead {
+    background-color: #21262d;
+}
+th, td {
+    padding: 0.8rem;
+    text-align: left;
+    border-bottom: 1px solid #30363d;
+}
+tbody tr:hover {
+    background-color: #21262d;
+}
+
+/* ===== CHART SECTION ===== */
+#market-chart {
+    grid-column: 1 / -1; /* Full width for chart */
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .dashboard-container {
+        flex-direction: column;
+    }
+    .sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid #30363d;
+        display: flex;
+        justify-content: space-around;
+    }
+    .content {
+        grid-template-columns: 1fr;
+    }
+}
