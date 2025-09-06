@@ -1,27 +1,25 @@
-# db.py - Connects SQLAlchemy to SQLite and initializes engine
+# app/database/db.py
 
+import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
-# SQLite database URL format
-DATABASE_URL = "sqlite:///./stock_market.db"
+# Database file relative to project root
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+DATABASE_PATH = os.path.join(BASE_DIR, "stock_market.db")
+DATABASE_URL = f"sqlite:///{DATABASE_PATH}"
 
-# Create the SQLAlchemy engine
-engine = create_engine(
-    DATABASE_URL, connect_args={"check_same_thread": False}
-)
+# SQLAlchemy engine
+engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 
-# SessionLocal class used for creating session objects
+# Session factory
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Base class for all ORM models
+# Base class for models
 Base = declarative_base()
 
-
-from sqlalchemy.orm import Session
-from fastapi import Depends
-
-# Dependency for getting DB session
+# ✅ Add this function for FastAPI dependency injection
+# app/database/db.py
 
 def get_db():
     db = SessionLocal()

@@ -1,0 +1,11 @@
+symbol,name,exchange,sector,price
+AAPL,Apple Inc.,NASDAQ,Technology,195.55
+TSLA,Tesla Inc.,NASDAQ,Automotive,245.67
+AMZN,Amazon.com Inc.,NASDAQ,E-Commerce,125.12
+GOOGL,Alphabet Inc.,NASDAQ,Technology,135.40
+MSFT,Microsoft Corp.,NASDAQ,Technology,310.25
+NFLX,Netflix Inc.,NASDAQ,Entertainment,420.10
+FB,Meta Platforms Inc.,NASDAQ,Technology,180.50
+NVDA,NVIDIA Corp.,NASDAQ,Technology,280.75
+BABA,Alibaba Group,NYSE,E-Commerce,98.60
+JPM,JPMorgan Chase,NYSE,Finance,160.45
