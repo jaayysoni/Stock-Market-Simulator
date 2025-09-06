@@ -1,9 +1,12 @@
 # app/database/seed_data.py
 
-from app.database.session import SessionLocal
+from app.database.db import SessionLocal, Base, engine
 from app.models.stock import Stock
 
 def seed():
+    print("📦 Ensuring tables exist...")
+    Base.metadata.create_all(bind=engine)  # make sure all tables exist
+
     db = SessionLocal()
     stocks = [
         Stock(name="Apple Inc.", symbol="AAPL", exchange="NASDAQ", price=195.55, sector="Technology"),
