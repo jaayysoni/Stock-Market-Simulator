@@ -1,0 +1,162 @@
+/* ===== TRADING TERMINAL FULL-PAGE DASHBOARD THEME ===== */
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    background-color: #0e1117; /* full-page dark theme */
+    font-family: Arial, sans-serif;
+    color: #c9d1d9;
+}
+
+/* ===== CONTAINER ===== */
+.trading-sim {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 2rem;
+    height: 100%;
+    box-sizing: border-box;
+}
+
+/* ===== BACK BUTTON ===== */
+.back-btn {
+    background-color: #161b22;
+    color: #58a6ff;
+    border: 1px solid #30363d;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    width: fit-content;
+    margin-bottom: 1rem;
+    transition: 0.3s ease;
+}
+.back-btn:hover {
+    background-color: #1f242b;
+    box-shadow: 0 0 8px rgba(88,166,255,0.5);
+}
+
+/* ===== BALANCE BOX ===== */
+.balance-box {
+    background-color: #161b22;
+    padding: 14px 16px;
+    border-radius: 8px;
+    border: 1px solid #30363d;
+    color: #58a6ff;
+    font-size: 1.1rem;
+    text-align: center;
+}
+
+/* ===== TRADE FORM ===== */
+.trade-form {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    background-color: transparent; /* transparent for full-page look */
+    padding: 0;
+}
+
+.sim-input {
+    flex: 1;
+    max-width: 180px; /* smaller input width */
+    background-color: #161b22;
+    border: 1px solid #30363d;
+    color: #c9d1d9;
+    padding: 6px 10px;
+    border-radius: 6px;
+    outline: none;
+    transition: 0.2s ease;
+}
+.sim-input:focus {
+    border-color: #58a6ff;
+    box-shadow: 0 0 6px rgba(88,166,255,0.3);
+}
+.sim-input::placeholder {
+    color: #8b949e;
+    font-size: 0.9rem;
+}
+
+/* ===== BUTTONS ===== */
+.sim-btn {
+    padding: 6px 12px;
+    font-size: 0.9rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.3s ease;
+    border: none;
+    font-weight: bold;
+}
+.sim-btn.buy {
+    background: #58a6ff;
+    color: #0e1117;
+}
+.sim-btn.buy:hover {
+    background: #1f6feb;
+    box-shadow: 0 0 8px rgba(88,166,255,0.5);
+}
+.sim-btn.sell {
+    background: #ff6b6b;
+    color: #fff;
+}
+.sim-btn.sell:hover {
+    background: #ff4d4d;
+    box-shadow: 0 0 8px rgba(255,107,107,0.5);
+}
+
+/* ===== STOCK CHART CONTAINER ===== */
+.stock-chart {
+    background-color: #161b22;
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid #30363d;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+#stockChart {
+    width: 100%;
+    height: 300px;
+}
+
+/* ===== HOLDINGS TABLE ===== */
+.sim-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #161b22;
+    border-radius: 8px;
+    border: 1px solid #30363d;
+    overflow: hidden;
+}
+.sim-table th, .sim-table td {
+    padding: 10px 12px;
+    color: #c9d1d9;
+    font-size: 0.9rem;
+    text-align: center;
+}
+.sim-table thead {
+    background-color: #090a0a;
+    color: #58a6ff;
+}
+.sim-table tbody tr {
+    border-bottom: 1px solid #30363d;
+    transition: background 0.3s;
+}
+.sim-table tbody tr:hover {
+    background-color: #21262d;
+}
+
+/* ===== PROFIT / LOSS COLORS ===== */
+.profit { color: #21b0a7; font-weight: bold; }
+.loss { color: #ff6b6b; font-weight: bold; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .trade-form {
+        flex-direction: column;
+        gap: 6px;
+    }
+    .sim-btn, .sim-input {
+        width: 100%;
+        max-width: 100%;
+    }
+}

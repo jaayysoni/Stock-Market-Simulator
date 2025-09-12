@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Watchlist — Drag & Drop</title>
+  <link rel="stylesheet" href="/static/css/watchlist.css" />
+</head>
+<body>
+  <section class="wl-wrap">
+    <header class="wl-head">
+      <h2 class="wl-title">Watchlist</h2>
+      <button class="wl-reset" type="button" aria-label="Reset to default order">Reset</button>
+    </header>
+
+    <!-- Watchlist (reorderable) -->
+    <ul id="watchlist" class="wl-list" aria-label="Reorder your watchlist via drag and drop">
+      <li class="wl-item" draggable="true" data-symbol="AAPL">
+        <span class="wl-handle" aria-hidden="true">⋮⋮</span>
+        <div class="wl-main">
+          <div class="wl-symbol">AAPL</div>
+          <div class="wl-meta">Apple Inc • 228.31</div>
+        </div>
+        <div class="wl-badges">
+          <span class="badge up">+1.24%</span>
+        </div>
+      </li>
+      <li class="wl-item" draggable="true" data-symbol="TSLA">
+        <span class="wl-handle" aria-hidden="true">⋮⋮</span>
+        <div class="wl-main">
+          <div class="wl-symbol">TSLA</div>
+          <div class="wl-meta">Tesla • 241.70</div>
+        </div>
+        <div class="wl-badges">
+          <span class="badge down">-0.83%</span>
+        </div>
+      </li>
+      <li class="wl-item" draggable="true" data-symbol="NVDA">
+        <span class="wl-handle" aria-hidden="true">⋮⋮</span>
+        <div class="wl-main">
+          <div class="wl-symbol">NVDA</div>
+          <div class="wl-meta">NVIDIA • 119.40</div>
+        </div>
+        <div class="wl-badges">
+          <span class="badge up">+0.42%</span>
+        </div>
+      </li>
+      <li class="wl-item" draggable="true" data-symbol="BTC">
+        <span class="wl-handle" aria-hidden="true">⋮⋮</span>
+        <div class="wl-main">
+          <div class="wl-symbol">BTC</div>
+          <div class="wl-meta">Bitcoin • 63,420</div>
+        </div>
+        <div class="wl-badges">
+          <span class="badge up">+2.10%</span>
+        </div>
+      </li>
+    </ul>
+
+    <footer class="wl-foot">
+      <small class="muted">Tip: items ko handle pakad kar drag karo. Order auto-save hota hai.</small>
+    </footer>
+  </section>
+
+  <!-- Embedded JavaScript -->
+  <script>
+    const LIST_ID = "watchlist";
+    const STORAGE_KEY = "watchlist-order-v1";
+
+    const listEl = document.getElementById(LIST_ID);
+    const resetBtn = document.querySelector(".wl-reset");
+
+    // --- load order from storage
+    (function restoreOrder(){
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if(!saved) return;
+      const order = JSON.parse(saved);
+      const current = Array.from(listEl.children);
+      const map = new Map(current.map(li => [li.dataset.symbol, li]));
+
+      listEl.innerHTML = "";
+      order.forEach(sym => {
+        const li = map.get(sym);
+        if(li) listEl.appendChild(li);
+      });
+      current.forEach(li => {
+        if(!order.includes(li.dataset.symbol)) listEl.appendChild(li);
+      });
+    })();
+
+    // --- drag logic
+    let draggingEl = null;
+
+    listEl.addEventListener("dragstart", (e) => {
+      const li = e.target.closest(".wl-item");
+      if(!li) return;
+      draggingEl = li;
+      li.classList.add("dragging");
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", li.dataset.symbol);
+    });
+
+    listEl.addEventListener("dragend", (e) => {
+      const li = e.target.closest(".wl-item");
+      if(li) li.classList.remove("dragging");
+      draggingEl = null;
+      persistOrder();
+    });
+
+    listEl.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      const afterEl = getDragAfterElement(listEl, e.clientY);
+      const isSame = afterEl === draggingEl;
+      Array.from(listEl.children).forEach(li => li.classList.remove("drop-target"));
+
+      if(!afterEl){
+        listEl.appendChild(draggingEl);
+      } else if(!isSame) {
+        listEl.insertBefore(draggingEl, afterEl);
+        afterEl.classList.add("drop-target");
+      }
+    });
+
+    listEl.addEventListener("drop", (e) => {
+      e.preventDefault();
+      Array.from(listEl.children).forEach(li => li.classList.remove("drop-target"));
+      persistOrder();
+    });
+
+    function getDragAfterElement(container, y){
+      const els = [...container.querySelectorAll(".wl-item:not(.dragging)")];
+      return els.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - (box.top + box.height / 2);
+        if(offset < 0 && offset > closest.offset){
+          return { offset, element: child };
+        } else {
+          return closest;
+        }
+      }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
+
+    function persistOrder(){
+      const order = [...listEl.children].map(li => li.dataset.symbol);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(order));
+    }
+
+    resetBtn.addEventListener("click", () => {
+      localStorage.removeItem(STORAGE_KEY);
+      location.reload();
+    });
+
+    // Optional: Touch/Pointer drag for mobile
+    let pointerId = null;
+    listEl.addEventListener("pointerdown", (e) => {
+      const handle = e.target.closest(".wl-handle");
+      if(!handle) return;
+      const li = handle.closest(".wl-item");
+      if(!li) return;
+
+      pointerId = e.pointerId;
+      handle.setPointerCapture(pointerId);
+      li.draggable = true;
+      const dt = new DataTransfer();
+      dt.setData("text/plain", li.dataset.symbol);
+      const dragStart = new DragEvent("dragstart", { dataTransfer: dt, bubbles: true });
+      li.dispatchEvent(dragStart);
+    }, { passive: true });
+  </script>
+</body>
+</html>

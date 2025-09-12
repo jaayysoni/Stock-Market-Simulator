@@ -1,17 +1,17 @@
+# app/routers/auth_router.py
+
 from fastapi import APIRouter, Depends, HTTPException, status, Request
-from fastapi.responses import RedirectResponse, JSONResponse
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.responses import JSONResponse, RedirectResponse
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 import random, string
 
 from app.models.user import User
-from app.schemas.user_schema import UserCreate, UserOut
+from app.schemas.user_schema import UserOut
 from app.database.session import get_db
 from app.dependencies.auth import get_current_user
 from app.services.auth_service import authenticate_user, create_access_token
 from app.services.google_oauth import get_google_auth_url, get_user_info_from_google
-from app.config import settings
 
 router = APIRouter(
     prefix="/auth",
@@ -20,96 +20,134 @@ router = APIRouter(
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+# -------------------------------
 # ✅ Register a new user
+# -------------------------------
 @router.post("/register", response_model=UserOut)
-def register(user: UserCreate, db: Session = Depends(get_db)):
-    existing_user = db.query(User).filter(User.email == user.email).first()
-    if existing_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
+async def register(request: Request, db: Session = Depends(get_db)):
+    try:
+        data = await request.json()
+        username = data.get("username")
+        email = data.get("email")
+        password = data.get("password")
 
-    hashed_password = pwd_context.hash(user.password)
-    new_user = User(
-        username=user.username,
-        email=user.email,
-        hashed_password=hashed_password,
-        is_guest=False
-    )
+        if not username or not email or not password:
+            raise HTTPException(status_code=400, detail="All fields are required")
 
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-    return new_user
+        existing_user = db.query(User).filter(User.email == email).first()
+        if existing_user:
+            raise HTTPException(status_code=400, detail="Email already registered")
 
-# ✅ Email/password Login
-@router.post("/login")
-def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    user = authenticate_user(db, form_data.username, form_data.password)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
-            headers={"WWW-Authenticate": "Bearer"}
+        hashed_password = pwd_context.hash(password)
+        new_user = User(
+            username=username,
+            email=email,
+            hashed_password=hashed_password,
+            is_guest=False
         )
-    access_token = create_access_token(data={"sub": str(user.id)})
 
-    return {
-        "access_token": access_token,
-        "token_type": "bearer",
-        "user": {
-            "id": user.id,
-            "username": user.username,
-            "email": user.email,
-            "virtual_balance": user.virtual_balance,
-            "is_guest": user.is_guest
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+        return new_user
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Registration failed: {e}")
+
+
+# -------------------------------
+# ✅ Email/password Login (JSON)
+# -------------------------------
+@router.post("/login")
+async def login(request: Request, db: Session = Depends(get_db)):
+    try:
+        data = await request.json()
+        email = data.get("email")
+        password = data.get("password")
+
+        if not email or not password:
+            raise HTTPException(status_code=400, detail="Email and password required")
+
+        user = authenticate_user(db, email, password)
+        if not user:
+            raise HTTPException(status_code=401, detail="Incorrect email or password")
+
+        access_token = create_access_token(data={"sub": str(user.id)})
+
+        return {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "user": {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+                "virtual_balance": user.virtual_balance,
+                "is_guest": user.is_guest
+            }
         }
-    }
 
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Login failed: {e}")
+
+
+# -------------------------------
 # ✅ Guest Login
+# -------------------------------
 @router.post("/guest-login")
 def guest_login(db: Session = Depends(get_db)):
-    random_id = ''.join(random.choices(string.ascii_lowercase + string.digits, k=8))
-    guest_username = f"guest_{random_id}"
-    guest_email = f"{guest_username}@guest.local"
+    try:
+        random_id = ''.join(random.choices(string.ascii_lowercase + string.digits, k=8))
+        guest_username = f"guest_{random_id}"
+        guest_email = f"{guest_username}@guest.local"
 
-    existing_guest = db.query(User).filter(User.email == guest_email).first()
-    if existing_guest:
-        user = existing_guest
-    else:
-        user = User(
-            username=guest_username,
-            email=guest_email,
-            hashed_password="",
-            is_guest=True
-        )
-        db.add(user)
-        db.commit()
-        db.refresh(user)
+        user = db.query(User).filter(User.email == guest_email).first()
+        if not user:
+            user = User(
+                username=guest_username,
+                email=guest_email,
+                hashed_password="",
+                is_guest=True
+            )
+            db.add(user)
+            db.commit()
+            db.refresh(user)
 
-    access_token = create_access_token(data={"sub": str(user.id)})
-
-    return {
-        "access_token": access_token,
-        "token_type": "bearer",
-        "user": {
-            "id": user.id,
-            "username": user.username,
-            "email": user.email,
-            "virtual_balance": user.virtual_balance,
-            "is_guest": user.is_guest
+        access_token = create_access_token(data={"sub": str(user.id)})
+        return {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "user": {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+                "virtual_balance": user.virtual_balance,
+                "is_guest": user.is_guest
+            }
         }
-    }
 
-# ✅ Get current logged-in user info
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Guest login failed: {e}")
+
+
+# -------------------------------
+# ✅ Current User
+# -------------------------------
 @router.get("/me", response_model=UserOut)
 def get_current_user_info(current_user: User = Depends(get_current_user)):
     return current_user
 
-# ✅ Google Login - Redirect to Google
+
+# -------------------------------
+# ✅ Google Login
+# -------------------------------
 @router.get("/google-login")
 def google_login():
     return RedirectResponse(get_google_auth_url())
 
-# ✅ Google Callback - Get token and create user
+
+# -------------------------------
+# ✅ Google Callback
+# -------------------------------
 @router.get("/google-callback")
 async def google_callback(request: Request, db: Session = Depends(get_db)):
     code = request.query_params.get("code")
@@ -118,8 +156,11 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
 
     try:
         user_info = await get_user_info_from_google(code)
-        email = user_info["email"]
-        username = user_info["username"]
+        email = user_info.get("email")
+        username = user_info.get("name") or email.split("@")[0]
+
+        if not email:
+            raise HTTPException(status_code=400, detail="Google account has no email")
 
         user = db.query(User).filter(User.email == email).first()
         if not user:
@@ -148,4 +189,4 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
         })
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Google OAuth failed: {e}")

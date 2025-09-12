@@ -1,1 +1,0 @@
-# Prepares daily summaries or optional email alerts

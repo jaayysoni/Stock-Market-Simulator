@@ -46,10 +46,10 @@ body {
 
 /* ===== SIDEBAR ===== */
 .sidebar {
-    background-color: #161b22;
+    background-color: #090a0a;
     width: 220px;
     padding: 2rem 1rem;
-    border-right: 1px solid #30363d;
+    border-right: 1px solid #090a0a;
 }
 .sidebar ul {
     list-style: none;
@@ -63,7 +63,7 @@ body {
 }
 .sidebar li.active,
 .sidebar li:hover {
-    background-color: #21262d;
+    background-color: #090a0a;
     color: #58a6ff;
 }
 
@@ -96,7 +96,7 @@ table {
     border-collapse: collapse;
 }
 thead {
-    background-color: #21262d;
+    background-color: #090a0a;
 }
 th, td {
     padding: 0.8rem;
@@ -120,7 +120,7 @@ tbody tr:hover {
     .sidebar {
         width: 100%;
         border-right: none;
-        border-bottom: 1px solid #30363d;
+        border-bottom: 1px solid #090a0a;
         display: flex;
         justify-content: space-around;
     }

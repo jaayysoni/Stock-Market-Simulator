@@ -5,7 +5,6 @@ from datetime import datetime
 from app.models import Transaction, Portfolio, Stock, User
 from app.schemas.transaction_schema import TransactionCreate
 from app.utils.stock_data import get_stock_price
-from app.services.tax_calculator import calculate_tax  # Tax calculator import
 
 
 def buy_stock(db: Session, user: User, data: TransactionCreate) -> Transaction:
@@ -60,13 +59,6 @@ def sell_stock(db: Session, user: User, data: TransactionCreate) -> Transaction:
             f"Owned: {portfolio.quantity if portfolio else 0}, Trying to sell: {data.quantity}"
         )
 
-    # Calculate tax and net gain
-    tax_info = calculate_tax(stock_price, data.quantity)
-    net_gain = tax_info["net_amount"]
-
-    # Credit net gain after tax
-    user.virtual_balance += net_gain
-
     # Record transaction
     transaction = Transaction(
         user_id=user.id,
@@ -85,8 +77,3 @@ def sell_stock(db: Session, user: User, data: TransactionCreate) -> Transaction:
 
     db.commit()
     db.refresh(user)
-
-    # Optionally attach tax info to transaction object if needed (not stored in DB directly)
-    transaction.tax_info = tax_info  # Optional: You can remove this or return it via API
-
-    return transaction
