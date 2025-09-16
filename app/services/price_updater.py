@@ -1,10 +1,10 @@
 # app/services/price_updater.py
 import yfinance as yf
-from app.database.db import SessionLocal
+from app.database.session import UserSessionLocal
 from app.models.stock import Stock
 
 def update_prices():
-    db = SessionLocal()
+    db = UserSessionLocal()
     stocks = db.query(Stock).all()
     print(f"Updating prices for {len(stocks)} stocks...")
 

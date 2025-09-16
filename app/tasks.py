@@ -1,12 +1,12 @@
 # app/tasks.py
 
 import yfinance as yf
-from app.database.db import SessionLocal
+from app.database.db import UserSessionLocal
 from app.models.stock import Stock
 
 def update_stock_prices():
     """Fetch current stock prices from Yahoo Finance and update the DB."""
-    db = SessionLocal()
+    db = UserSessionLocal()
     try:
         stocks = db.query(Stock).all()
         for stock in stocks:

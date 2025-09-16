@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from app.database.session import get_db
+from app.database.session import get_user_db
 from app.models.stock import Stock
 from app.services.stock_service import get_multiple_stock_prices
 
@@ -11,7 +11,7 @@ router = APIRouter(
 
 # Get stock by ID from DB
 @router.get("/{stock_id}")
-def get_stock(stock_id: int, db: Session = Depends(get_db)):
+def get_stock(stock_id: int, db: Session = Depends(get_user_db)):
     stock = db.query(Stock).filter(Stock.id == stock_id).first()
     if not stock:
         raise HTTPException(status_code=404, detail="Stock not found")

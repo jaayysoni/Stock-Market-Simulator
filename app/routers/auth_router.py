@@ -7,24 +7,20 @@ from passlib.context import CryptContext
 import random, string
 
 from app.models.user import User
-from app.schemas.user_schema import UserOut
-from app.database.session import get_db
+from app.schemas.user_schema import UserOut, TokenResponse
+from app.database.session import get_user_db
 from app.dependencies.auth import get_current_user
 from app.services.auth_service import authenticate_user, create_access_token
 from app.services.google_oauth import get_google_auth_url, get_user_info_from_google
 
-router = APIRouter(
-    prefix="/auth",
-    tags=["Auth"]
-)
-
+router = APIRouter(tags=["Auth"])
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # -------------------------------
-# ✅ Register a new user
+# ✅ Register a new user 
 # -------------------------------
 @router.post("/register", response_model=UserOut)
-async def register(request: Request, db: Session = Depends(get_db)):
+async def register(request: Request, db: Session = Depends(get_user_db)):
     try:
         data = await request.json()
         username = data.get("username")
@@ -38,12 +34,12 @@ async def register(request: Request, db: Session = Depends(get_db)):
         if existing_user:
             raise HTTPException(status_code=400, detail="Email already registered")
 
-        hashed_password = pwd_context.hash(password)
+        password = pwd_context.hash(password)
         new_user = User(
             username=username,
             email=email,
-            hashed_password=hashed_password,
-            is_guest=False
+            password=password,
+            # is_guest=False
         )
 
         db.add(new_user)
@@ -58,8 +54,8 @@ async def register(request: Request, db: Session = Depends(get_db)):
 # -------------------------------
 # ✅ Email/password Login (JSON)
 # -------------------------------
-@router.post("/login")
-async def login(request: Request, db: Session = Depends(get_db)):
+@router.post("/login", response_model=TokenResponse)
+async def login(request: Request, db: Session = Depends(get_user_db)):
     try:
         data = await request.json()
         email = data.get("email")
@@ -74,59 +70,51 @@ async def login(request: Request, db: Session = Depends(get_db)):
 
         access_token = create_access_token(data={"sub": str(user.id)})
 
+        # ✅ Only return token, leave balance for /auth/me
         return {
             "access_token": access_token,
-            "token_type": "bearer",
-            "user": {
-                "id": user.id,
-                "username": user.username,
-                "email": user.email,
-                "virtual_balance": user.virtual_balance,
-                "is_guest": user.is_guest
-            }
+            "token_type": "bearer"
         }
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Login failed: {e}")
-
-
 # -------------------------------
 # ✅ Guest Login
 # -------------------------------
-@router.post("/guest-login")
-def guest_login(db: Session = Depends(get_db)):
-    try:
-        random_id = ''.join(random.choices(string.ascii_lowercase + string.digits, k=8))
-        guest_username = f"guest_{random_id}"
-        guest_email = f"{guest_username}@guest.local"
+# @router.post("/guest-login")
+# def guest_login(db: Session = Depends(get_user_db)):
+#     try:
+#         random_id = ''.join(random.choices(string.ascii_lowercase + string.digits, k=8))
+#         guest_username = f"guest_{random_id}"
+#         guest_email = f"{guest_username}@guest.local"
 
-        user = db.query(User).filter(User.email == guest_email).first()
-        if not user:
-            user = User(
-                username=guest_username,
-                email=guest_email,
-                hashed_password="",
-                is_guest=True
-            )
-            db.add(user)
-            db.commit()
-            db.refresh(user)
+#         user = db.query(User).filter(User.email == guest_email).first()
+#         if not user:
+#             user = User(
+#                 username=guest_username,
+#                 email=guest_email,
+#                 password="",
+#                 is_guest=True
+#             )
+#             db.add(user)
+#             db.commit()
+#             db.refresh(user)
 
-        access_token = create_access_token(data={"sub": str(user.id)})
-        return {
-            "access_token": access_token,
-            "token_type": "bearer",
-            "user": {
-                "id": user.id,
-                "username": user.username,
-                "email": user.email,
-                "virtual_balance": user.virtual_balance,
-                "is_guest": user.is_guest
-            }
-        }
+#         access_token = create_access_token(data={"sub": str(user.id)})
+#         return {
+#             "access_token": access_token,
+#             "token_type": "bearer",
+#             "user": {
+#                 "id": user.id,
+#                 "username": user.username,
+#                 "email": user.email,
+#                 "virtual_balance": user.virtual_balance,
+#                 "is_guest": user.is_guest
+#             }
+#         }
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Guest login failed: {e}")
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=f"Guest login failed: {e}")
 
 
 # -------------------------------
@@ -149,7 +137,7 @@ def google_login():
 # ✅ Google Callback
 # -------------------------------
 @router.get("/google-callback")
-async def google_callback(request: Request, db: Session = Depends(get_db)):
+async def google_callback(request: Request, db: Session = Depends(get_user_db)):
     code = request.query_params.get("code")
     if not code:
         raise HTTPException(status_code=400, detail="Missing Google auth code")
@@ -167,8 +155,8 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
             user = User(
                 username=username,
                 email=email,
-                hashed_password="",
-                is_guest=False
+                password="",
+                # is_guest=False
             )
             db.add(user)
             db.commit()
@@ -184,7 +172,7 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
                 "username": user.username,
                 "email": user.email,
                 "virtual_balance": user.virtual_balance,
-                "is_guest": user.is_guest
+                # "is_guest": user.is_guest
             }
         })
 

@@ -1,6 +1,6 @@
 # app/tasks/scheduler.py
 from apscheduler.schedulers.background import BackgroundScheduler
-from app.database.db import SessionLocal
+from app.database.session import UserSessionLocal, MarketSessionLocal
 from app.models.stock import Stock
 import yfinance as yf
 
@@ -9,7 +9,7 @@ scheduler = BackgroundScheduler()
 
 def update_stock_prices(batch_size=50):
     """Fetch latest prices from Yahoo Finance for all stocks in DB in batches."""
-    db = SessionLocal()
+    db = UserSessionLocal()
     stocks = db.query(Stock).all()
     print(f"Updating prices for {len(stocks)} stocks...")
 

@@ -16,11 +16,11 @@ def get_user_by_id(db: Session, user_id: int):
 
 # Create user
 def create_user(db: Session, user: UserCreate):
-    hashed_password = pwd_context.hash(user.password)
+    password = pwd_context.hash(user.password)
     db_user = User(
         username=user.username,
         email=user.email,
-        hashed_password=hashed_password
+        password = password
     )
     db.add(db_user)
     db.commit()
@@ -28,5 +28,5 @@ def create_user(db: Session, user: UserCreate):
     return db_user
 
 # Verify password
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+def verify_password(plain_password: str, password: str) -> bool:
+    return pwd_context.verify(plain_password, password)

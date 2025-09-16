@@ -4,25 +4,40 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
-# Database file relative to project root
+# -------------------------
+# Base directory
+# -------------------------
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-DATABASE_PATH = os.path.join(BASE_DIR, "stock_market.db")
-DATABASE_URL = f"sqlite:///{DATABASE_PATH}"
 
-# SQLAlchemy engine
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+# -------------------------
+# USER DATABASE (user_data.db)
+# -------------------------
+USER_DB_PATH = os.path.join(BASE_DIR, "user_data.db")
+USER_DB_URL = f"sqlite:///{USER_DB_PATH}"
 
-# Session factory
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+user_engine = create_engine(USER_DB_URL, connect_args={"check_same_thread": False})
+UserSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=user_engine)
+UserBase = declarative_base()
 
-# Base class for models
-Base = declarative_base()
+def get_user_db():
+    db = UserSessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
-# ✅ Add this function for FastAPI dependency injection
-# app/database/db.py
+# -------------------------
+# MARKET DATABASE (market_data.db)
+# -------------------------
+MARKET_DB_PATH = os.path.join(BASE_DIR, "market_data.db")
+MARKET_DB_URL = f"sqlite:///{MARKET_DB_PATH}"
 
-def get_db():
-    db = SessionLocal()
+market_engine = create_engine(MARKET_DB_URL, connect_args={"check_same_thread": False})
+MarketSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=market_engine)
+MarketBase = declarative_base()
+
+def get_market_db():
+    db = MarketSessionLocal()
     try:
         yield db
     finally:

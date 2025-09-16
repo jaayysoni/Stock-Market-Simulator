@@ -76,49 +76,53 @@
     </div>
   </div>
 
-  <!-- AJAX Login Script -->
   <script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const form = document.getElementById("loginForm");
-    const messageBox = document.getElementById("loginMessage");
-
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      const username = document.getElementById("email").value.trim(); // backend expects username field
-      const password = document.getElementById("password").value.trim();
-
-      if (!username || !password) {
-        messageBox.textContent = "Please fill all fields!";
-        messageBox.style.color = "red";
-        return;
-      }
-
-      try {
-        const response = await fetch("/auth/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, password }) // ✅ send username/password
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-          messageBox.textContent = "Login successful! Redirecting...";
-          messageBox.style.color = "green";
-          setTimeout(() => window.location.href = "/dashboard", 1500);
-        } else {
-          messageBox.textContent = data.detail || "Login failed!";
+    document.addEventListener("DOMContentLoaded", () => {
+      const form = document.getElementById("loginForm");
+      const messageBox = document.getElementById("loginMessage");
+    
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+    
+        const email = document.getElementById("email").value.trim(); // backend expects email
+        const password = document.getElementById("password").value.trim(); // match input id
+    
+        if (!email || !password) {
+          messageBox.textContent = "Please fill all fields!";
           messageBox.style.color = "red";
+          return;
         }
-      } catch (err) {
-        messageBox.textContent = "Server error. Try again!";
-        messageBox.style.color = "red";
-        console.error(err);
-      }
+    
+        try {
+          const response = await fetch("/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password }) // send email/password
+          });
+    
+          const data = await response.json();
+    
+          if (response.ok) {
+            messageBox.textContent = "Login successful! Redirecting...";
+            messageBox.style.color = "green";
+    
+            // Optional: store access token if you need it
+            localStorage.setItem("access_token", data.access_token);
+    
+            // setTimeout(() => window.location.href = "/dashboard", 1500);
+            setTimeout(() => window.location.replace("/dashboard"), 1500);
+          } else {
+            messageBox.textContent = data.detail || "Login failed!";
+            messageBox.style.color = "red";
+          }
+        } catch (err) {
+          messageBox.textContent = "Server error. Try again!";
+          messageBox.style.color = "red";
+          console.error(err);
+        }
+      });
     });
-  });
-  </script>
+    </script>
 
 </body>
 </html>

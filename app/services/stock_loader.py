@@ -2,7 +2,7 @@
 
 import csv
 import os
-from app.database.db import Base, engine, SessionLocal
+from app.database.db import Base, engine, UserSessionLocal
 from app.models.stock import Stock
 
 # Ensure tables exist
@@ -17,7 +17,7 @@ def load_stocks():
         print(f"❌ CSV file not found at {CSV_FILE}")
         return
 
-    db = SessionLocal()
+    db = UserSessionLocal()
     with open(CSV_FILE, newline='', encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
         print("CSV Headers:", reader.fieldnames)

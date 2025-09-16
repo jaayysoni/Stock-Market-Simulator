@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from starlette.responses import RedirectResponse
 import httpx
 from app.config import settings
-from app.database.session import get_db
+from app.database.session import get_user_db
 from app.models.user import User
 from app.services.auth_service import create_access_token
 
@@ -35,7 +35,7 @@ def google_login():
     return RedirectResponse(url=f"{GOOGLE_AUTH_URI}?{urlencode(params)}")
 
 @router.get("/google-callback")
-async def google_callback(request: Request, db: Session = Depends(get_db)):
+async def google_callback(request: Request, db: Session = Depends(get_user_db)):
     code = request.query_params.get("code")
 
     if not code:
@@ -74,8 +74,8 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
         user = User(
             email=email,
             username=username,
-            hashed_password="",  # No password for Google users
-            is_guest=False
+            password="",  # No password for Google users
+            # is_guest=False
         )
         db.add(user)
         db.commit()
@@ -92,6 +92,6 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
             "username": user.username,
             "email": user.email,
             "virtual_balance": user.virtual_balance,
-            "is_guest": user.is_guest
+            # "is_guest": user.is_guest
         }
     }

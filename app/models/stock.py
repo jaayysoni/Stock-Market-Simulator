@@ -1,16 +1,16 @@
- # Stock model with symbol, name, latest price, sector, etc.
+# app/models/stock.py
 from sqlalchemy import Column, Integer, String, Float
 from sqlalchemy.orm import relationship
-from app.database.db import Base
+from app.database.db import MarketBase  # Use MarketBase for market_data.db
 
-class Stock(Base):
+class Stock(MarketBase):
     __tablename__ = "stocks"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String,nullable = False)
-    symbol = Column(String,unique = True, index = True, nullable = False)
-    exchange = Column(String,index = True)
-    price = Column(Float,nullable = False)
+    name = Column(String, nullable=False)
+    symbol = Column(String, unique=True, index=True, nullable=False)
+    exchange = Column(String, index=True)
+    price = Column(Float, nullable=False)
     sector = Column(String)
 
     portfolios = relationship("Portfolio", back_populates="stock", cascade="all, delete")
@@ -18,5 +18,3 @@ class Stock(Base):
 
     def __repr__(self):
         return f"<Stock(name={self.name}, symbol={self.symbol}, price={self.price})>"
-
-

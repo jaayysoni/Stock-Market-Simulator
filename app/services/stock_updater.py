@@ -2,14 +2,14 @@
 import yfinance as yf
 import pandas as pd
 from sqlalchemy.orm import Session
-from app.database.db import SessionLocal
+from app.database.db import UserSessionLocal
 from app.models.stock import Stock
 import time
 
 BATCH_SIZE = 50  # Number of stocks per batch to fetch safely
 
 def update_stock_prices():
-    db: Session = SessionLocal()
+    db: Session = UserSessionLocal()
     stocks = db.query(Stock).all()
     symbols = [stock.symbol for stock in stocks]
 

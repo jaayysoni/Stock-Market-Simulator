@@ -14,12 +14,12 @@
   <div class="signup-wrapper">
     <div class="signup-card glass-effect">
 
-      <!-- Logo Section -->
+      <!-- Logo Section
       <div class="logo-container">
         <img src="https://upload.wikimedia.org/wikipedia/commons/5/5a/Trading-logo-example.png" 
              alt="Trading Logo" class="logo">
         <h1 class="brand-title">Stock-Market-Simulator</h1>
-      </div>
+      </div> -->
 
       <!-- Form Section -->
       <div class="form-area">
@@ -48,12 +48,12 @@
         <div class="divider"><span>OR</span></div>
 
        <!-- Google OAuth Button -->
-<div class="google-login-container">
+ <div class="google-login-container">
   <button id="googleLoginBtn" class="google-btn" onclick="window.location.href='http: //127.0.0.1:8000/auth/google-login'">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="Google Logo" class="google-logo">
+    <!-- <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="Google Logo" class="google-logo"> -->
     <span>Continue with Google</span>
   </button>
-</div>
+</div> 
 
         <p class="account-link">Already have an account? 
           <a href="/static/login.html">Login</a>
@@ -93,13 +93,20 @@
           if (response.ok) {
             messageBox.textContent = "Signup successful! Redirecting...";
             messageBox.style.color = "green";
-            setTimeout(() => window.location.href = "/static/dashboard.html", 1500);
+            // Save token to localStorage
+localStorage.setItem("access_token", data.access_token);
+
+messageBox.textContent = "Signup successful! Redirecting...";
+messageBox.style.color = "green";
+
+// Redirect to dashboard after short delay
+setTimeout(() => window.location.href = "/static/dashboard.html", 1500);;
           } else {
             messageBox.textContent = data.detail || "Signup failed!";
             messageBox.style.color = "red";
           }
         } catch (err) {
-          messageBox.textContent = "Server error. Try again!";
+          messageBox.textContent = " you are Registered kindly Get to Login Page Please";
           messageBox.style.color = "red";
           console.error(err);
         }

@@ -16,13 +16,13 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 # Password Verification
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+def verify_password(plain_password: str, password: str) -> bool:
+    return pwd_context.verify(plain_password, password)
 
 # User Authentication
 def authenticate_user(db: Session, email: str, password: str):
     user = db.query(User).filter(User.email == email).first()
-    if not user or not verify_password(password, user.hashed_password):
+    if not user or not verify_password(password, user.password):
         return None
     return user
 
@@ -47,9 +47,9 @@ def register_user(db: Session, user_data: UserCreate):
     # Hash password and create new user
     hashed_pwd = pwd_context.hash(user_data.password)
     new_user = User(
-        name=user_data.name,
+        username=user_data.username,
         email=user_data.email,
-        hashed_password=hashed_pwd
+        password=hashed_pwd
     )
 
     db.add(new_user)
