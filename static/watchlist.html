@@ -1,97 +1,116 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Watchlist — Drag & Drop</title>
-  <link rel="stylesheet" href="/static/css/watchlist.css" />
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Watchlist — Stock Market Simulator</title>
+<link rel="stylesheet" href="/static/css/watchlist.css" />
 </head>
 <body>
-  <section class="wl-wrap">
-    <header class="wl-head">
-      <h2 class="wl-title">Watchlist</h2>
-      <button class="wl-reset" type="button" aria-label="Reset to default order">Reset</button>
-    </header>
 
-    <!-- Watchlist (reorderable) -->
-    <ul id="watchlist" class="wl-list" aria-label="Reorder your watchlist via drag and drop">
-      <li class="wl-item" draggable="true" data-symbol="AAPL">
-        <span class="wl-handle" aria-hidden="true">⋮⋮</span>
-        <div class="wl-main">
-          <div class="wl-symbol">AAPL</div>
-          <div class="wl-meta">Apple Inc • 228.31</div>
-        </div>
-        <div class="wl-badges">
-          <span class="badge up">+1.24%</span>
-        </div>
-      </li>
-      <li class="wl-item" draggable="true" data-symbol="TSLA">
-        <span class="wl-handle" aria-hidden="true">⋮⋮</span>
-        <div class="wl-main">
-          <div class="wl-symbol">TSLA</div>
-          <div class="wl-meta">Tesla • 241.70</div>
-        </div>
-        <div class="wl-badges">
-          <span class="badge down">-0.83%</span>
-        </div>
-      </li>
-      <li class="wl-item" draggable="true" data-symbol="NVDA">
-        <span class="wl-handle" aria-hidden="true">⋮⋮</span>
-        <div class="wl-main">
-          <div class="wl-symbol">NVDA</div>
-          <div class="wl-meta">NVIDIA • 119.40</div>
-        </div>
-        <div class="wl-badges">
-          <span class="badge up">+0.42%</span>
-        </div>
-      </li>
-      <li class="wl-item" draggable="true" data-symbol="BTC">
-        <span class="wl-handle" aria-hidden="true">⋮⋮</span>
-        <div class="wl-main">
-          <div class="wl-symbol">BTC</div>
-          <div class="wl-meta">Bitcoin • 63,420</div>
-        </div>
-        <div class="wl-badges">
-          <span class="badge up">+2.10%</span>
-        </div>
-      </li>
-    </ul>
+<!-- TOP: Search bar -->
+<div style="display:flex; justify-content:center; margin: 12px 0; gap:8px;">
+  <input type="text" id="w-search" placeholder="Search or add stock..." />
+  <select id="select-watchlist"></select>
+  <button id="add-to-watchlist">Add</button>
+</div>
 
-    <footer class="wl-foot">
-      <small class="muted">Tip: items ko handle pakad kar drag karo. Order auto-save hota hai.</small>
-    </footer>
-  </section>
+<!-- WATCHLISTS -->
+<div id="watchlists-container"></div>
 
-  <!-- Embedded JavaScript -->
-  <script>
-    const LIST_ID = "watchlist";
-    const STORAGE_KEY = "watchlist-order-v1";
+<!-- FOOTER: Create new watchlist -->
+<div style="display:flex; justify-content:center; margin: 20px 0;">
+  <button id="create-watchlist">Create New Watchlist</button>
+</div>
 
-    const listEl = document.getElementById(LIST_ID);
-    const resetBtn = document.querySelector(".wl-reset");
+<script>
+const STORAGE_KEY = "multi-watchlists-v3";
+const container = document.getElementById("watchlists-container");
+const searchInput = document.getElementById("w-search");
+const addBtn = document.getElementById("add-to-watchlist");
+const selectWL = document.getElementById("select-watchlist");
+const createBtn = document.getElementById("create-watchlist");
 
-    // --- load order from storage
-    (function restoreOrder(){
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if(!saved) return;
-      const order = JSON.parse(saved);
-      const current = Array.from(listEl.children);
-      const map = new Map(current.map(li => [li.dataset.symbol, li]));
+// --- Dummy Indian stocks
+const dummyStocks = [
+  { symbol: "RELIANCE", avg_price: 2400, current_price: 2450 },
+  { symbol: "TCS", avg_price: 3200, current_price: 3190 },
+  { symbol: "INFY", avg_price: 1500, current_price: 1525 },
+  { symbol: "HDFC", avg_price: 1600, current_price: 1580 },
+];
 
-      listEl.innerHTML = "";
-      order.forEach(sym => {
-        const li = map.get(sym);
-        if(li) listEl.appendChild(li);
+// --- Load or initialize watchlists
+let watchlists = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [
+  { name: "Tech Giants", stocks: [...dummyStocks] },
+  { name: "My Portfolio", stocks: [{ symbol:"DUMMY", avg_price:140, current_price:150 }] }
+];
+
+// --- Populate watchlist selector
+function populateSelector() {
+  selectWL.innerHTML = "";
+  watchlists.forEach((wl, index) => {
+    const option = document.createElement("option");
+    option.value = index;
+    option.textContent = wl.name;
+    selectWL.appendChild(option);
+  });
+}
+
+// --- Render all watchlists
+function renderWatchlists(filter="") {
+  container.innerHTML = "";
+  watchlists.forEach((wl, index) => {
+    const section = document.createElement("section");
+    section.className = "wl-wrap";
+    section.dataset.index = index;
+
+    section.innerHTML = `
+      <header class="wl-head">
+        <h2 class="wl-title">${wl.name}</h2>
+        <button class="wl-reset" data-index="${index}">Reset</button>
+      </header>
+      <ul class="wl-list" id="wl-${index}"></ul>
+      <footer class="wl-foot">
+        <small class="muted">
+          Drag handle to reorder. Order auto-saves.
+          <button class="delete-watchlist" data-index="${index}">Delete List</button>
+        </small>
+      </footer>
+    `;
+    container.appendChild(section);
+
+    const ul = section.querySelector(".wl-list");
+
+    wl.stocks.filter(s => s.symbol.toLowerCase().includes(filter.toLowerCase()))
+      .forEach(stock => {
+        const price = stock.current_price ?? 0;
+        const change = price - stock.avg_price;
+        const changeClass = change >= 0 ? "up" : "down";
+        const changeSign = change >= 0 ? "+" : "";
+        const li = document.createElement("li");
+        li.className = "wl-item";
+        li.dataset.symbol = stock.symbol;
+        li.draggable = true;
+        li.innerHTML = `
+          <span class="wl-handle">⋮⋮</span>
+          <div class="wl-main">
+            <div class="wl-symbol">${stock.symbol}</div>
+            <div class="wl-meta">
+              <span>₹${price.toFixed(2)}</span>
+              <span class="wl-subtext">Avg Buy: ₹${stock.avg_price.toFixed(2)}</span>
+            </div>
+          </div>
+          <div class="wl-badges">
+            <span class="badge ${changeClass}">${changeSign}${change.toFixed(2)}</span>
+            <button class="remove-stock" data-symbol="${stock.symbol}">✖</button>
+          </div>
+        `;
+        ul.appendChild(li);
       });
-      current.forEach(li => {
-        if(!order.includes(li.dataset.symbol)) listEl.appendChild(li);
-      });
-    })();
 
-    // --- drag logic
+    // --- Drag & Drop
     let draggingEl = null;
-
-    listEl.addEventListener("dragstart", (e) => {
+    ul.addEventListener("dragstart", e => {
       const li = e.target.closest(".wl-item");
       if(!li) return;
       draggingEl = li;
@@ -99,73 +118,105 @@
       e.dataTransfer.effectAllowed = "move";
       e.dataTransfer.setData("text/plain", li.dataset.symbol);
     });
-
-    listEl.addEventListener("dragend", (e) => {
-      const li = e.target.closest(".wl-item");
-      if(li) li.classList.remove("dragging");
+    ul.addEventListener("dragend", e => {
+      if(e.target.closest(".wl-item")) e.target.closest(".wl-item").classList.remove("dragging");
       draggingEl = null;
-      persistOrder();
+      persistOrder(ul, wl);
+    });
+    ul.addEventListener("dragover", e => {
+      e.preventDefault();
+      const afterEl = getDragAfterElement(ul, e.clientY);
+      Array.from(ul.children).forEach(li => li.classList.remove("drop-target"));
+      if(!afterEl) ul.appendChild(draggingEl);
+      else { ul.insertBefore(draggingEl, afterEl); afterEl.classList.add("drop-target"); }
+    });
+    ul.addEventListener("drop", e => {
+      e.preventDefault();
+      Array.from(ul.children).forEach(li => li.classList.remove("drop-target"));
+      persistOrder(ul, wl);
     });
 
-    listEl.addEventListener("dragover", (e) => {
-      e.preventDefault();
-      const afterEl = getDragAfterElement(listEl, e.clientY);
-      const isSame = afterEl === draggingEl;
-      Array.from(listEl.children).forEach(li => li.classList.remove("drop-target"));
-
-      if(!afterEl){
-        listEl.appendChild(draggingEl);
-      } else if(!isSame) {
-        listEl.insertBefore(draggingEl, afterEl);
-        afterEl.classList.add("drop-target");
+    // --- Remove stock
+    ul.addEventListener("click", e => {
+      if(e.target.classList.contains("remove-stock")) {
+        const sym = e.target.dataset.symbol;
+        wl.stocks = wl.stocks.filter(s => s.symbol !== sym);
+        saveWatchlists();
+        renderWatchlists(searchInput.value);
       }
     });
 
-    listEl.addEventListener("drop", (e) => {
-      e.preventDefault();
-      Array.from(listEl.children).forEach(li => li.classList.remove("drop-target"));
-      persistOrder();
+    // --- Reset
+    section.querySelector(".wl-reset").addEventListener("click", () => {
+      wl.stocks = [...dummyStocks];
+      saveWatchlists();
+      renderWatchlists(searchInput.value);
     });
 
-    function getDragAfterElement(container, y){
-      const els = [...container.querySelectorAll(".wl-item:not(.dragging)")];
-      return els.reduce((closest, child) => {
-        const box = child.getBoundingClientRect();
-        const offset = y - (box.top + box.height / 2);
-        if(offset < 0 && offset > closest.offset){
-          return { offset, element: child };
-        } else {
-          return closest;
-        }
-      }, { offset: Number.NEGATIVE_INFINITY }).element;
-    }
-
-    function persistOrder(){
-      const order = [...listEl.children].map(li => li.dataset.symbol);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(order));
-    }
-
-    resetBtn.addEventListener("click", () => {
-      localStorage.removeItem(STORAGE_KEY);
-      location.reload();
+    // --- Delete watchlist
+    section.querySelector(".delete-watchlist").addEventListener("click", () => {
+      watchlists.splice(index,1);
+      saveWatchlists();
+      populateSelector();
+      renderWatchlists(searchInput.value);
     });
+  });
+}
 
-    // Optional: Touch/Pointer drag for mobile
-    let pointerId = null;
-    listEl.addEventListener("pointerdown", (e) => {
-      const handle = e.target.closest(".wl-handle");
-      if(!handle) return;
-      const li = handle.closest(".wl-item");
-      if(!li) return;
+// --- Drag helper
+function getDragAfterElement(container, y){
+  const els = [...container.querySelectorAll(".wl-item:not(.dragging)")];
+  return els.reduce((closest, child) => {
+    const box = child.getBoundingClientRect();
+    const offset = y - (box.top + box.height / 2);
+    if(offset < 0 && offset > closest.offset) return { offset, element: child };
+    return closest;
+  }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
 
-      pointerId = e.pointerId;
-      handle.setPointerCapture(pointerId);
-      li.draggable = true;
-      const dt = new DataTransfer();
-      dt.setData("text/plain", li.dataset.symbol);
-      const dragStart = new DragEvent("dragstart", { dataTransfer: dt, bubbles: true });
-      li.dispatchEvent(dragStart);
-    }, { passive: true });
-  </script>
+// --- Persist order after drag
+function persistOrder(ul, wl){
+  wl.stocks = [...ul.children].map(li => {
+    const sym = li.dataset.symbol;
+    return wl.stocks.find(s => s.symbol === sym);
+  });
+  saveWatchlists();
+}
+
+// --- Save to localStorage
+function saveWatchlists(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(watchlists));
+}
+
+// --- Search filter
+searchInput.addEventListener("input", e => renderWatchlists(e.target.value));
+
+// --- Add stock to selected watchlist
+addBtn.addEventListener("click", () => {
+  const sym = searchInput.value.trim().toUpperCase();
+  const wlIndex = selectWL.value;
+  if(sym && watchlists[wlIndex] && !watchlists[wlIndex].stocks.find(s => s.symbol === sym)) {
+    watchlists[wlIndex].stocks.push({ symbol: sym, avg_price: 100, current_price: 100 });
+    saveWatchlists();
+    renderWatchlists(searchInput.value);
+    searchInput.value = "";
+  }
+});
+
+// --- Create new watchlist
+createBtn.addEventListener("click", () => {
+  const name = prompt("Enter new watchlist name:");
+  if(name){
+    watchlists.push({ name, stocks: [] });
+    saveWatchlists();
+    populateSelector();
+    renderWatchlists(searchInput.value);
+  }
+});
+
+// --- Initial load
+populateSelector();
+renderWatchlists();
+</script>
 </body>
 </html>

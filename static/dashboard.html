@@ -13,38 +13,130 @@
     <div class="logo">Stock Market Simulator</div>
     <nav class="main-nav">
         <ul>
-            <li><a href="#">Overview</a></li>
-            <li><a href="#">Watchlist</a></li>
-            <li><a href="#">Orders</a></li>
-            <li><a href="#">Portfolio</a></li>
-            <li><a href="#">Settings</a></li>
+            <li><a href="#portfolio">Portfolio</a></li>
+            <li><a href="#orders">Orders</a></li>
+            <li><a href="/static/watchlist.html">Watchlist</a></li>
+            <li><a href="/static/tradingterminal.html">Trading-Terminal</a></li>
         </ul>
     </nav>
 </header>
 
 <!-- ======= MAIN CONTAINER ======= -->
-<div class="dashboard-container">
-    <!-- ======= SIDEBAR ======= -->
+<!-- <div class="dashboard-container">
     <aside class="sidebar">
         <ul>
             <li class="active"> Dashboard</li>
-            <li> Markets</li>
-            <li> Portfolio</li>
+            <li>Markets</li>
+            <li><a href="/static/watchlist.html"> watchlist</a></li>
             <li> Orders</li>
-            <li> Settings</li>
+            <li><a href="/static/tradingterminal.html"> Trading-Terminal</a></li>
         </ul>
-    </aside>
+    </aside> -->
 
     <!-- ======= CONTENT AREA ======= -->
     <main class="content">
         <!-- ======= MARKET CHART ======= -->
+        <!DOCTYPE html>
+        <html>
+        <head>
+        <style>
+        /* ===== General Card Styling ===== */
+        .card {
+            background-color: #0e1117;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px;
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        
+        /* ===== Market Overview Flex Container ===== */
+        .market-overview {
+            display: flex;
+            gap: 20px; /* space between cards */
+            flex-wrap: wrap; /* wrap on small screens */
+            margin-bottom: 20px;
+        }
+        
+        /* ===== Individual Market Containers ===== */
+        .market-container {
+            flex: 1 1 200px; /* flexible width, min 200px */
+        }
+        
+        /* ===== Index Card Styling ===== */
+        .index-card {
+            background-color: #0e1117;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        
+        .index-card h3 {
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+        
+        .index-card .price {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .index-card .change {
+            font-size: 1rem;
+            color: #0f0; /* green for positive, can change dynamically */
+        }
+        
+        /* ===== Chart Styling ===== */
+        #chartCanvas {
+            width: 100%;
+            height: 300px;
+            background-color: #2a2a3e;
+            border-radius: 10px;
+        }
+        </style>
+        </head>
+        <body>
+        
         <section id="market-chart" class="card">
             <h2>Market Overview</h2>
+            
+            <!-- Market Overview Wrapper -->
+            <div class="market-overview">
+                <!-- BSE Container -->
+                <div class="market-container" id="bse-container">
+                  <div class="index-card">
+                    <h3>BSE</h3>
+                    <p class="price" id="bse-price">--</p>
+                    <p class="change" id="bse-change">--</p>
+                  </div>
+                </div>
+              
+                <!-- NSE Container -->
+                <div class="market-container" id="nse-container">
+                  <div class="index-card">
+                    <h3>NSE</h3>
+                    <p class="price" id="nse-price">--</p>
+                    <p class="change" id="nse-change">--</p>
+                  </div>
+                </div>
+              
+                <!-- Bank Nifty Container -->
+                <div class="market-container" id="banknifty-container">
+                  <div class="index-card">
+                    <h3>Bank Nifty</h3>
+                    <p class="price" id="banknifty-price">--</p>
+                    <p class="change" id="banknifty-change">--</p>
+                  </div>
+                </div>
+            </div>
+            <!-- Chart Canvas -->
             <canvas id="chartCanvas"></canvas>
         </section>
 
         <!-- ======= WATCHLIST ======= -->
-        <section id="watchlist" class="card">
+        <!-- <section id="watchlist" class="card">
             <h2>Watchlist</h2>
             <table>
                 <thead>
@@ -56,34 +148,109 @@
                 </thead>
                 <tbody id="watchlist-body"></tbody>
             </table>
-        </section>
+        </section> -->
 
-        <!-- ======= ORDERS ======= -->
-        <section id="orders" class="card">
-            <h2>Recent Orders</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Order ID</th>
-                        <th>Type</th>
-                        <th>Quantity</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody id="orders-body"></tbody>
-            </table>
-        </section>
+        <!-- ======= TOP WINNERS ======= -->
+<section id="top-winners" class="card">
+    <h2>Top Winners of the Day</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Symbol</th>
+                <th>Current Price (INR)</th>
+                <th>Gain %</th>
+                <th>Current Value (₹)</th>
+            </tr>
+        </thead>
+        <tbody id="top-winners-body">
+            <!-- Top 4 winners will be dynamically injected here -->
+        </tbody>
+    </table>
+</section>
 
-        <!-- ======= PORTFOLIO ======= -->
-        <section id="portfolio" class="card">
-            <h2>Portfolio Summary</h2>
-            <div id="portfolio-summary"></div>
-        </section>
+<!-- ======= TOP LOSERS ======= -->
+<section id="top-losers" class="card">
+    <h2>Top Losers of the Day</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Symbol</th>
+                <th>Current Price (INR)</th>
+                <th>Loss %</th>
+                <th>Current Value (₹)</th>
+            </tr>
+        </thead>
+        <tbody id="top-losers-body">
+            <!-- Top 4 losers will be dynamically injected here -->
+        </tbody>
+    </table>
+</section>
+
+<section id="portfolio" class="card">
+    <h2>Portfolio Summary</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Stock</th>
+                <th>Quantity</th>
+                <th>Avg. Buy Price (₹)</th>
+                <th>Total (₹)</th>
+                <th>Current Price (₹)</th>
+            </tr>
+        </thead>
+        <tbody id="portfolio-summary-body">
+            <!-- Portfolio stocks will be dynamically injected here -->
+        </tbody>
+    </table>
+</section>
+
+
+ <!-- ======= ORDERS ======= -->
+ <section id="orders" class="card">
+    <h2>Recent Orders</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Order ID</th>
+                <th>Type</th>
+                <th>Quantity</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody id="orders-body"></tbody>
+    </table>
+</section>
     </main>
 </div>
 
+
 <!-- ======= DASHBOARD SCRIPT ======= -->
 <script>
+
+// ===== Toggle Menu =====
+const hamburger = document.getElementById("hamburger");
+const menuDropdown = document.getElementById("menuDropdown");
+const logoutBtn = document.getElementById("logoutBtn");
+
+hamburger.addEventListener("click", () => {
+    menuDropdown.style.display = menuDropdown.style.display === "block" ? "none" : "block";
+});
+
+// Close menu if clicked outside
+window.addEventListener("click", (e) => {
+    if (!hamburger.contains(e.target) && !menuDropdown.contains(e.target)) {
+        menuDropdown.style.display = "none";
+    }
+});
+
+// Logout functionality
+logoutBtn.addEventListener("click", () => {
+    localStorage.removeItem("access_token");
+    window.location.href = "/Login";
+});
+
+
+
 document.addEventListener("DOMContentLoaded", async () => {
     const token = localStorage.getItem("access_token");
     if (!token) window.location.href = "/Login";
@@ -195,6 +362,47 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
     document.body.appendChild(logoutBtn);
 });
+
+// ======= RENDER TOP WINNERS =======
+async function renderTopWinners() {
+    const prices = await fetchAllPrices(allSymbols);
+    const winners = [];
+
+    // Mock previous close prices or use API for real previous data
+    // For now, using random previous price for demo
+    allSymbols.forEach(symbol => {
+        const current = prices[symbol] || 0;
+        const previous = current * (1 - Math.random() * 0.05); // random -5% to 0%
+        const gain = current - previous;
+        const gainPercent = previous > 0 ? (gain / previous) * 100 : 0;
+        winners.push({
+            symbol,
+            current,
+            gainPercent,
+            currentValue: current * 10 // assume holding 10 shares for demo
+        });
+    });
+
+    // Sort by gain %
+    winners.sort((a, b) => b.gainPercent - a.gainPercent);
+
+    // Take top 4
+    const top4 = winners.slice(0, 4);
+
+    // Render table
+    const tbody = document.getElementById("top-winners-body");
+    tbody.innerHTML = "";
+    top4.forEach(stock => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+            <td>${stock.symbol}</td>
+            <td>₹${stock.current.toFixed(2)}</td>
+            <td style="color: #4ade80;">${stock.gainPercent.toFixed(2)}%</td>
+            <td>₹${stock.currentValue.toFixed(2)}</td>
+        `;
+        tbody.appendChild(row);
+    });
+}
 </script>
 </body>
 </html>

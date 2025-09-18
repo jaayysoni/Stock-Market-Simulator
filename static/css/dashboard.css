@@ -16,9 +16,12 @@ body {
     background-color: #161b22;
     padding: 1rem 2rem;
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
+    gap: 1.5rem;
     border-bottom: 1px solid #30363d;
+    position: relative;
+    z-index: 100;
 }
 .logo {
     font-size: 1.5rem;
@@ -41,7 +44,9 @@ body {
 /* ===== DASHBOARD LAYOUT ===== */
 .dashboard-container {
     display: flex;
+    flex-direction: column;
     min-height: calc(100vh - 70px);
+    width: 100%;
 }
 
 /* ===== SIDEBAR ===== */
@@ -70,61 +75,159 @@ body {
 /* ===== CONTENT AREA ===== */
 .content {
     flex: 1;
+    width: 100%;
     padding: 2rem;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 1.5rem;
 }
 
 /* ===== CARD COMPONENT ===== */
 .card {
-    background-color: #161b22;
+    width: 100%;
+    margin-bottom: 1.5rem;
     padding: 1.5rem;
-    border-radius: 8px;
+    border-radius: 12px;
     border: 1px solid #30363d;
-    box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    background-color: #161b22;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
 }
 .card h2 {
     margin-bottom: 1rem;
-    font-size: 1.2rem;
+    font-size: 1.5rem;
+    font-weight: 700;
     color: #58a6ff;
+    border-bottom: 1px solid #30363d;
+    padding-bottom: 8px;
 }
 
-/* ===== TABLES ===== */
+/* ===== TABLE STYLING ===== */
 table {
     width: 100%;
     border-collapse: collapse;
-}
-thead {
-    background-color: #090a0a;
+    font-size: 14px;
 }
 th, td {
     padding: 0.8rem;
     text-align: left;
     border-bottom: 1px solid #30363d;
 }
+thead {
+    background-color: #090a0a;
+    color: #58a6ff;
+    font-weight: 600;
+}
 tbody tr:hover {
     background-color: #21262d;
 }
 
-/* ===== CHART SECTION ===== */
-#market-chart {
-    grid-column: 1 / -1; /* Full width for chart */
+/* ===== TOP WINNERS & LOSERS ===== */
+#top-winners td:nth-child(3) {
+    color: #4ade80;
+    font-weight: 700;
+}
+#top-losers h2 {
+    color: #ef6464;
+}
+#top-losers td:nth-child(3) {
+    color: #ef6464;
+    font-weight: 700;
+}
+
+/* ===== TRADE BUTTON ===== */
+.trade-btn {
+    padding: 4px 10px;
+    border-radius: 6px;
+    background-color: #58a6ff;
+    color: #0e1117;
+    font-weight: 600;
+    font-size: 13px;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.trade-btn:hover {
+    background-color: #1f83ff;
+}
+
+/* ===== MARKET OVERVIEW SECTION ===== */
+.market-overview {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin: 2rem 0;
+}
+
+/* Each market container box */
+.market-container {
+    flex: 1;
+    background-color: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Hover effect */
+.market-container:hover {
+    border-color: #58a6ff;
+    box-shadow: 0 4px 12px rgba(88,166,255,0.4);
+    transform: translateY(-3px);
+}
+
+/* Inside card styling */
+.index-card {
+    text-align: center;
+    transition: transform 0.2s;
+}
+.index-card:hover {
+    transform: translateY(-2px);
+}
+.index-card h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #c9d1d9;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.index-card .price {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 6px;
+}
+.index-card .change {
+    font-size: 1rem;
+    font-weight: 600;
+}
+.change.positive {
+    color: #4ade80;
+}
+.change.negative {
+    color: #ef6464;
+}
+
+/* ===== CHART STYLING ===== */
+#chartCanvas {
+    width: 100%;
+    height: 300px;
+    background-color: #2a2a3e;
+    border-radius: 10px;
+    margin-top: 15px;
 }
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 768px) {
-    .dashboard-container {
+    .market-overview {
         flex-direction: column;
     }
-    .sidebar {
+    .market-container {
         width: 100%;
-        border-right: none;
-        border-bottom: 1px solid #090a0a;
-        display: flex;
-        justify-content: space-around;
     }
-    .content {
-        grid-template-columns: 1fr;
+
+    .main-nav ul {
+        display: none;
     }
 }
