@@ -26,6 +26,26 @@ body {
   align-items: center;
 }
 
+
+/* ===== BACK TO DASHBOARD BUTTON ===== */
+.back-btn {
+  position: fixed;       /* Fix at top-left */
+  top: 20px;             /* Distance from top */
+  left: 20px;            /* Distance from left */
+  background-color: #161b22;
+  color: #58a6ff;
+  border: 1px solid #30363d;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  z-index: 1000;         /* Stay above other content */
+  transition: 0.3s ease;
+  font-weight: bold;
+}
+.back-btn:hover {
+  background-color: #1f242b;
+  box-shadow: 0 0 8px rgba(88,166,255,0.5);
+}
 /* ===== TOP CONTROLS ===== */
 #search-container, #w-search, select, button {
   font-size: 0.9rem;

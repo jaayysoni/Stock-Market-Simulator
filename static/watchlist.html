@@ -7,7 +7,8 @@
 <link rel="stylesheet" href="/static/css/watchlist.css" />
 </head>
 <body>
-
+<!-- back button -->
+  <button class="back-btn" onclick="window.location.href='/dashboard'">← Back to Dashboard</button>
 <!-- TOP: Search bar -->
 <div style="display:flex; justify-content:center; margin: 12px 0; gap:8px;">
   <input type="text" id="w-search" placeholder="Search or add stock..." />
@@ -102,6 +103,7 @@ function renderWatchlists(filter="") {
           </div>
           <div class="wl-badges">
             <span class="badge ${changeClass}">${changeSign}${change.toFixed(2)}</span>
+            <button class="trade-stock" data-symbol="${stock.symbol}">Trade</button>
             <button class="remove-stock" data-symbol="${stock.symbol}">✖</button>
           </div>
         `;
@@ -136,13 +138,17 @@ function renderWatchlists(filter="") {
       persistOrder(ul, wl);
     });
 
-    // --- Remove stock
+    // --- Stock actions
     ul.addEventListener("click", e => {
       if(e.target.classList.contains("remove-stock")) {
         const sym = e.target.dataset.symbol;
         wl.stocks = wl.stocks.filter(s => s.symbol !== sym);
         saveWatchlists();
         renderWatchlists(searchInput.value);
+      }
+      if(e.target.classList.contains("trade-stock")) {
+        const sym = e.target.dataset.symbol;
+        alert(`Trading interface for ${sym} will open here.`);
       }
     });
 
