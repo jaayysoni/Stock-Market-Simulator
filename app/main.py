@@ -33,7 +33,7 @@ app = FastAPI(
 # ----------------- Middleware -----------------
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # TODO: Restrict in production
+    allow_origins=["http://localhost:8000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -49,6 +49,7 @@ app.include_router(transaction_router, prefix="/transactions", tags=["Transactio
 app.include_router(portfolio_router, prefix="/portfolio", tags=["Portfolio"])
 app.include_router(watchlist_router.router, prefix="/watchlist", tags=["Watchlist"])
 app.include_router(google_oauth_router.router, prefix="/oauth", tags=["Google OAuth"])
+
 
 # ----------------- Pages -----------------
 @app.get("/", include_in_schema=False)

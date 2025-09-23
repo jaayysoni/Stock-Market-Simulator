@@ -225,185 +225,168 @@
 </div>
 
 
-<!-- ======= DASHBOARD SCRIPT ======= -->
 <script>
-
-// ===== Toggle Menu =====
-const hamburger = document.getElementById("hamburger");
-const menuDropdown = document.getElementById("menuDropdown");
-const logoutBtn = document.getElementById("logoutBtn");
-
-hamburger.addEventListener("click", () => {
-    menuDropdown.style.display = menuDropdown.style.display === "block" ? "none" : "block";
-});
-
-// Close menu if clicked outside
-window.addEventListener("click", (e) => {
-    if (!hamburger.contains(e.target) && !menuDropdown.contains(e.target)) {
-        menuDropdown.style.display = "none";
-    }
-});
-
-// Logout functionality
-logoutBtn.addEventListener("click", () => {
-    localStorage.removeItem("access_token");
-    window.location.href = "/Login";
-});
-
-
-
-document.addEventListener("DOMContentLoaded", async () => {
-    const token = localStorage.getItem("access_token");
-    if (!token) window.location.href = "/Login";
-
-    // Fetch user info
-    let user;
-    try {
-        const res = await fetch("/auth/me", { headers: { "Authorization": `Bearer ${token}` } });
-        if (!res.ok) throw new Error("Unauthorized");
-        user = await res.json();
-    } catch (err) {
-        console.error(err);
-        window.location.href = "/Login";
-    }
-
-    document.querySelector(".logo").textContent = `Welcome, ${user.username}`;
-    document.getElementById("portfolio-summary").innerHTML = `
-        <p>Email: ${user.email}</p>
-        <p>Virtual Balance: ₹${user.virtual_balance}</p>
-    `;
-    document.getElementById("orders-body").innerHTML = `
-        <tr><td>1</td><td>Buy</td><td>10</td><td>Completed</td></tr>
-        <tr><td>2</td><td>Sell</td><td>5</td><td>Pending</td></tr>
-    `;
-
-    // ======= FETCH ALL STOCK SYMBOLS =======
-    let allSymbols = [];
-    try {
-        const res = await fetch("/stocks/all");
-        const data = await res.json();
-        allSymbols = data.symbols; // 500 symbols
-    } catch (err) {
-        console.error("Error fetching symbols:", err);
-    }
-
-    // ======= FETCH PRICES =======
-    async function fetchPricesChunk(symbolsChunk) {
+    // ===== Dashboard Authentication & Data =====
+    let allSymbols = []; // Global symbols array
+    let topChart;
+    
+    document.addEventListener("DOMContentLoaded", async () => {
+        // ===== Fetch user info using HTTP-only cookie =====
+        let user;
         try {
-            const res = await fetch(`/stocks/prices?symbols=${symbolsChunk.join(",")}`);
-            const data = await res.json();
-            return data.prices;
+            const res = await fetch("/auth/me", {
+                method: "GET",
+                credentials: "include" // Important: sends cookie with request
+            });
+            if (!res.ok) throw new Error("Unauthorized");
+            user = await res.json();
         } catch (err) {
-            console.error("Error fetching prices:", err);
-            return {};
+            console.error(err);
+            // If token invalid or not logged in, redirect to login
+            window.location.href = "/static/login.html";
+            return;
         }
-    }
-
-    async function fetchAllPrices(symbols, chunkSize = 50) {
-        const prices = {};
-        for (let i = 0; i < symbols.length; i += chunkSize) {
-            const chunk = symbols.slice(i, i + chunkSize);
-            const chunkPrices = await fetchPricesChunk(chunk);
-            Object.assign(prices, chunkPrices);
+    
+        // ===== Update UI =====
+        document.querySelector(".logo").textContent = `Welcome, ${user.username}`;
+        const portfolioEl = document.getElementById("portfolio-summary-body");
+        if (portfolioEl) {
+            portfolioEl.innerHTML = `
+                <tr>
+                    <td colspan="2">Email: ${user.email}</td>
+                    <td colspan="2">Virtual Balance: ₹${user.virtual_balance}</td>
+                </tr>
+            `;
         }
-        return prices;
-    }
-
-    // ======= RENDER WATCHLIST =======
-    const watchlistBody = document.getElementById("watchlist-body");
-    async function renderWatchlist() {
+    
+        // ===== Fetch all stock symbols =====
+        try {
+            const res = await fetch("/stocks/all");
+            const data = await res.json();
+            allSymbols = data.symbols || [];
+        } catch (err) {
+            console.error("Error fetching symbols:", err);
+        }
+    
+        // ===== Fetch prices =====
+        async function fetchPricesChunk(symbolsChunk) {
+            try {
+                const res = await fetch(`/stocks/prices?symbols=${symbolsChunk.join(",")}`);
+                const data = await res.json();
+                return data.prices || {};
+            } catch (err) {
+                console.error("Error fetching prices:", err);
+                return {};
+            }
+        }
+    
+        async function fetchAllPrices(symbols, chunkSize = 50) {
+            const prices = {};
+            for (let i = 0; i < symbols.length; i += chunkSize) {
+                const chunk = symbols.slice(i, i + chunkSize);
+                const chunkPrices = await fetchPricesChunk(chunk);
+                Object.assign(prices, chunkPrices);
+            }
+            return prices;
+        }
+    
+        // ===== Render Watchlist (if used) =====
+        const watchlistBody = document.getElementById("watchlist-body");
+        async function renderWatchlist() {
+            const prices = await fetchAllPrices(allSymbols);
+            if (watchlistBody) {
+                watchlistBody.innerHTML = "";
+                allSymbols.forEach(symbol => {
+                    const price = prices[symbol] != null ? prices[symbol].toFixed(2) : "N/A";
+                    const row = document.createElement("tr");
+                    row.innerHTML = `<td>${symbol}</td><td>${price}</td><td>-</td>`;
+                    watchlistBody.appendChild(row);
+                });
+            }
+    
+            // Update chart (top 10)
+            if (topChart) {
+                topChart.data.datasets[0].data = allSymbols.slice(0,10).map(s => prices[s] || 0);
+                topChart.update();
+            }
+        }
+    
+        // ===== Initialize Chart =====
+        const top10Symbols = allSymbols.slice(0, 10);
+        const ctx = document.getElementById("chartCanvas").getContext("2d");
+        topChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: top10Symbols,
+                datasets: [{
+                    label: 'Price (INR)',
+                    data: Array(top10Symbols.length).fill(0),
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 2,
+                    fill: false
+                }]
+            },
+            options: { responsive: true, scales: { y: { beginAtZero: false } } }
+        });
+    
+        // Render watchlist initially and update every second
+        setInterval(renderWatchlist, 1000);
+    
+        // ===== Logout Button =====
+        document.querySelectorAll('a[href="/static/login.html"]').forEach(link => {
+            link.addEventListener("click", async (e) => {
+                e.preventDefault();
+                // Call backend logout to clear HTTP-only cookie
+                await fetch("/auth/logout", { method: "POST", credentials: "include" });
+                window.location.href = "/static/login.html";
+            });
+        });
+    
+        // ===== Render Top Winners =====
+        renderTopWinners();
+    });
+    
+    // ===== Render Top Winners =====
+    async function renderTopWinners() {
+        if (!allSymbols.length) return;
         const prices = await fetchAllPrices(allSymbols);
-        watchlistBody.innerHTML = "";
-        allSymbols.forEach(symbol => {
-            const price = prices[symbol] !== null ? prices[symbol].toFixed(2) : "N/A";
-            const row = document.createElement("tr");
-            row.innerHTML = `<td>${symbol}</td><td>${price}</td><td>-</td>`;
-            watchlistBody.appendChild(row);
-        });
-
-        // Update chart (top 10)
-        topChart.data.datasets[0].data = allSymbols.slice(0,10).map(s => prices[s] || 0);
-        topChart.update();
+        const winners = allSymbols.map(symbol => {
+            const current = prices[symbol] || 0;
+            const previous = current * (1 - Math.random() * 0.05);
+            const gainPercent = previous > 0 ? ((current - previous)/previous)*100 : 0;
+            return { symbol, current, gainPercent, currentValue: current*10 };
+        }).sort((a,b) => b.gainPercent - a.gainPercent)
+          .slice(0, 4);
+    
+        const tbody = document.getElementById("top-winners-body");
+        if (tbody) {
+            tbody.innerHTML = "";
+            winners.forEach(stock => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${stock.symbol}</td>
+                    <td>₹${stock.current.toFixed(2)}</td>
+                    <td style="color: #4ade80;">${stock.gainPercent.toFixed(2)}%</td>
+                    <td>₹${stock.currentValue.toFixed(2)}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
     }
-
-    // ======= RENDER CHART =======
-    const top10Symbols = allSymbols.slice(0, 10);
-    const top10Prices = {};
-    top10Symbols.forEach(s => top10Prices[s] = 0);
-
-    const ctx = document.getElementById("chartCanvas").getContext("2d");
-    const topChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: top10Symbols,
-            datasets: [{
-                label: 'Price (INR)',
-                data: Object.values(top10Prices),
-                borderColor: 'rgba(75, 192, 192, 1)',
-                borderWidth: 2,
-                fill: false
-            }]
-        },
-        options: { responsive: true, scales: { y: { beginAtZero: false } } }
-    });
-
-    // Update every second
-    setInterval(renderWatchlist, 1000);
-
-    // ======= LOGOUT BUTTON =======
-    const logoutBtn = document.createElement("button");
-    logoutBtn.textContent = "Logout";
-    logoutBtn.className = "logout-btn";
-    logoutBtn.style.position = "absolute";
-    logoutBtn.style.right = "20px";
-    logoutBtn.style.top = "20px";
-    logoutBtn.addEventListener("click", () => {
-        localStorage.removeItem("access_token");
-        window.location.href = "/Login";
-    });
-    document.body.appendChild(logoutBtn);
-});
-
-// ======= RENDER TOP WINNERS =======
-async function renderTopWinners() {
-    const prices = await fetchAllPrices(allSymbols);
-    const winners = [];
-
-    // Mock previous close prices or use API for real previous data
-    // For now, using random previous price for demo
-    allSymbols.forEach(symbol => {
-        const current = prices[symbol] || 0;
-        const previous = current * (1 - Math.random() * 0.05); // random -5% to 0%
-        const gain = current - previous;
-        const gainPercent = previous > 0 ? (gain / previous) * 100 : 0;
-        winners.push({
-            symbol,
-            current,
-            gainPercent,
-            currentValue: current * 10 // assume holding 10 shares for demo
-        });
-    });
-
-    // Sort by gain %
-    winners.sort((a, b) => b.gainPercent - a.gainPercent);
-
-    // Take top 4
-    const top4 = winners.slice(0, 4);
-
-    // Render table
-    const tbody = document.getElementById("top-winners-body");
-    tbody.innerHTML = "";
-    top4.forEach(stock => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-            <td>${stock.symbol}</td>
-            <td>₹${stock.current.toFixed(2)}</td>
-            <td style="color: #4ade80;">${stock.gainPercent.toFixed(2)}%</td>
-            <td>₹${stock.currentValue.toFixed(2)}</td>
-        `;
-        tbody.appendChild(row);
-    });
-}
-</script>
-</body>
-</html>
+    
+    /* ===== Commented Out (Old localStorage JWT logic for manual login) =====
+    
+    // const urlParams = new URLSearchParams(window.location.search);
+    // const tokenFromUrl = urlParams.get("token");
+    // if (tokenFromUrl) {
+    //     localStorage.setItem("access_token", tokenFromUrl);
+    //     window.history.replaceState({}, document.title, window.location.pathname);
+    // }
+    // const token = localStorage.getItem("access_token");
+    // if (!token) {
+    //     alert("You must login first!");
+    //     window.location.href = "/static/login.html";
+    // }
+    
+    */
+    </script>

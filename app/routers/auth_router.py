@@ -1,13 +1,10 @@
-# app/routers/auth_router.py
-
-from fastapi import APIRouter, Depends, HTTPException, status, Request
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi import APIRouter, Depends, HTTPException, Request, FastAPI
+from fastapi.responses import JSONResponse, RedirectResponse, FileResponse
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
-import random, string
 
 from app.models.user import User
-from app.schemas.user_schema import UserOut, TokenResponse
+from app.schemas.user_schema import UserOut
 from app.database.session import get_user_db
 from app.dependencies.auth import get_current_user
 from app.services.auth_service import authenticate_user, create_access_token
@@ -17,124 +14,79 @@ router = APIRouter(tags=["Auth"])
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # -------------------------------
-# ✅ Register a new user 
+# Manual Registration
 # -------------------------------
-@router.post("/register", response_model=UserOut)
+@router.post("/register")
 async def register(request: Request, db: Session = Depends(get_user_db)):
-    try:
-        data = await request.json()
-        username = data.get("username")
-        email = data.get("email")
-        password = data.get("password")
+    data = await request.json()
+    username = data.get("username")
+    email = data.get("email")
+    password = data.get("password")
 
-        if not username or not email or not password:
-            raise HTTPException(status_code=400, detail="All fields are required")
+    if not username or not email or not password:
+        raise HTTPException(status_code=400, detail="All fields required")
 
-        existing_user = db.query(User).filter(User.email == email).first()
-        if existing_user:
-            raise HTTPException(status_code=400, detail="Email already registered")
+    existing_user = db.query(User).filter(User.email == email).first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
 
-        password = pwd_context.hash(password)
-        new_user = User(
-            username=username,
-            email=email,
-            password=password,
-            # is_guest=False
-        )
+    hashed_password = pwd_context.hash(password)
+    new_user = User(username=username, email=email, password=hashed_password, oauth_provider="manual")
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
 
-        db.add(new_user)
-        db.commit()
-        db.refresh(new_user)
-        return new_user
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Registration failed: {e}")
-
+    access_token = create_access_token({"sub": str(new_user.id)})
+    response = JSONResponse({"detail": "Signup successful"})
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        samesite="lax",
+        max_age=60*60*24
+    )
+    return response
 
 # -------------------------------
-# ✅ Email/password Login (JSON)
+# Manual Login
 # -------------------------------
-@router.post("/login", response_model=TokenResponse)
+@router.post("/login")
 async def login(request: Request, db: Session = Depends(get_user_db)):
-    try:
-        data = await request.json()
-        email = data.get("email")
-        password = data.get("password")
+    data = await request.json()
+    email = data.get("email")
+    password = data.get("password")
 
-        if not email or not password:
-            raise HTTPException(status_code=400, detail="Email and password required")
+    user = authenticate_user(db, email, password)
+    if not user:
+        raise HTTPException(status_code=401, detail="Incorrect email or password")
 
-        user = authenticate_user(db, email, password)
-        if not user:
-            raise HTTPException(status_code=401, detail="Incorrect email or password")
-
-        access_token = create_access_token(data={"sub": str(user.id)})
-
-        # ✅ Only return token, leave balance for /auth/me
-        return {
-            "access_token": access_token,
-            "token_type": "bearer"
-        }
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Login failed: {e}")
-# -------------------------------
-# ✅ Guest Login
-# -------------------------------
-# @router.post("/guest-login")
-# def guest_login(db: Session = Depends(get_user_db)):
-#     try:
-#         random_id = ''.join(random.choices(string.ascii_lowercase + string.digits, k=8))
-#         guest_username = f"guest_{random_id}"
-#         guest_email = f"{guest_username}@guest.local"
-
-#         user = db.query(User).filter(User.email == guest_email).first()
-#         if not user:
-#             user = User(
-#                 username=guest_username,
-#                 email=guest_email,
-#                 password="",
-#                 is_guest=True
-#             )
-#             db.add(user)
-#             db.commit()
-#             db.refresh(user)
-
-#         access_token = create_access_token(data={"sub": str(user.id)})
-#         return {
-#             "access_token": access_token,
-#             "token_type": "bearer",
-#             "user": {
-#                 "id": user.id,
-#                 "username": user.username,
-#                 "email": user.email,
-#                 "virtual_balance": user.virtual_balance,
-#                 "is_guest": user.is_guest
-#             }
-#         }
-
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=f"Guest login failed: {e}")
-
+    access_token = create_access_token({"sub": str(user.id)})
+    response = JSONResponse({"detail": "Login successful"})
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        samesite="lax",
+        max_age=60*60*24
+    )
+    return response
 
 # -------------------------------
-# ✅ Current User
+# Current User Info
 # -------------------------------
 @router.get("/me", response_model=UserOut)
 def get_current_user_info(current_user: User = Depends(get_current_user)):
     return current_user
 
-
 # -------------------------------
-# ✅ Google Login
+# Google OAuth Login
 # -------------------------------
 @router.get("/google-login")
 def google_login():
     return RedirectResponse(get_google_auth_url())
 
-
 # -------------------------------
-# ✅ Google Callback
+# Google OAuth Callback
 # -------------------------------
 @router.get("/google-callback")
 async def google_callback(request: Request, db: Session = Depends(get_user_db)):
@@ -145,36 +97,35 @@ async def google_callback(request: Request, db: Session = Depends(get_user_db)):
     try:
         user_info = await get_user_info_from_google(code)
         email = user_info.get("email")
-        username = user_info.get("name") or email.split("@")[0]
+        username = user_info.get("name") or (email.split("@")[0] if email else None)
 
         if not email:
             raise HTTPException(status_code=400, detail="Google account has no email")
 
         user = db.query(User).filter(User.email == email).first()
         if not user:
-            user = User(
-                username=username,
-                email=email,
-                password="",
-                # is_guest=False
-            )
+            user = User(username=username, email=email, password=None, oauth_provider="google")
             db.add(user)
             db.commit()
             db.refresh(user)
 
-        access_token = create_access_token(data={"sub": str(user.id)})
-
-        return JSONResponse({
-            "access_token": access_token,
-            "token_type": "bearer",
-            "user": {
-                "id": user.id,
-                "username": user.username,
-                "email": user.email,
-                "virtual_balance": user.virtual_balance,
-                # "is_guest": user.is_guest
-            }
-        })
+        access_token = create_access_token({"sub": str(user.id)})
+        response = RedirectResponse(url="/dashboard")  # Use proper GET route
+        response.set_cookie(
+            key="access_token",
+            value=access_token,
+            httponly=True,
+            samesite="lax",
+            max_age=60*60*24
+        )
+        return response
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Google OAuth failed: {e}")
+    
+
+app = FastAPI()
+
+@app.get("/dashboard")
+def dashboard():
+    return FileResponse("static/dashboard.html")

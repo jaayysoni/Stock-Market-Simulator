@@ -68,10 +68,37 @@
         <div class="divider"><span>OR</span></div>
 
         <!-- Google Sign-in -->
-        <form action="/auth/google" method="get">
-          <button type="submit" class="google-btn">Sign in with Google</button>
-        </form>
-
+        <style>
+          /* Google OAuth Button */
+          .google-btn {
+            width: 100%;
+            padding: 10px 0;
+            border-radius: 8px;
+            background-color: #fff; /* Google blue */
+            color: #070202;            /* Black text */
+            font-weight: 600;
+            font-size: 0.95rem;
+            border: none;
+            cursor: pointer;
+            text-align: center;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+          }
+        
+          .google-btn:hover {
+            background-color: #fff; /* Darker blue on hover */
+            transform: translateY(-1px);
+          }
+        
+          .google-btn:active {
+            background-color: #fff; /* Even darker when pressed */
+            transform: translateY(0);
+          }
+        </style>
+      <div class="google-oauth-container">
+        <a href="/auth/google-login" id="googleOauthBtn" class="google-btn">
+          <span>Continue with Google</span>
+        </a>
+      </div>
       </div>
     </div>
   </div>
@@ -95,22 +122,19 @@
     
         try {
           const response = await fetch("/auth/login", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, password }) // send email/password
-          });
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ email, password }), // send email/password
+  credentials: "include" // 🔑 ensure cookie is saved + sent
+});
     
           const data = await response.json();
     
           if (response.ok) {
             messageBox.textContent = "Login successful! Redirecting...";
             messageBox.style.color = "green";
-    
-            // Optional: store access token if you need it
-            localStorage.setItem("access_token", data.access_token);
-    
-            // setTimeout(() => window.location.href = "/dashboard", 1500);
-            setTimeout(() => window.location.replace("/dashboard"), 1500);
+
+            setTimeout(() => window.location.href ="/dashboard", 1500);
           } else {
             messageBox.textContent = data.detail || "Login failed!";
             messageBox.style.color = "red";

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Redirecting...</title>
+</head>
+<body>
+  <p>Redirecting to dashboard...</p>
+  <script>
+    // Get token from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get("token");
+
+    if (token) {
+      // Save token to localStorage
+      localStorage.setItem("access_token", token);
+
+      // Remove token from URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+
+      // Redirect to dashboard
+      window.location.href = "/static/dashboard.html";
+    } else {
+      document.body.innerHTML = "<p style='color:red;'>No token found! Please try logging in again.</p>";
+    }
+  </script>
+</body>
+</html>
