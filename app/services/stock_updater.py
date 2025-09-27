@@ -1,37 +1,45 @@
 # app/services/stock_updater.py
+"""
+Batch updater for daily close prices.
+Uses yfinance for indices (BSE, NSE, Bank Nifty).
+Uses Finnhub REST API for other stocks.
+"""
+
+import os
+import finnhub
 import yfinance as yf
-import pandas as pd
 from sqlalchemy.orm import Session
 from app.database.db import UserSessionLocal
 from app.models.stock import Stock
-import time
 
-BATCH_SIZE = 50  # Number of stocks per batch to fetch safely
+finnhub_client = finnhub.Client(api_key=os.getenv("FINNHUB_API_KEY"))
 
-def update_stock_prices():
+INDICES = {
+    "BSE": "^BSESN",
+    "NSE": "^NSEI",
+    "BANKNIFTY": "^NSEBANK"
+}
+
+def update_eod_prices():
     db: Session = UserSessionLocal()
     stocks = db.query(Stock).all()
-    symbols = [stock.symbol for stock in stocks]
 
-    # Fetch in batches
-    for i in range(0, len(symbols), BATCH_SIZE):
-        batch_symbols = symbols[i:i + BATCH_SIZE]
+    for stock in stocks:
         try:
-            data = yf.download(batch_symbols, period="1d", interval="1m", progress=False)
-            # yf.download returns a DataFrame; we get the latest 'Close' price
-            if len(batch_symbols) == 1:
-                price_data = {batch_symbols[0]: data['Close'][-1]}
+            if stock.symbol in INDICES:
+                # yfinance for indices
+                ticker = yf.Ticker(INDICES[stock.symbol])
+                data = ticker.history(period="1d", interval="1d")
+                if not data.empty:
+                    stock.price = float(data["Close"].iloc[-1])
             else:
-                price_data = data['Close'].iloc[-1].to_dict()
-
-            # Update stock prices in DB
-            for stock in stocks[i:i + BATCH_SIZE]:
-                if stock.symbol in price_data and not pd.isna(price_data[stock.symbol]):
-                    stock.price = float(price_data[stock.symbol])
+                # Finnhub REST for other stocks
+                candles = finnhub_client.stock_candles(stock.symbol, "D", 1695859200, 1695945600)
+                if candles and "c" in candles and len(candles["c"]) > 0:
+                    stock.price = candles["c"][-1]
         except Exception as e:
-            print(f"⚠️ Error updating batch {batch_symbols}: {e}")
-        time.sleep(1)  # small delay to avoid API rate-limit
+            print(f"⚠️ Error updating {stock.symbol}: {e}")
 
     db.commit()
     db.close()
-    print("✅ Stock prices updated for all NSE stocks")
+    print("✅ End-of-day stock prices updated")

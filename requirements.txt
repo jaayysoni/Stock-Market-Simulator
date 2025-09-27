@@ -20,3 +20,6 @@ pytest
 pytest-asyncio
 coverage
 pandas-ta
+finnhub-python
+redis
+websocket

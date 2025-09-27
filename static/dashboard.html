@@ -6,9 +6,53 @@
 <title>Trading Dashboard – Stock Market Simulator</title>
 <link rel="stylesheet" href="/static/css/dashboard.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+/* ===== General Card Styling ===== */
+.card {
+    background-color: #0e1117;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 20px;
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+/* ===== Market Overview Flex Container ===== */
+.market-overview {
+    display: flex;
+    gap: 20px; 
+    flex-wrap: wrap; 
+    margin-bottom: 20px;
+}
+
+/* ===== Individual Market Containers ===== */
+.market-container {
+    flex: 1 1 200px; 
+}
+
+/* ===== Index Card Styling ===== */
+.index-card {
+    background-color: #0e1117;
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+.index-card h3 { margin-bottom: 10px; font-size: 1.2rem; }
+.index-card .price { font-size: 1.5rem; font-weight: bold; margin-bottom: 5px; }
+.index-card .change { font-size: 1rem; }
+
+/* ===== Chart Styling ===== */
+#chartCanvas {
+    width: 100%;
+    height: 300px;
+    background-color: #2a2a3e;
+    border-radius: 10px;
+}
+</style>
 </head>
 <body>
-<!-- ======= HEADER ======= -->
+
 <header class="header">
     <div class="logo">Stock Market Simulator</div>
     <nav class="main-nav">
@@ -22,171 +66,38 @@
     </nav>
 </header>
 
-<!-- ======= MAIN CONTAINER ======= -->
-<!-- <div class="dashboard-container">
-    <aside class="sidebar">
-        <ul>
-            <li class="active"> Dashboard</li>
-            <li>Markets</li>
-            <li><a href="/static/watchlist.html"> watchlist</a></li>
-            <li> Orders</li>
-            <li><a href="/static/tradingterminal.html"> Trading-Terminal</a></li>
-        </ul>
-    </aside> -->
+<main class="content">
 
-    <!-- ======= CONTENT AREA ======= -->
-    <main class="content">
-        <!-- ======= MARKET CHART ======= -->
-        <!DOCTYPE html>
-        <html>
-        <head>
-        <style>
-        /* ===== General Card Styling ===== */
-        .card {
-            background-color: #0e1117;
-            border-radius: 12px;
-            padding: 20px;
-            margin: 20px;
-            color: #fff;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        }
-        
-        /* ===== Market Overview Flex Container ===== */
-        .market-overview {
-            display: flex;
-            gap: 20px; /* space between cards */
-            flex-wrap: wrap; /* wrap on small screens */
-            margin-bottom: 20px;
-        }
-        
-        /* ===== Individual Market Containers ===== */
-        .market-container {
-            flex: 1 1 200px; /* flexible width, min 200px */
-        }
-        
-        /* ===== Index Card Styling ===== */
-        .index-card {
-            background-color: #0e1117;
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-        }
-        
-        .index-card h3 {
-            margin-bottom: 10px;
-            font-size: 1.2rem;
-        }
-        
-        .index-card .price {
-            font-size: 1.5rem;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        
-        .index-card .change {
-            font-size: 1rem;
-            color: #0f0; /* green for positive, can change dynamically */
-        }
-        
-        /* ===== Chart Styling ===== */
-        #chartCanvas {
-            width: 100%;
-            height: 300px;
-            background-color: #2a2a3e;
-            border-radius: 10px;
-        }
-        </style>
-        </head>
-        <body>
-        
-        <section id="market-chart" class="card">
-            <h2>Market Overview</h2>
-            
-            <!-- Market Overview Wrapper -->
-            <div class="market-overview">
-                <!-- BSE Container -->
-                <div class="market-container" id="bse-container">
-                  <div class="index-card">
-                    <h3>BSE</h3>
-                    <p class="price" id="bse-price">--</p>
-                    <p class="change" id="bse-change">--</p>
-                  </div>
-                </div>
-              
-                <!-- NSE Container -->
-                <div class="market-container" id="nse-container">
-                  <div class="index-card">
-                    <h3>NSE</h3>
-                    <p class="price" id="nse-price">--</p>
-                    <p class="change" id="nse-change">--</p>
-                  </div>
-                </div>
-              
-                <!-- Bank Nifty Container -->
-                <div class="market-container" id="banknifty-container">
-                  <div class="index-card">
-                    <h3>Bank Nifty</h3>
-                    <p class="price" id="banknifty-price">--</p>
-                    <p class="change" id="banknifty-change">--</p>
-                  </div>
-                </div>
+<!-- ===== Market Overview ===== -->
+<section id="market-chart" class="card">
+    <h2>Market Overview</h2>
+    <div class="market-overview">
+        <div class="market-container">
+            <div class="index-card">
+                <h3>BSE</h3>
+                <p class="price" id="bse-price">--</p>
+                <p class="change" id="bse-change">--</p>
             </div>
-            <!-- Chart Canvas -->
-            <canvas id="chartCanvas"></canvas>
-        </section>
-
-        <!-- ======= WATCHLIST ======= -->
-        <!-- <section id="watchlist" class="card">
-            <h2>Watchlist</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Symbol</th>
-                        <th>Price (INR)</th>
-                        <th>Change</th>
-                    </tr>
-                </thead>
-                <tbody id="watchlist-body"></tbody>
-            </table>
-        </section> -->
-
-        <!-- ======= TOP WINNERS ======= -->
-<section id="top-winners" class="card">
-    <h2>Top Winners of the Day</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>Symbol</th>
-                <th>Current Price (INR)</th>
-                <th>Gain %</th>
-                <th>Current Value (₹)</th>
-            </tr>
-        </thead>
-        <tbody id="top-winners-body">
-            <!-- Top 4 winners will be dynamically injected here -->
-        </tbody>
-    </table>
+        </div>
+        <div class="market-container">
+            <div class="index-card">
+                <h3>NSE</h3>
+                <p class="price" id="nse-price">--</p>
+                <p class="change" id="nse-change">--</p>
+            </div>
+        </div>
+        <div class="market-container">
+            <div class="index-card">
+                <h3>Bank Nifty</h3>
+                <p class="price" id="banknifty-price">--</p>
+                <p class="change" id="banknifty-change">--</p>
+            </div>
+        </div>
+    </div>
+    <canvas id="chartCanvas"></canvas>
 </section>
 
-<!-- ======= TOP LOSERS ======= -->
-<section id="top-losers" class="card">
-    <h2>Top Losers of the Day</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>Symbol</th>
-                <th>Current Price (INR)</th>
-                <th>Loss %</th>
-                <th>Current Value (₹)</th>
-            </tr>
-        </thead>
-        <tbody id="top-losers-body">
-            <!-- Top 4 losers will be dynamically injected here -->
-        </tbody>
-    </table>
-</section>
-
+<!-- ===== Portfolio Summary ===== -->
 <section id="portfolio" class="card">
     <h2>Portfolio Summary</h2>
     <table>
@@ -199,15 +110,44 @@
                 <th>Current Price (₹)</th>
             </tr>
         </thead>
-        <tbody id="portfolio-summary-body">
-            <!-- Portfolio stocks will be dynamically injected here -->
-        </tbody>
+        <tbody id="portfolio-summary-body"></tbody>
     </table>
 </section>
 
+<!-- ===== Top Winners ===== -->
+<section id="top-winners" class="card">
+    <h2>Top Winners of the Day</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Symbol</th>
+                <th>Current Price (INR)</th>
+                <th>Gain %</th>
+                <th>Current Value (₹)</th>
+            </tr>
+        </thead>
+        <tbody id="top-winners-body"></tbody>
+    </table>
+</section>
 
- <!-- ======= ORDERS ======= -->
- <section id="orders" class="card">
+<!-- ===== Top Losers ===== -->
+<section id="top-losers" class="card">
+    <h2>Top Losers of the Day</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Symbol</th>
+                <th>Current Price (INR)</th>
+                <th>Loss %</th>
+                <th>Current Value (₹)</th>
+            </tr>
+        </thead>
+        <tbody id="top-losers-body"></tbody>
+    </table>
+</section>
+
+<!-- ===== Orders ===== -->
+<section id="orders" class="card">
     <h2>Recent Orders</h2>
     <table>
         <thead>
@@ -221,172 +161,179 @@
         <tbody id="orders-body"></tbody>
     </table>
 </section>
-    </main>
-</div>
 
+</main>
 
 <script>
-    // ===== Dashboard Authentication & Data =====
-    let allSymbols = []; // Global symbols array
-    let topChart;
-    
-    document.addEventListener("DOMContentLoaded", async () => {
-        // ===== Fetch user info using HTTP-only cookie =====
-        let user;
-        try {
-            const res = await fetch("/auth/me", {
-                method: "GET",
-                credentials: "include" // Important: sends cookie with request
-            });
-            if (!res.ok) throw new Error("Unauthorized");
-            user = await res.json();
-        } catch (err) {
-            console.error(err);
-            // If token invalid or not logged in, redirect to login
-            window.location.href = "/static/login.html";
-            return;
-        }
-    
-        // ===== Update UI =====
-        document.querySelector(".logo").textContent = `Welcome, ${user.username}`;
-        const portfolioEl = document.getElementById("portfolio-summary-body");
-        if (portfolioEl) {
-            portfolioEl.innerHTML = `
-                <tr>
-                    <td colspan="2">Email: ${user.email}</td>
-                    <td colspan="2">Virtual Balance: ₹${user.virtual_balance}</td>
-                </tr>
-            `;
-        }
-    
-        // ===== Fetch all stock symbols =====
-        try {
-            const res = await fetch("/stocks/all");
-            const data = await res.json();
-            allSymbols = data.symbols || [];
-        } catch (err) {
-            console.error("Error fetching symbols:", err);
-        }
-    
-        // ===== Fetch prices =====
-        async function fetchPricesChunk(symbolsChunk) {
-            try {
-                const res = await fetch(`/stocks/prices?symbols=${symbolsChunk.join(",")}`);
-                const data = await res.json();
-                return data.prices || {};
-            } catch (err) {
-                console.error("Error fetching prices:", err);
-                return {};
-            }
-        }
-    
-        async function fetchAllPrices(symbols, chunkSize = 50) {
-            const prices = {};
-            for (let i = 0; i < symbols.length; i += chunkSize) {
-                const chunk = symbols.slice(i, i + chunkSize);
-                const chunkPrices = await fetchPricesChunk(chunk);
-                Object.assign(prices, chunkPrices);
-            }
-            return prices;
-        }
-    
-        // ===== Render Watchlist (if used) =====
-        const watchlistBody = document.getElementById("watchlist-body");
-        async function renderWatchlist() {
-            const prices = await fetchAllPrices(allSymbols);
-            if (watchlistBody) {
-                watchlistBody.innerHTML = "";
-                allSymbols.forEach(symbol => {
-                    const price = prices[symbol] != null ? prices[symbol].toFixed(2) : "N/A";
-                    const row = document.createElement("tr");
-                    row.innerHTML = `<td>${symbol}</td><td>${price}</td><td>-</td>`;
-                    watchlistBody.appendChild(row);
-                });
-            }
-    
-            // Update chart (top 10)
-            if (topChart) {
-                topChart.data.datasets[0].data = allSymbols.slice(0,10).map(s => prices[s] || 0);
-                topChart.update();
-            }
-        }
-    
-        // ===== Initialize Chart =====
-        const top10Symbols = allSymbols.slice(0, 10);
-        const ctx = document.getElementById("chartCanvas").getContext("2d");
-        topChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: top10Symbols,
-                datasets: [{
-                    label: 'Price (INR)',
-                    data: Array(top10Symbols.length).fill(0),
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    borderWidth: 2,
-                    fill: false
-                }]
-            },
-            options: { responsive: true, scales: { y: { beginAtZero: false } } }
-        });
-    
-        // Render watchlist initially and update every second
-        setInterval(renderWatchlist, 1000);
-    
-        // ===== Logout Button =====
-        document.querySelectorAll('a[href="/static/login.html"]').forEach(link => {
-            link.addEventListener("click", async (e) => {
-                e.preventDefault();
-                // Call backend logout to clear HTTP-only cookie
-                await fetch("/auth/logout", { method: "POST", credentials: "include" });
-                window.location.href = "/static/login.html";
-            });
-        });
-    
-        // ===== Render Top Winners =====
-        renderTopWinners();
-    });
-    
-    // ===== Render Top Winners =====
-    async function renderTopWinners() {
-        if (!allSymbols.length) return;
-        const prices = await fetchAllPrices(allSymbols);
-        const winners = allSymbols.map(symbol => {
-            const current = prices[symbol] || 0;
-            const previous = current * (1 - Math.random() * 0.05);
-            const gainPercent = previous > 0 ? ((current - previous)/previous)*100 : 0;
-            return { symbol, current, gainPercent, currentValue: current*10 };
-        }).sort((a,b) => b.gainPercent - a.gainPercent)
-          .slice(0, 4);
-    
-        const tbody = document.getElementById("top-winners-body");
-        if (tbody) {
-            tbody.innerHTML = "";
-            winners.forEach(stock => {
-                const row = document.createElement("tr");
-                row.innerHTML = `
-                    <td>${stock.symbol}</td>
-                    <td>₹${stock.current.toFixed(2)}</td>
-                    <td style="color: #4ade80;">${stock.gainPercent.toFixed(2)}%</td>
-                    <td>₹${stock.currentValue.toFixed(2)}</td>
-                `;
-                tbody.appendChild(row);
-            });
-        }
+let allSymbols = [];
+let topChart;
+
+// ===== Market Overview =====
+async function fetchMarketOverview() {
+    try {
+        const res = await fetch("/stocks/indices");
+        if (!res.ok) throw new Error("Failed to fetch indices");
+        const data = await res.json();
+
+        // Update DOM
+        const setValue = (id, value, change) => {
+            document.getElementById(`${id}-price`).innerText = value ?? "--";
+            const changeEl = document.getElementById(`${id}-change`);
+            changeEl.innerText = change ? `${change}%` : "--";
+            changeEl.style.color = change >= 0 ? "#4ade80" : "#f87171";
+        };
+
+        setValue("bse", data.BSE?.price, data.BSE?.change);
+        setValue("nse", data.NSE?.price, data.NSE?.change);
+        setValue("banknifty", data.BankNifty?.price, data.BankNifty?.change);
+
+    } catch (err) {
+        console.error("Market overview error:", err);
     }
-    
-    /* ===== Commented Out (Old localStorage JWT logic for manual login) =====
-    
-    // const urlParams = new URLSearchParams(window.location.search);
-    // const tokenFromUrl = urlParams.get("token");
-    // if (tokenFromUrl) {
-    //     localStorage.setItem("access_token", tokenFromUrl);
-    //     window.history.replaceState({}, document.title, window.location.pathname);
-    // }
-    // const token = localStorage.getItem("access_token");
-    // if (!token) {
-    //     alert("You must login first!");
-    //     window.location.href = "/static/login.html";
-    // }
-    
-    */
-    </script>
+}
+
+// ===== Fetch user & update UI =====
+async function initDashboard() {
+    try {
+        const res = await fetch("/auth/me", { credentials: "include" });
+        if (!res.ok) throw new Error("Unauthorized");
+        const user = await res.json();
+        document.querySelector(".logo").textContent = `Welcome, ${user.username}`;
+    } catch (err) {
+        console.error(err);
+        window.location.href = "/static/login.html";
+    }
+}
+
+// ===== Portfolio =====
+async function fetchPortfolio() {
+    try {
+        const res = await fetch("/portfolio/holdings", { credentials: "include" });
+        const data = await res.json();
+
+        // Ensure data is an array
+        const holdings = Array.isArray(data) ? data : Object.values(data);
+
+        const tbody = document.getElementById("portfolio-summary-body");
+        tbody.innerHTML = "";
+
+        holdings.forEach(stock => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                <td>${stock.symbol}</td>
+                <td>${stock.quantity}</td>
+                <td>₹${stock.avg_price.toFixed(2)}</td>
+                <td>₹${(stock.quantity * stock.avg_price).toFixed(2)}</td>
+                <td>₹${stock.live_price?.toFixed(2) ?? '--'}</td>
+            `;
+            tbody.appendChild(row);
+        });
+    } catch (err) {
+        console.error("Portfolio fetch error:", err);
+    }
+}
+// ===== Fetch Prices =====
+async function fetchPrices(symbols) {
+    if (!symbols.length) return {};
+    try {
+        const res = await fetch(`/stocks/prices?symbols=${symbols.join(",")}`);
+        const data = await res.json();
+        return data.prices || {};
+    } catch {
+        return {};
+    }
+}
+
+// ===== Render Winners & Losers =====
+async function renderTopMovers() {
+    const prices = await fetchPrices(allSymbols);
+    if (!Object.keys(prices).length) return;
+
+    const movers = allSymbols.map(symbol => {
+        const stock = prices[symbol];
+        const current = stock?.price || 0;
+        const changePercent = stock?.change || 0;
+        return { symbol, current, changePercent, currentValue: current*10 };
+    });
+
+    const winners = [...movers].sort((a,b)=>b.changePercent-a.changePercent).slice(0,4);
+    const losers = [...movers].sort((a,b)=>a.changePercent-b.changePercent).slice(0,4);
+
+    const winnersTbody = document.getElementById("top-winners-body");
+    winnersTbody.innerHTML = "";
+    winners.forEach(s => {
+        winnersTbody.innerHTML += `<tr>
+            <td>${s.symbol}</td>
+            <td>₹${s.current.toFixed(2)}</td>
+            <td style="color:#4ade80;">${s.changePercent.toFixed(2)}%</td>
+            <td>₹${s.currentValue.toFixed(2)}</td>
+        </tr>`;
+    });
+
+    const losersTbody = document.getElementById("top-losers-body");
+    losersTbody.innerHTML = "";
+    losers.forEach(s => {
+        losersTbody.innerHTML += `<tr>
+            <td>${s.symbol}</td>
+            <td>₹${s.current.toFixed(2)}</td>
+            <td style="color:#f87171;">${s.changePercent.toFixed(2)}%</td>
+            <td>₹${s.currentValue.toFixed(2)}</td>
+        </tr>`;
+    });
+}
+
+// ===== Initialize Chart =====
+function initChart(symbols) {
+    const ctx = document.getElementById("chartCanvas").getContext("2d");
+    topChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: symbols.slice(0,10),
+            datasets: [{
+                label:'Price (INR)',
+                data: Array(10).fill(0),
+                borderColor:'rgba(75,192,192,1)',
+                borderWidth:2,
+                fill:false
+            }]
+        },
+        options:{ responsive:true, scales:{ y:{ beginAtZero:false } } }
+    });
+}
+
+// ===== Main Refresh Loop =====
+async function refreshDashboard() {
+    await fetchMarketOverview();
+    await fetchPortfolio();
+    await renderTopMovers();
+
+    if(topChart && allSymbols.length) {
+        const prices = await fetchPrices(allSymbols.slice(0,10));
+        topChart.data.datasets[0].data = Object.values(prices).map(p=>p.price || 0);
+        topChart.update();
+    }
+}
+
+// ===== Logout =====
+document.querySelectorAll('a[href="/static/login.html"]').forEach(link=>{
+    link.addEventListener("click", async e=>{
+        e.preventDefault();
+        await fetch("/auth/logout",{method:"POST",credentials:"include"});
+        window.location.href="/static/login.html";
+    });
+});
+
+// ===== Init =====
+initDashboard();
+fetch("/stocks/all")
+  .then(r=>r.json())
+  .then(d=>{
+      allSymbols = d;
+      initChart(allSymbols);
+  });
+
+setInterval(refreshDashboard,2000);
+
+</script>
+</body>
+</html>

@@ -10,27 +10,50 @@ env_path = Path('.') / '.env'
 load_dotenv(dotenv_path=env_path)
 
 class Settings(BaseSettings):
+    # -------------------------
     # Database
+    # -------------------------
     DATABASE_URL: str = "sqlite:///./stock_simulator.db"
 
-    # API key for internal use
+    # -------------------------
+    # Internal API key
+    # -------------------------
     API_KEY: str = os.getenv("API_KEY", "your-default-api-key")
 
+    # -------------------------
     # Debug mode
+    # -------------------------
     DEBUG: bool = os.getenv("DEBUG", "False").lower() == "true"
 
+    # -------------------------
     # JWT settings
+    # -------------------------
     SECRET_KEY: str = os.getenv("SECRET_KEY", "your-secret-key")
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
+    # -------------------------
     # Google OAuth
+    # -------------------------
     GOOGLE_CLIENT_ID: str = os.getenv("GOOGLE_CLIENT_ID", "")
     GOOGLE_CLIENT_SECRET: str = os.getenv("GOOGLE_CLIENT_SECRET", "")
-    GOOGLE_REDIRECT_URI: str = os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:8000/auth/google/callback")
+    GOOGLE_REDIRECT_URI: str = os.getenv(
+        "GOOGLE_REDIRECT_URI",
+        "http://localhost:8000/auth/google/callback"
+    )
 
+    # -------------------------
+    # Finnhub API
+    # -------------------------
+    FINNHUB_API_KEY: str = os.getenv("FINNHUB_API_KEY", "")
+
+    # -------------------------
+    # Pydantic config
+    # -------------------------
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
+        extra = "forbid"  # Do not allow unknown env vars to silently pass
 
+# Instantiate global settings object
 settings = Settings()

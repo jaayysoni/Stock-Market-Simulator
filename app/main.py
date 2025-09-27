@@ -18,6 +18,7 @@ from app.routers.portfolio_router import router as portfolio_router
 from app.routers import watchlist_router, google_oauth_router
 from app.tasks.scheduler import start_scheduler
 from app.config import settings
+from app.routers import stock_router
 
 # ----------------- Load Environment -----------------
 load_dotenv()
@@ -44,12 +45,11 @@ app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), na
 
 # ----------------- Routers -----------------
 app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
-app.include_router(stock_router, prefix="/stocks", tags=["Stocks"])
+app.include_router(stock_router.router, prefix="/stocks")
 app.include_router(transaction_router, prefix="/transactions", tags=["Transactions"])
 app.include_router(portfolio_router, prefix="/portfolio", tags=["Portfolio"])
 app.include_router(watchlist_router.router, prefix="/watchlist", tags=["Watchlist"])
 app.include_router(google_oauth_router.router, prefix="/oauth", tags=["Google OAuth"])
-
 
 # ----------------- Pages -----------------
 @app.get("/", include_in_schema=False)

@@ -5,6 +5,7 @@ from app.database.db import MarketBase  # Use MarketBase for market_data.db
 
 class Transaction(MarketBase):
     __tablename__ = "transactions"
+    __table_args__ = {"extend_existing": True}  # <-- Fix for "table already defined"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, nullable=False)  # reference user manually
