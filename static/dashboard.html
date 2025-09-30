@@ -167,6 +167,7 @@
 <script>
 let allSymbols = [];
 let topChart;
+let stockPrices = {}; // Stores latest Finnhub prices
 
 // ===== Market Overview =====
 async function fetchMarketOverview() {
@@ -175,11 +176,10 @@ async function fetchMarketOverview() {
         if (!res.ok) throw new Error("Failed to fetch indices");
         const data = await res.json();
 
-        // Update DOM
         const setValue = (id, value, change) => {
             document.getElementById(`${id}-price`).innerText = value ?? "--";
             const changeEl = document.getElementById(`${id}-change`);
-            changeEl.innerText = change ? `${change}%` : "--";
+            changeEl.innerText = change != null ? `${change}%` : "--";
             changeEl.style.color = change >= 0 ? "#4ade80" : "#f87171";
         };
 
@@ -192,39 +192,23 @@ async function fetchMarketOverview() {
     }
 }
 
-// ===== Fetch user & update UI =====
-async function initDashboard() {
-    try {
-        const res = await fetch("/auth/me", { credentials: "include" });
-        if (!res.ok) throw new Error("Unauthorized");
-        const user = await res.json();
-        document.querySelector(".logo").textContent = `Welcome, ${user.username}`;
-    } catch (err) {
-        console.error(err);
-        window.location.href = "/static/login.html";
-    }
-}
-
 // ===== Portfolio =====
 async function fetchPortfolio() {
     try {
-        const res = await fetch("/portfolio/holdings", { credentials: "include" });
+        const res = await fetch("/portfolio/holdings");
         const data = await res.json();
-
-        // Ensure data is an array
         const holdings = Array.isArray(data) ? data : Object.values(data);
-
         const tbody = document.getElementById("portfolio-summary-body");
         tbody.innerHTML = "";
-
         holdings.forEach(stock => {
+            const currentPrice = stockPrices[stock.symbol]?.price?.toFixed(2) ?? '--';
             const row = document.createElement("tr");
             row.innerHTML = `
                 <td>${stock.symbol}</td>
                 <td>${stock.quantity}</td>
                 <td>₹${stock.avg_price.toFixed(2)}</td>
                 <td>₹${(stock.quantity * stock.avg_price).toFixed(2)}</td>
-                <td>₹${stock.live_price?.toFixed(2) ?? '--'}</td>
+                <td>₹${currentPrice}</td>
             `;
             tbody.appendChild(row);
         });
@@ -232,28 +216,17 @@ async function fetchPortfolio() {
         console.error("Portfolio fetch error:", err);
     }
 }
-// ===== Fetch Prices =====
-async function fetchPrices(symbols) {
-    if (!symbols.length) return {};
-    try {
-        const res = await fetch(`/stocks/prices?symbols=${symbols.join(",")}`);
-        const data = await res.json();
-        return data.prices || {};
-    } catch {
-        return {};
-    }
-}
 
 // ===== Render Winners & Losers =====
-async function renderTopMovers() {
-    const prices = await fetchPrices(allSymbols);
-    if (!Object.keys(prices).length) return;
+function renderTopMovers() {
+    const symbols = Object.keys(stockPrices);
+    if (!symbols.length) return;
 
-    const movers = allSymbols.map(symbol => {
-        const stock = prices[symbol];
+    const movers = symbols.map(symbol => {
+        const stock = stockPrices[symbol];
         const current = stock?.price || 0;
         const changePercent = stock?.change || 0;
-        return { symbol, current, changePercent, currentValue: current*10 };
+        return { symbol, current, changePercent, currentValue: current * 10 };
     });
 
     const winners = [...movers].sort((a,b)=>b.changePercent-a.changePercent).slice(0,4);
@@ -301,17 +274,44 @@ function initChart(symbols) {
     });
 }
 
+// ===== WebSocket for Finnhub WITHOUT JWT =====
+function setupFinnhubWebSocket() {
+    const wsProtocol = location.protocol === "https:" ? "wss" : "ws";
+    const ws = new WebSocket(`${wsProtocol}://${location.host}/ws/stocks`);
+
+    ws.onopen = () => console.log("✅ Connected to Finnhub WebSocket");
+
+    ws.onmessage = (event) => {
+        try {
+            const data = JSON.parse(event.data);
+            if (!data?.symbol || data.price == null) return;
+
+            stockPrices[data.symbol] = { price: data.price, change: data.change || 0 };
+
+            fetchPortfolio();
+
+            if(topChart) {
+                topChart.data.datasets[0].data = topChart.data.labels.map(label => stockPrices[label]?.price || 0);
+                topChart.update();
+            }
+
+            renderTopMovers();
+        } catch(err) {
+            console.error("WebSocket message error:", err);
+        }
+    };
+
+    ws.onclose = () => {
+        console.warn("⚠️ Finnhub WebSocket closed, reconnecting in 5s...");
+        setTimeout(setupFinnhubWebSocket, 5000);
+    };
+
+    ws.onerror = (err) => console.error("WebSocket error:", err);
+}
+
 // ===== Main Refresh Loop =====
 async function refreshDashboard() {
     await fetchMarketOverview();
-    await fetchPortfolio();
-    await renderTopMovers();
-
-    if(topChart && allSymbols.length) {
-        const prices = await fetchPrices(allSymbols.slice(0,10));
-        topChart.data.datasets[0].data = Object.values(prices).map(p=>p.price || 0);
-        topChart.update();
-    }
 }
 
 // ===== Logout =====
@@ -324,7 +324,6 @@ document.querySelectorAll('a[href="/static/login.html"]').forEach(link=>{
 });
 
 // ===== Init =====
-initDashboard();
 fetch("/stocks/all")
   .then(r=>r.json())
   .then(d=>{
@@ -332,8 +331,11 @@ fetch("/stocks/all")
       initChart(allSymbols);
   });
 
-setInterval(refreshDashboard,2000);
+refreshDashboard();
+setupFinnhubWebSocket();
+setInterval(refreshDashboard, 15000); // refresh indices every 15s
 
 </script>
+
 </body>
 </html>

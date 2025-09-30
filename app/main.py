@@ -6,9 +6,11 @@ from dotenv import load_dotenv
 from sqlalchemy.exc import OperationalError
 from sqlalchemy import text
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import RedirectResponse, FileResponse,HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse
 import os
+import asyncio
 
+from app.routers import ws_router  
 from app.database.db import user_engine, UserBase, market_engine, MarketBase
 from app.models import user, stock, transaction, portfolio, watchlist
 from app.routers.auth_router import router as auth_router
@@ -18,7 +20,9 @@ from app.routers.portfolio_router import router as portfolio_router
 from app.routers import watchlist_router, google_oauth_router
 from app.tasks.scheduler import start_scheduler
 from app.config import settings
-from app.routers import stock_router
+
+# 🔹 Import Finnhub WebSocket client
+from app.services.finnhub_client import finnhub_client
 
 # ----------------- Load Environment -----------------
 load_dotenv()
@@ -45,17 +49,17 @@ app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), na
 
 # ----------------- Routers -----------------
 app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
-app.include_router(stock_router.router, prefix="/stocks")
+app.include_router(stock_router, prefix="/stocks")
 app.include_router(transaction_router, prefix="/transactions", tags=["Transactions"])
 app.include_router(portfolio_router, prefix="/portfolio", tags=["Portfolio"])
 app.include_router(watchlist_router.router, prefix="/watchlist", tags=["Watchlist"])
 app.include_router(google_oauth_router.router, prefix="/oauth", tags=["Google OAuth"])
+app.include_router(ws_router.router, prefix="/ws", tags=["WebSocket"])
 
 # ----------------- Pages -----------------
 @app.get("/", include_in_schema=False)
 def root():
-    # return RedirectResponse(url="/static/login.html")
-     return FileResponse(os.path.join(BASE_DIR, "static/login.html"))
+    return FileResponse(os.path.join(BASE_DIR, "static/login.html"))
 
 @app.get("/signup", include_in_schema=False)
 def signup_page():
@@ -78,7 +82,7 @@ def trading_terminal_page():
 # ----------------- Events -----------------
 @app.on_event("startup")
 def startup_event():
-    # Check and create tables in user_data.db
+    # ✅ Ensure user_data.db tables
     try:
         with user_engine.connect() as conn:
             conn.execute(text("SELECT 1"))
@@ -87,7 +91,7 @@ def startup_event():
     except OperationalError as e:
         print("❌ user_data.db connection failed:", e)
 
-    # Check and create tables in market_data.db
+    # ✅ Ensure market_data.db tables
     try:
         with market_engine.connect() as conn:
             conn.execute(text("SELECT 1"))
@@ -96,9 +100,13 @@ def startup_event():
     except OperationalError as e:
         print("❌ market_data.db connection failed:", e)
 
-    # Start Scheduler
+    # ⏰ Start Scheduler
     start_scheduler()
     print("⏰ Scheduler started")
+
+    # 📡 Start Finnhub WebSocket in background
+    asyncio.create_task(finnhub_client.connect())
+    print("📡 Finnhub WebSocket started")
 
 @app.on_event("shutdown")
 def shutdown_event():
