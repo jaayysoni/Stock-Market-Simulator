@@ -177,9 +177,19 @@ async function fetchMarketOverview() {
         const data = await res.json();
 
         const setValue = (id, value, change) => {
-            document.getElementById(`${id}-price`).innerText = value ?? "--";
+            // Format price with commas and 2 decimal places
+            const formattedPrice = value != null 
+                ? value.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) 
+                : "--";
+
+            // Format change percentage with 2 decimal places
+            const formattedChange = change != null 
+                ? change.toFixed(2) 
+                : "--";
+
+            document.getElementById(`${id}-price`).innerText = formattedPrice;
             const changeEl = document.getElementById(`${id}-change`);
-            changeEl.innerText = change != null ? `${change}%` : "--";
+            changeEl.innerText = formattedChange !== "--" ? `${formattedChange}%` : "--";
             changeEl.style.color = change >= 0 ? "#4ade80" : "#f87171";
         };
 
@@ -217,43 +227,53 @@ async function fetchPortfolio() {
     }
 }
 
-// ===== Render Winners & Losers =====
-function renderTopMovers() {
-    const symbols = Object.keys(stockPrices);
-    if (!symbols.length) return;
+// ===== Fetch Top Gainers & Losers from Redis =====
+async function fetchTopMovers() {
+    try {
+        const res = await fetch("/market/top-movers");
+        if (!res.ok) throw new Error("Failed to fetch top movers");
+        const data = await res.json();
 
-    const movers = symbols.map(symbol => {
-        const stock = stockPrices[symbol];
-        const current = stock?.price || 0;
-        const changePercent = stock?.change || 0;
-        return { symbol, current, changePercent, currentValue: current * 10 };
-    });
+        const formatPrice = (val) => val != null 
+            ? val.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) 
+            : "--";
 
-    const winners = [...movers].sort((a,b)=>b.changePercent-a.changePercent).slice(0,4);
-    const losers = [...movers].sort((a,b)=>a.changePercent-b.changePercent).slice(0,4);
+        const formatChange = (val) => val != null 
+            ? val.toFixed(2) 
+            : "--";
 
-    const winnersTbody = document.getElementById("top-winners-body");
-    winnersTbody.innerHTML = "";
-    winners.forEach(s => {
-        winnersTbody.innerHTML += `<tr>
-            <td>${s.symbol}</td>
-            <td>₹${s.current.toFixed(2)}</td>
-            <td style="color:#4ade80;">${s.changePercent.toFixed(2)}%</td>
-            <td>₹${s.currentValue.toFixed(2)}</td>
-        </tr>`;
-    });
+        // Top Gainers
+        const winnersTbody = document.getElementById("top-winners-body");
+        winnersTbody.innerHTML = "";
+        data.gainers.forEach(s => {
+            winnersTbody.innerHTML += `<tr>
+                <td>${s.symbol}</td>
+                <td>₹${formatPrice(s.price)}</td>
+                <td style="color:#4ade80;">${formatChange(s.change)}%</td>
+                <td>₹${formatPrice(s.price * 10)}</td>
+            </tr>`;
+        });
 
-    const losersTbody = document.getElementById("top-losers-body");
-    losersTbody.innerHTML = "";
-    losers.forEach(s => {
-        losersTbody.innerHTML += `<tr>
-            <td>${s.symbol}</td>
-            <td>₹${s.current.toFixed(2)}</td>
-            <td style="color:#f87171;">${s.changePercent.toFixed(2)}%</td>
-            <td>₹${s.currentValue.toFixed(2)}</td>
-        </tr>`;
-    });
+        // Top Losers
+        const losersTbody = document.getElementById("top-losers-body");
+        losersTbody.innerHTML = "";
+        data.losers.forEach(s => {
+            losersTbody.innerHTML += `<tr>
+                <td>${s.symbol}</td>
+                <td>₹${formatPrice(s.price)}</td>
+                <td style="color:#f87171;">${formatChange(s.change)}%</td>
+                <td>₹${formatPrice(s.price * 10)}</td>
+            </tr>`;
+        });
+
+    } catch(err) {
+        console.error("Top movers fetch error:", err);
+    }
 }
+
+// Refresh top movers every 15 seconds
+fetchTopMovers();
+setInterval(fetchTopMovers, 20000);
 
 // ===== Initialize Chart =====
 function initChart(symbols) {

@@ -9,6 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, HTMLResponse
 import os
 import asyncio
+from app.routers import market_router
 
 from app.routers import ws_router  
 from app.database.db import user_engine, UserBase, market_engine, MarketBase
@@ -20,6 +21,8 @@ from app.routers.portfolio_router import router as portfolio_router
 from app.routers import watchlist_router, google_oauth_router
 from app.tasks.scheduler import start_scheduler
 from app.config import settings
+from app.tasks.market_tasks import refresh_market_indices, refresh_top_movers
+import asyncio
 
 # 🔹 Import Finnhub WebSocket client
 from app.services.finnhub_client import finnhub_client
@@ -55,6 +58,7 @@ app.include_router(portfolio_router, prefix="/portfolio", tags=["Portfolio"])
 app.include_router(watchlist_router.router, prefix="/watchlist", tags=["Watchlist"])
 app.include_router(google_oauth_router.router, prefix="/oauth", tags=["Google OAuth"])
 app.include_router(ws_router.router, prefix="/ws", tags=["WebSocket"])
+app.include_router(market_router.router, prefix="/market", tags=["Market"])
 
 # ----------------- Pages -----------------
 @app.get("/", include_in_schema=False)
@@ -80,8 +84,9 @@ def trading_terminal_page():
     return FileResponse(os.path.join(BASE_DIR, "static/tradingterminal.html"))
 
 # ----------------- Events -----------------
+
 @app.on_event("startup")
-def startup_event():
+async def startup_event():
     # ✅ Ensure user_data.db tables
     try:
         with user_engine.connect() as conn:
@@ -107,6 +112,11 @@ def startup_event():
     # 📡 Start Finnhub WebSocket in background
     asyncio.create_task(finnhub_client.connect())
     print("📡 Finnhub WebSocket started")
+
+    # 🟢 Start Redis market refresh tasks
+    asyncio.create_task(refresh_market_indices())
+    asyncio.create_task(refresh_top_movers())
+    print("🟢 Redis market indices and top movers tasks started")
 
 @app.on_event("shutdown")
 def shutdown_event():
