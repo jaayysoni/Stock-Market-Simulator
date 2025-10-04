@@ -1,0 +1,152 @@
+/* ==================== VARIABLES ==================== */
+:root {
+  --bg: #0e1117;
+  --surface: #161b22;
+  --card: #161b22;
+  --card-hover: #21262d;
+  --stroke: #30363d;
+  --accent: #58a6ff;       /* generic accent */
+  --text: #c9d1d9;
+  --muted: #8b949e;
+  --buy: #4ade80;           /* green for buy */
+  --sell: #ef6464;          /* red for sell */
+  --yellow: #facc15;        /* yellow for special items */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --shadow: 0 4px 12px rgba(0,0,0,0.25);
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+/* ==================== GLOBAL STYLES ==================== */
+body {
+  font-family: Arial, sans-serif;
+  background-color: var(--bg);
+  color: var(--text);
+  margin: 0;
+  padding: 60px 16px 16px 16px;
+}
+
+/* ==================== BACK BUTTON ==================== */
+.back-btn {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  background-color: var(--surface);
+  color: var(--accent);
+  border: 1px solid var(--stroke);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  z-index: 1000;
+  font-weight: bold;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.back-btn:hover {
+  background-color: var(--card-hover);
+  box-shadow: 0 0 8px rgba(88,166,255,0.5);
+}
+
+/* ==================== SEARCH & SORT ==================== */
+.search-sort-container {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.search-sort-container input,
+.search-sort-container select {
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.05);
+  color: var(--text);
+  outline: none;
+  font-size: 0.95rem;
+}
+.search-sort-container input::placeholder {
+  color: var(--muted);
+}
+.search-sort-container select,
+.search-sort-container input {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.search-sort-container select:hover,
+.search-sort-container input:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ==================== MONTHLY SECTION ==================== */
+.month-section {
+  margin-bottom: 32px;
+}
+.month-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--accent);
+  border-bottom: 1px solid var(--stroke);
+  padding-bottom: 4px;
+}
+
+/* ==================== TRANSACTION TABLE ==================== */
+.transaction-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+.transaction-table th,
+.transaction-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--stroke);
+  text-align: center;
+  font-size: 0.9rem;
+}
+.transaction-table th {
+  background-color: var(--card-hover);
+  color: var(--muted);
+  font-weight: 600;
+}
+.transaction-table tr:hover {
+  background-color: var(--card-hover);
+  transition: background 0.2s;
+}
+
+/* ==================== TYPE COLORS ==================== */
+.buy { color: var(--buy); font-weight: 600; }
+.sell { color: var(--sell); font-weight: 600; }
+.money-add { color: var(--buy); font-weight: 600; }
+.money-remove { color: var(--sell); font-weight: 600; }
+.special { color: var(--yellow); font-weight: 600; } /* optional yellow highlight */
+
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 768px) {
+  .transaction-table th,
+  .transaction-table td {
+      padding: 8px;
+      font-size: 0.85rem;
+  }
+  .search-sort-container {
+      flex-direction: column;
+      gap: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .transaction-table th,
+  .transaction-table td {
+      padding: 6px;
+      font-size: 0.8rem;
+  }
+  .back-btn {
+      padding: 0.4rem 0.8rem;
+      font-size: 0.9rem;
+  }
+}

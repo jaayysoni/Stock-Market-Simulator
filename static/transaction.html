@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Transactions — Stock Market Simulator</title>
+<link rel="stylesheet" href="/static/css/transaction.css" />
+</head>
+<body>
+
+<button class="back-btn" onclick="window.location.href='/dashboard'">← Back to Dashboard</button>
+
+<div class="search-sort-container">
+  <input type="text" id="transaction-search" placeholder="Search by stock or type..." />
+  <select id="transaction-sort">
+    <option value="date-desc">Date Desc</option>
+    <option value="date-asc">Date Asc</option>
+    <option value="stock-asc">Stock A-Z</option>
+    <option value="stock-desc">Stock Z-A</option>
+  </select>
+</div>
+
+<div id="transactions-container"></div>
+
+<script>
+// ===== Dummy Data =====
+const transactions = [
+  { type: "buy", symbol: "RELIANCE", quantity: 10, price: 2450, date: "2025-09-30T10:30:00", status: "completed" },
+  { type: "sell", symbol: "INFY", quantity: 5, price: 1525, date: "2025-09-28T15:00:00", status: "completed" },
+  { type: "money-add", amount: 50000, date: "2025-09-25T12:15:00", status: "completed" },
+  { type: "money-remove", amount: 10000, date: "2025-08-20T11:00:00", status: "completed" },
+  { type: "buy", symbol: "TCS", quantity: 7, price: 3190, date: "2025-08-18T09:45:00", status: "completed" },
+  { type: "sell", symbol: "HDFC", quantity: 3, price: 1580, date: "2025-07-22T14:30:00", status: "completed" },
+];
+
+// ===== Helper =====
+function formatDateTime(dt) {
+  const d = new Date(dt);
+  return d.toLocaleDateString('en-IN') + " " + d.toLocaleTimeString('en-IN', { hour12: false });
+}
+
+function groupByMonth(transactions) {
+  return transactions.reduce((acc, tx) => {
+    const month = new Date(tx.date).toLocaleString('en-IN', { month: 'long', year: 'numeric' });
+    if(!acc[month]) acc[month] = [];
+    acc[month].push(tx);
+    return acc;
+  }, {});
+}
+
+function renderTransactions(filter="", sort="date-desc") {
+  const container = document.getElementById("transactions-container");
+  container.innerHTML = "";
+
+  let filtered = transactions.filter(tx => {
+    if(!filter) return true;
+    return (tx.symbol && tx.symbol.toLowerCase().includes(filter.toLowerCase())) || tx.type.toLowerCase().includes(filter.toLowerCase());
+  });
+
+  // ===== Sorting =====
+  filtered.sort((a,b)=>{
+    if(sort === "date-desc") return new Date(b.date) - new Date(a.date);
+    if(sort === "date-asc") return new Date(a.date) - new Date(b.date);
+    if(sort === "stock-asc") return (a.symbol||"").localeCompare(b.symbol||"");
+    if(sort === "stock-desc") return (b.symbol||"").localeCompare(a.symbol||"");
+    return 0;
+  });
+
+  const grouped = groupByMonth(filtered);
+
+  Object.keys(grouped).forEach(month=>{
+    const section = document.createElement("div");
+    section.className = "month-section";
+    section.innerHTML = `<div class="month-title">${month}</div>`;
+    const table = document.createElement("table");
+    table.className = "transaction-table";
+
+    // Table Header
+    table.innerHTML = `<thead>
+      <tr>
+        <th>Type</th>
+        <th>Stock / Details</th>
+        <th>Quantity / Amount</th>
+        <th>Price</th>
+        <th>Date & Time</th>
+        <th>Status</th>
+      </tr>
+    </thead>`;
+
+    const tbody = document.createElement("tbody");
+
+    grouped[month].forEach(tx=>{
+      const tr = document.createElement("tr");
+      let typeClass = "";
+      let details = "";
+      let quantityAmount = "";
+      let price = "";
+
+      if(tx.type === "buy") {
+        typeClass = "buy";
+        details = tx.symbol;
+        quantityAmount = tx.quantity;
+        price = `₹${tx.price.toLocaleString('en-IN')}`;
+      } else if(tx.type === "sell") {
+        typeClass = "sell";
+        details = tx.symbol;
+        quantityAmount = tx.quantity;
+        price = `₹${tx.price.toLocaleString('en-IN')}`;
+      } else if(tx.type === "money-add") {
+        typeClass = "money-add";
+        details = "Money Added";
+        quantityAmount = `₹${tx.amount.toLocaleString('en-IN')}`;
+        price = "-";
+      } else if(tx.type === "money-remove") {
+        typeClass = "money-remove";
+        details = "Money Deducted";
+        quantityAmount = `₹${tx.amount.toLocaleString('en-IN')}`;
+        price = "-";
+      }
+
+      tr.innerHTML = `
+        <td class="${typeClass}">${tx.type.replace("-", " ")}</td>
+        <td>${details}</td>
+        <td>${quantityAmount}</td>
+        <td>${price}</td>
+        <td>${formatDateTime(tx.date)}</td>
+        <td>${tx.status}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    table.appendChild(tbody);
+    section.appendChild(table);
+    container.appendChild(section);
+  });
+}
+
+// ===== Event Listeners =====
+document.getElementById("transaction-search").addEventListener("input", e=>{
+  renderTransactions(e.target.value, document.getElementById("transaction-sort").value);
+});
+
+document.getElementById("transaction-sort").addEventListener("change", e=>{
+  renderTransactions(document.getElementById("transaction-search").value, e.target.value);
+});
+
+// ===== Initial Render =====
+renderTransactions();
+</script>
+
+</body>
+</html>

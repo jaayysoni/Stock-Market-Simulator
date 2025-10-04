@@ -29,7 +29,7 @@
 
         <!-- Logo -->
         <div class="logo-container">
-          <img src="/assets/Ankesh Profile Pic.png" alt="Logo" class="logo" />
+          <img src="/static/assets/Logo.png" alt="Logo" class="logo" />
         </div>
 
         <!-- Title -->
@@ -70,29 +70,34 @@
         <!-- Google Sign-in -->
         <style>
           /* Google OAuth Button */
-          .google-btn {
-            width: 100%;
-            padding: 10px 0;
-            border-radius: 8px;
-            background-color: #fff; /* Google blue */
-            color: #070202;            /* Black text */
-            font-weight: 600;
-            font-size: 0.95rem;
-            border: none;
-            cursor: pointer;
-            text-align: center;
-            transition: background-color 0.2s ease, transform 0.1s ease;
-          }
-        
-          .google-btn:hover {
-            background-color: #fff; /* Darker blue on hover */
-            transform: translateY(-1px);
-          }
-        
-          .google-btn:active {
-            background-color: #fff; /* Even darker when pressed */
-            transform: translateY(0);
-          }
+          .google-oauth-container {
+  display: flex;
+  justify-content: center;  /* horizontally center */
+  margin-top: 1rem;         /* optional spacing from above */
+}
+
+.google-btn {
+  width: 250px;             /* fixed width */
+  padding: 10px 0;
+  border-radius: 8px;
+  background-color: #fff;
+  color: #070202;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border: none;
+  cursor: pointer;
+  text-align: center;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.google-btn:hover {
+  background-color: #f0f0f0;
+  transform: translateY(-1px);
+}
+
+.google-btn:active {
+  transform: translateY(0);
+}
         </style>
       <div class="google-oauth-container">
         <a href="/auth/google-login" id="googleOauthBtn" class="google-btn">

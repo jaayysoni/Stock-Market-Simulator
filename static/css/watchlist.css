@@ -1,20 +1,24 @@
+/* ===== THEME VARIABLES ===== */
 :root {
-  --bg: #161b22;             
-  --surface: #161b22;        
-  --card: #161b22;           
-  --card-hover: #21262d;     
-  --stroke: #30363d;         
-  --text: #c9d1d9;           
-  --muted: #8b949e;          
-  --accent: #58a6ff;         
-  --up: #58a6ff;             
-  --down: #ef6464;            
+  --bg: #060607;
+  --surface: rgba(22,27,34,0.85);
+  --card: rgba(22,27,34,0.75);
+  --card-hover: rgba(33,38,45,0.9);
+  --stroke: #30363d;
+  --text: #fff;
+  --muted: #8b949e;
+  --accent: #58a6ff;
+  --up: #4ade80;
+  --down: #ef6464;
+  --radius-sm: 6px;
   --radius-md: 12px;
   --radius-xl: 20px;
-  --shadow: 0 4px 12px rgba(0,0,0,0.25);
+  --shadow-sm: 0 2px 6px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.25);
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
+/* ===== RESET & BASE STYLING ===== */
 body {
   font-family: Arial, sans-serif;
   background-color: var(--bg);
@@ -26,26 +30,26 @@ body {
   align-items: center;
 }
 
-
 /* ===== BACK TO DASHBOARD BUTTON ===== */
 .back-btn {
-  position: fixed;       /* Fix at top-left */
-  top: 20px;             /* Distance from top */
-  left: 20px;            /* Distance from left */
-  background-color: #161b22;
-  color: #58a6ff;
-  border: 1px solid #30363d;
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  background-color: var(--surface);
+  color: var(--accent);
+  border: 1px solid var(--stroke);
   padding: 0.5rem 1rem;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  z-index: 1000;         /* Stay above other content */
+  z-index: 1000;
   transition: 0.3s ease;
   font-weight: bold;
 }
 .back-btn:hover {
-  background-color: #1f242b;
+  background-color: var(--card-hover);
   box-shadow: 0 0 8px rgba(88,166,255,0.5);
 }
+
 /* ===== TOP CONTROLS ===== */
 #search-container, #w-search, select, button {
   font-size: 0.9rem;
@@ -85,7 +89,7 @@ select:hover, #add-to-watchlist:hover {
   background: var(--surface);
   border: 1px solid var(--stroke);
   border-radius: var(--radius-xl);
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-md);
   padding: 18px 16px;
   margin: 16px 0;
   position: relative;
@@ -173,23 +177,15 @@ select:hover, #add-to-watchlist:hover {
 }
 
 /* ===== MAIN CONTENT ===== */
-.wl-main {
-  display: flex;
-  flex-direction: column;
-}
+.wl-main { display: flex; flex-direction: column; }
 .wl-symbol {
   font-weight: 900;
   letter-spacing: 0.5px;
   color: var(--text);
 }
-.wl-meta {
+.wl-meta, .wl-subtext {
   color: var(--muted);
   font-size: 12px;
-}
-.wl-subtext {
-  display: block;
-  font-size: 11px;
-  color: var(--muted);
 }
 
 /* ===== BADGES ===== */
@@ -208,9 +204,9 @@ select:hover, #add-to-watchlist:hover {
   color: var(--accent);
 }
 .badge.up {
-  background: rgba(88,166,255,0.15);
+  background: rgba(74,222,128,0.15);
   color: var(--up);
-  border-color: rgba(88,166,255,0.4);
+  border-color: rgba(74,222,128,0.4);
 }
 .badge.down {
   background: rgba(239,100,100,0.15);
@@ -227,9 +223,7 @@ select:hover, #add-to-watchlist:hover {
   font-weight: bold;
   cursor: pointer;
 }
-.remove-stock:hover {
-  color: #ff4d4d;
-}
+.remove-stock:hover { color: #ff4d4d; }
 
 /* ===== FOOTER: "+" CREATE NEW WATCHLIST ===== */
 .wl-foot {
@@ -244,11 +238,11 @@ select:hover, #add-to-watchlist:hover {
   cursor: pointer;
   user-select: none;
 }
-.add-watchlist:hover {
-  color: var(--accent);
-}
+.add-watchlist:hover { color: var(--accent); }
+
 /* ===== CREATE WATCHLIST POPUP ===== */
-#new-watchlist-popup {
+#new-watchlist-popup,
+#create-watchlist-form-overlay {
   position: fixed;
   top: 50%;
   left: 50%;
@@ -265,23 +259,14 @@ select:hover, #add-to-watchlist:hover {
   opacity: 0;
   transition: all 0.25s ease;
 }
+#new-watchlist-popup.show,
+#create-watchlist-form-overlay.show { display: flex; opacity: 1; transform: translate(-50%, -50%) scale(1); }
 
-/* Show popup */
-#new-watchlist-popup.show {
-  display: flex;
-  opacity: 1;
-  transform: translate(-50%, -50%) scale(1);
-}
-
-/* ===== Floating Label Input ===== */
-.floating-input {
-  position: relative;
+/* Floating Input */
+.floating-input input,
+#create-watchlist-form input {
   width: 100%;
-}
-
-.floating-input input {
-  width: 100%;
-  padding: 12px 12px 12px 12px;
+  padding: 12px;
   border-radius: var(--radius-md);
   border: 1px solid rgba(255,255,255,0.1);
   background: rgba(255,255,255,0.05);
@@ -290,12 +275,11 @@ select:hover, #add-to-watchlist:hover {
   font-size: 1rem;
   transition: all 0.2s ease;
 }
-
-.floating-input input:focus {
+.floating-input input:focus,
+#create-watchlist-form input:focus {
   border-color: var(--accent);
   box-shadow: 0 0 6px rgba(88,166,255,0.5);
 }
-
 .floating-input label {
   position: absolute;
   left: 12px;
@@ -314,69 +298,4 @@ select:hover, #add-to-watchlist:hover {
   left: 8px;
   font-size: 0.75rem;
   color: var(--accent);
-}
-
-/* ===== CREATE WATCHLIST FORM POPUP STYLES ONLY ===== */
-#create-watchlist-form-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.6);
-  display: none; /* hidden initially */
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-}
-#create-watchlist-form {
-  background: #1b222e; /* match page theme */
-  padding: 24px 32px;
-  border-radius: 16px;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.5);
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  width: 300px;
-  animation: popup 0.3s ease-out;
-}
-#create-watchlist-form input {
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.2);
-  background: rgba(255,255,255,0.05);
-  color: #fff;
-  font-size: 1rem;
-  outline: none;
-  transition: all 0.2s ease;
-}
-#create-watchlist-form input:focus {
-  border-color: #58a6ff;
-  box-shadow: 0 0 6px rgba(88,166,255,0.5);
-}
-#create-watchlist-form button {
-  padding: 10px 16px;
-  border-radius: 8px;
-  border: none;
-  background: rgba(255,255,255,0.05);
-  color: #fff;
-  cursor: pointer;
-  font-weight: 600;
-  transition: all 0.2s ease;
-}
-#create-watchlist-form button:hover {
-  background: #58a6ff;
-  color: #000;
-}
-#create-watchlist-form .close-btn {
-  align-self: flex-end;
-  background: transparent;
-  font-size: 1.2rem;
-  font-weight: bold;
-}
-
-/* ===== POPUP ANIMATION ===== */
-@keyframes popup {
-  from { transform: scale(0.8); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
 }

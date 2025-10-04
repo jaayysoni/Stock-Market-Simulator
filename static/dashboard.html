@@ -58,7 +58,7 @@
     <nav class="main-nav">
         <ul>
             <li><a href="#portfolio">Portfolio</a></li>
-            <li><a href="#orders">Orders</a></li>
+            <li><a href="/static/transaction.html">Transactions</a></li>
             <li><a href="/static/watchlist.html">Watchlist</a></li>
             <li><a href="/static/tradingterminal.html">Trading-Terminal</a></li>
             <li><a href="/static/login.html">Logout</a></li>
@@ -73,27 +73,28 @@
     <h2>Market Overview</h2>
     <div class="market-overview">
         <div class="market-container">
-            <div class="index-card">
+            <div class="index-card" data-symbol="BSE">
                 <h3>BSE</h3>
                 <p class="price" id="bse-price">--</p>
                 <p class="change" id="bse-change">--</p>
             </div>
         </div>
         <div class="market-container">
-            <div class="index-card">
+            <div class="index-card" data-symbol="NSE">
                 <h3>NSE</h3>
                 <p class="price" id="nse-price">--</p>
                 <p class="change" id="nse-change">--</p>
             </div>
         </div>
         <div class="market-container">
-            <div class="index-card">
+            <div class="index-card" data-symbol="BANKNIFTY">
                 <h3>Bank Nifty</h3>
                 <p class="price" id="banknifty-price">--</p>
                 <p class="change" id="banknifty-change">--</p>
             </div>
         </div>
     </div>
+
     <canvas id="chartCanvas"></canvas>
 </section>
 
@@ -177,12 +178,9 @@ async function fetchMarketOverview() {
         const data = await res.json();
 
         const setValue = (id, value, change) => {
-            // Format price with commas and 2 decimal places
             const formattedPrice = value != null 
                 ? value.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) 
                 : "--";
-
-            // Format change percentage with 2 decimal places
             const formattedChange = change != null 
                 ? change.toFixed(2) 
                 : "--";
