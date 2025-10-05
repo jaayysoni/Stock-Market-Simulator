@@ -1,301 +1,307 @@
-/* ===== THEME VARIABLES ===== */
-:root {
-  --bg: #060607;
-  --surface: rgba(22,27,34,0.85);
-  --card: rgba(22,27,34,0.75);
-  --card-hover: rgba(33,38,45,0.9);
-  --stroke: #30363d;
-  --text: #fff;
-  --muted: #8b949e;
-  --accent: #58a6ff;
-  --up: #4ade80;
-  --down: #ef6464;
-  --radius-sm: 6px;
-  --radius-md: 12px;
-  --radius-xl: 20px;
-  --shadow-sm: 0 2px 6px rgba(0,0,0,0.3);
-  --shadow-md: 0 4px 12px rgba(0,0,0,0.25);
-  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+/* ===== RESET & BASE STYLING ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-/* ===== RESET & BASE STYLING ===== */
 body {
   font-family: Arial, sans-serif;
-  background-color: var(--bg);
-  color: var(--text);
+  background-color: #0e1117;
+  color: #fff;
   line-height: 1.5;
-  padding: 12px;
+}
+
+/* ===== HEADER (reused style) ===== */
+.header {
+  background-color: #161b22;
+  padding: 1rem 2rem;
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
   align-items: center;
+  border-bottom: 1px solid #30363d;
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
-/* ===== BACK TO DASHBOARD BUTTON ===== */
-.back-btn {
-  position: fixed;
-  top: 20px;
-  left: 20px;
-  background-color: var(--surface);
-  color: var(--accent);
-  border: 1px solid var(--stroke);
-  padding: 0.5rem 1rem;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  z-index: 1000;
-  transition: 0.3s ease;
+.logo {
+  font-size: 1.5rem;
   font-weight: bold;
-}
-.back-btn:hover {
-  background-color: var(--card-hover);
-  box-shadow: 0 0 8px rgba(88,166,255,0.5);
+  color: #58a6ff;
 }
 
-/* ===== TOP CONTROLS ===== */
-#search-container, #w-search, select, button {
-  font-size: 0.9rem;
-  padding: 6px 10px;
-  border-radius: var(--radius-md);
-  border: 1px solid rgba(255,255,255,0.1);
-  background: rgba(255,255,255,0.05);
-  color: var(--text);
-  outline: none;
-  text-align: center;
-}
-
-#search-container {
+.main-nav ul {
   display: flex;
-  justify-content: center;
-  gap: 8px;
-  margin-bottom: 16px;
-  width: 320px;
+  list-style: none;
+  gap: 1.5rem;
 }
 
-#w-search::placeholder {
-  color: var(--muted);
+.main-nav a {
+  text-decoration: none;
+  color: #c9d1d9;
+  font-weight: 600;
 }
 
-select, #add-to-watchlist {
+/* .main-nav a:hover {
+  color: #58a6ff;
+} */
+
+/* ===== PAGE CONTENT ===== */
+.content {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+/* ===== BACK BUTTON ===== */
+.back-btn {
+  background: none;
+  border: none;
+  color: #58a6ff;
+  font-size: 1rem;
   cursor: pointer;
-  transition: all 0.2s ease;
-}
-select:hover, #add-to-watchlist:hover {
-  color: var(--accent);
-  border-color: var(--accent);
+  margin-bottom: 1rem;
+  transition: color 0.2s;
 }
 
-/* ===== WATCHLIST WRAPPER ===== */
+.back-btn:hover {
+  color: #1f83ff;
+}
+
+/* ===== SEARCH BAR AREA ===== */
+#w-search {
+  width: 280px;
+  padding: 0.6rem 1rem;
+  border-radius: 6px;
+  border: 1px solid #30363d;
+  background-color: #161b22;
+  color: #c9d1d9;
+}
+
+#w-search:focus {
+  outline: none;
+  border-color: #58a6ff;
+}
+
+#select-watchlist {
+  padding: 0.6rem;
+  border-radius: 6px;
+  border: 1px solid #30363d;
+  background-color: #161b22;
+  color: #c9d1d9;
+}
+
+#add-to-watchlist {
+  background-color: #58a6ff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.6rem 1.2rem;
+  font-weight: 600;
+  color: #0e1117;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+#add-to-watchlist:hover {
+  background-color: #1f83ff;
+}
+
+/* ===== WATCHLIST CONTAINER ===== */
 .wl-wrap {
-  width: min(92vw, 720px);
-  background: var(--surface);
-  border: 1px solid var(--stroke);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-md);
-  padding: 18px 16px;
-  margin: 16px 0;
-  position: relative;
+  background-color: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
-/* ===== HEADER ===== */
+/* ===== WATCHLIST HEADER ===== */
 .wl-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #30363d;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.wl-title {
+  color: #58a6ff;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.wl-reset {
+  background: none;
+  border: 1px solid #58a6ff;
+  color: #58a6ff;
+  border-radius: 6px;
+  padding: 0.3rem 0.8rem;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.wl-reset:hover {
+  background-color: #58a6ff;
+  color: #0e1117;
+}
+
+/* ===== WATCHLIST ITEMS ===== */
+.wl-list {
+  list-style: none;
+}
+
+.wl-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--stroke);
-}
-.wl-title {
-  font-size: 1.2rem;
-  font-weight: 800;
-  color: var(--accent);
-}
-.wl-reset {
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
-  color: var(--muted);
-  padding: 6px 12px;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-}
-.wl-reset:hover {
-  color: var(--accent);
+  padding: 0.8rem 0;
+  border-bottom: 1px solid #30363d;
+  cursor: grab;
+  transition: background 0.2s;
 }
 
-/* ===== STOCK LIST ===== */
-.wl-list {
-  list-style: none;
+.wl-item:hover {
+  background-color: #21262d;
+}
+
+.wl-handle {
+  cursor: grab;
+  color: #8b949e;
+  margin-right: 1rem;
+}
+
+.wl-main {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.wl-symbol {
+  font-weight: 700;
+  color: #fff;
+  font-size: 1rem;
+}
+
+.wl-meta {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 12px 0;
-  min-height: 80px;
-  background: var(--surface);
-  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  color: #c9d1d9;
 }
 
-/* ===== STOCK ITEM ===== */
-.wl-item {
-  display: grid;
-  grid-template-columns: 38px 1fr auto;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 14px;
-  border: 1px solid var(--stroke);
-  background: var(--card);
-  border-radius: var(--radius-md);
-  transition: transform 0.12s ease, background 0.2s ease, border-color 0.2s ease;
-}
-.wl-item:hover {
-  background: var(--card-hover);
-  border-color: var(--accent);
-}
-.wl-item.dragging {
-  opacity: 0.75;
-  transform: scale(1.02);
-  border-color: var(--accent);
-}
-.wl-item.drop-target {
-  outline: 2px dashed var(--accent);
-  outline-offset: 4px;
-}
-
-/* ===== HANDLE ===== */
-.wl-handle {
-  font-family: var(--mono);
-  font-size: 18px;
-  letter-spacing: 2px;
-  color: var(--muted);
-  display: grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  border-radius: var(--radius-md);
-  border: 1px dashed var(--stroke);
-  cursor: grab;
-}
-.wl-handle:active {
-  cursor: grabbing;
-}
-
-/* ===== MAIN CONTENT ===== */
-.wl-main { display: flex; flex-direction: column; }
-.wl-symbol {
-  font-weight: 900;
-  letter-spacing: 0.5px;
-  color: var(--text);
-}
-.wl-meta, .wl-subtext {
-  color: var(--muted);
-  font-size: 12px;
-}
-
-/* ===== BADGES ===== */
 .wl-badges {
   display: flex;
-  gap: 8px;
   align-items: center;
+  gap: 0.6rem;
 }
+
+/* PRICE BADGES */
 .badge {
-  padding: 6px 10px;
-  border-radius: 999px;
-  font-weight: 800;
-  font-size: 12px;
-  border: 1px solid rgba(255,255,255,0.1);
-  background: rgba(255,255,255,0.05);
-  color: var(--accent);
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.85rem;
 }
+
 .badge.up {
-  background: rgba(74,222,128,0.15);
-  color: var(--up);
-  border-color: rgba(74,222,128,0.4);
+  background-color: rgba(74, 222, 128, 0.15);
+  color: #4ade80;
 }
+
 .badge.down {
-  background: rgba(239,100,100,0.15);
-  color: var(--down);
-  border-color: rgba(239,100,100,0.4);
+  background-color: rgba(239, 100, 100, 0.15);
+  color: #ef6464;
 }
 
-/* ===== REMOVE STOCK BUTTON ===== */
+/* TRADE & REMOVE BUTTONS */
+.trade-stock,
 .remove-stock {
-  margin-left: 6px;
+  background: none;
   border: none;
-  background: rgba(255,255,255,0.05);
-  color: var(--down);
-  font-weight: bold;
+  color: #58a6ff;
   cursor: pointer;
+  font-size: 0.9rem;
+  transition: color 0.2s;
 }
-.remove-stock:hover { color: #ff4d4d; }
 
-/* ===== FOOTER: "+" CREATE NEW WATCHLIST ===== */
+.trade-stock:hover {
+  color: #1f83ff;
+}
+
+.remove-stock:hover {
+  color: #ef6464;
+}
+
+/* ===== WATCHLIST FOOTER ===== */
 .wl-foot {
-  padding-top: 8px;
   display: flex;
   justify-content: flex-end;
+  margin-top: 1rem;
+  color: #8b949e;
+  font-size: 0.85rem;
 }
-.add-watchlist {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: rgba(88,166,255,0.6);
+
+.delete-watchlist {
+  background: none;
+  border: none;
+  color: #ef6464;
+  margin-left: 1rem;
   cursor: pointer;
-  user-select: none;
-}
-.add-watchlist:hover { color: var(--accent); }
-
-/* ===== CREATE WATCHLIST POPUP ===== */
-#new-watchlist-popup,
-#create-watchlist-form-overlay {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%) scale(0.9);
-  background: var(--surface);
-  border-radius: var(--radius-xl);
-  padding: 24px 32px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
-  display: none;
-  flex-direction: column;
-  gap: 18px;
-  width: 320px;
-  z-index: 9999;
-  opacity: 0;
-  transition: all 0.25s ease;
-}
-#new-watchlist-popup.show,
-#create-watchlist-form-overlay.show { display: flex; opacity: 1; transform: translate(-50%, -50%) scale(1); }
-
-/* Floating Input */
-.floating-input input,
-#create-watchlist-form input {
-  width: 100%;
-  padding: 12px;
-  border-radius: var(--radius-md);
-  border: 1px solid rgba(255,255,255,0.1);
-  background: rgba(255,255,255,0.05);
-  color: var(--text);
-  outline: none;
-  font-size: 1rem;
-  transition: all 0.2s ease;
-}
-.floating-input input:focus,
-#create-watchlist-form input:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 6px rgba(88,166,255,0.5);
-}
-.floating-input label {
-  position: absolute;
-  left: 12px;
-  top: 12px;
-  color: var(--muted);
-  font-size: 0.9rem;
-  pointer-events: none;
-  transition: all 0.2s ease;
-  background: var(--surface);
-  padding: 0 4px;
+  transition: color 0.2s;
 }
 
-.floating-input input:focus + label,
-.floating-input input:not(:placeholder-shown) + label {
-  top: -8px;
-  left: 8px;
-  font-size: 0.75rem;
-  color: var(--accent);
+.delete-watchlist:hover {
+  color: #ff7a7a;
+}
+
+/* ===== CREATE WATCHLIST BUTTON ===== */
+#create-watchlist {
+  background-color: #58a6ff;
+  border: none;
+  padding: 0.7rem 1.5rem;
+  border-radius: 8px;
+  color: #0e1117;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+#create-watchlist:hover {
+  background-color: #1f83ff;
+}
+
+/* ===== DRAG & DROP ===== */
+.dragging {
+  opacity: 0.5;
+}
+
+.drop-target {
+  border-top: 2px solid #58a6ff;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .main-nav ul {
+    display: none;
+  }
+
+  .content {
+    padding: 1rem;
+  }
+
+  #w-search {
+    width: 100%;
+  }
+
+  .wl-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .wl-badges {
+    margin-top: 0.5rem;
+  }
 }

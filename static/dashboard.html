@@ -57,7 +57,7 @@
     <div class="logo">Stock Market Simulator</div>
     <nav class="main-nav">
         <ul>
-            <li><a href="#portfolio">Portfolio</a></li>
+            <li><a href="/static/portfolio.html">Portfolio</a></li>
             <li><a href="/static/transaction.html">Transactions</a></li>
             <li><a href="/static/watchlist.html">Watchlist</a></li>
             <li><a href="/static/tradingterminal.html">Trading-Terminal</a></li>
@@ -98,8 +98,24 @@
     <canvas id="chartCanvas"></canvas>
 </section>
 
+<!-- ===== Top Winners ===== -->
+<section id="top-winners" class="card">
+    <h2>Top Winners of the Day</h2>
+    <div class="market-overview" id="top-winners-body">
+        <!-- Winner cards will be injected here -->
+    </div>
+</section>
+
+<!-- ===== Top Losers ===== -->
+<section id="top-losers" class="card">
+    <h2>Top Losers of the Day</h2>
+    <div class="market-overview" id="top-losers-body">
+        <!-- Loser cards will be injected here -->
+    </div>
+</section>
+
 <!-- ===== Portfolio Summary ===== -->
-<section id="portfolio" class="card">
+<!-- <section id="portfolio" class="card">
     <h2>Portfolio Summary</h2>
     <table>
         <thead>
@@ -113,42 +129,10 @@
         </thead>
         <tbody id="portfolio-summary-body"></tbody>
     </table>
-</section>
-
-<!-- ===== Top Winners ===== -->
-<section id="top-winners" class="card">
-    <h2>Top Winners of the Day</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>Symbol</th>
-                <th>Current Price (INR)</th>
-                <th>Gain %</th>
-                <th>Current Value (₹)</th>
-            </tr>
-        </thead>
-        <tbody id="top-winners-body"></tbody>
-    </table>
-</section>
-
-<!-- ===== Top Losers ===== -->
-<section id="top-losers" class="card">
-    <h2>Top Losers of the Day</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>Symbol</th>
-                <th>Current Price (INR)</th>
-                <th>Loss %</th>
-                <th>Current Value (₹)</th>
-            </tr>
-        </thead>
-        <tbody id="top-losers-body"></tbody>
-    </table>
-</section>
+</section> -->
 
 <!-- ===== Orders ===== -->
-<section id="orders" class="card">
+<!-- <section id="orders" class="card">
     <h2>Recent Orders</h2>
     <table>
         <thead>
@@ -161,7 +145,107 @@
         </thead>
         <tbody id="orders-body"></tbody>
     </table>
-</section>
+</section> -->
+<style>
+    /* ===== DASHBOARD BALANCE SECTION ===== */
+    .dashboard-balance {
+        background-color: #161b22;
+        padding: 20px 25px;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        max-width: 400px;
+        margin: 20px auto;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    
+    .dashboard-balance h2 {
+        margin: 0 0 10px;
+        font-size: 1.3rem;
+        color: #e5e7eb;
+    }
+    
+    .dashboard-balance p#balance {
+        font-size: 1.6rem;
+        font-weight: 600;
+        margin: 10px 0 15px;
+        color: #22c55e; /* green for positive balance */
+    }
+    
+    .funds-controls {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .funds-controls input[type="number"] {
+        padding: 8px 12px;
+        border-radius: 6px;
+        border: none;
+        outline: none;
+        width: 130px;
+        font-size: 1rem;
+        background-color: #0f172a;
+        color: #e5e7eb;
+    }
+    
+    .funds-controls input[type="number"]::placeholder {
+        color: #94a3b8
+    }
+    
+    .funds-controls .btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 6px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        color: #fff;
+    }
+    
+    .funds-controls .btn.add {
+        background-color: #22c55e; /* green */
+    }
+    
+    .funds-controls .btn.add:hover {
+        background-color: #16a34a;
+    }
+    
+    .funds-controls .btn.remove {
+        background-color: #ef4444; /* red */
+    }
+    
+    .funds-controls .btn.remove:hover {
+        background-color: #dc2626;
+    }
+    
+    /* ===== Responsive ===== */
+    @media (max-width: 480px) {
+        .dashboard-balance {
+            padding: 15px 20px;
+        }
+        .funds-controls {
+            flex-direction: column;
+        }
+        .funds-controls input[type="number"], 
+        .funds-controls .btn {
+            width: 100%;
+        }
+    }
+    </style>
+
+<!-- ===== Balance Section ===== -->
+<section class="dashboard-balance">
+    <h2>💰 Available Balance</h2>
+    <p id="balance">₹100000</p>
+  
+    <div class="funds-controls">
+      <input type="number" id="balanceInput" placeholder="Enter Amount" />
+      <button id="addFundsBtn" class="btn add">Add Funds</button>
+      <button id="removeFundsBtn" class="btn remove">Remove Funds</button>
+    </div>
+  </section>
 
 </main>
 
@@ -240,28 +324,32 @@ async function fetchTopMovers() {
             ? val.toFixed(2) 
             : "--";
 
-        // Top Gainers
-        const winnersTbody = document.getElementById("top-winners-body");
-        winnersTbody.innerHTML = "";
+        // ===== Top Winners =====
+        const winnersContainer = document.getElementById("top-winners-body");
+        winnersContainer.innerHTML = "";
         data.gainers.forEach(s => {
-            winnersTbody.innerHTML += `<tr>
-                <td>${s.symbol}</td>
-                <td>₹${formatPrice(s.price)}</td>
-                <td style="color:#4ade80;">${formatChange(s.change)}%</td>
-                <td>₹${formatPrice(s.price * 10)}</td>
-            </tr>`;
+            const card = document.createElement("div");
+            card.className = "index-card";
+            card.innerHTML = `
+                <h3>${s.symbol}</h3>
+                <p class="price">₹${formatPrice(s.price)}</p>
+                <p class="change" style="color:#4ade80;">${formatChange(s.change)}%</p>
+            `;
+            winnersContainer.appendChild(card);
         });
 
-        // Top Losers
-        const losersTbody = document.getElementById("top-losers-body");
-        losersTbody.innerHTML = "";
+        // ===== Top Losers =====
+        const losersContainer = document.getElementById("top-losers-body");
+        losersContainer.innerHTML = "";
         data.losers.forEach(s => {
-            losersTbody.innerHTML += `<tr>
-                <td>${s.symbol}</td>
-                <td>₹${formatPrice(s.price)}</td>
-                <td style="color:#f87171;">${formatChange(s.change)}%</td>
-                <td>₹${formatPrice(s.price * 10)}</td>
-            </tr>`;
+            const card = document.createElement("div");
+            card.className = "index-card";
+            card.innerHTML = `
+                <h3>${s.symbol}</h3>
+                <p class="price">₹${formatPrice(s.price)}</p>
+                <p class="change" style="color:#f87171;">${formatChange(s.change)}%</p>
+            `;
+            losersContainer.appendChild(card);
         });
 
     } catch(err) {
@@ -352,6 +440,37 @@ fetch("/stocks/all")
 refreshDashboard();
 setupFinnhubWebSocket();
 setInterval(refreshDashboard, 15000); // refresh indices every 15s
+
+
+//<!-- ===== Balance Section ===== -->
+document.addEventListener("DOMContentLoaded", () => {
+  const balanceEl = document.getElementById("balance");
+  const input = document.getElementById("balanceInput");
+  const addBtn = document.getElementById("addFundsBtn");
+  const removeBtn = document.getElementById("removeFundsBtn");
+
+  let balance = 100000; // initial balance
+
+  function updateBalance(amountChange) {
+    balance += amountChange;
+    balanceEl.textContent = "₹" + balance.toFixed(2);
+  }
+
+  addBtn.addEventListener("click", () => {
+    const amt = parseFloat(input.value);
+    if (!amt || amt <= 0) return alert("Enter a valid amount!");
+    updateBalance(amt);
+    input.value = "";
+  });
+
+  removeBtn.addEventListener("click", () => {
+    const amt = parseFloat(input.value);
+    if (!amt || amt <= 0) return alert("Enter a valid amount!");
+    if (amt > balance) return alert("Cannot remove more than your current balance!");
+    updateBalance(-amt);
+    input.value = "";
+  });
+});
 
 </script>
 

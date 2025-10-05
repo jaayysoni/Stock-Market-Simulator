@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portfolio – Stock Market Simulator</title>
+<link rel="stylesheet" href="/static/css/portfolio.css">
+<style>
+  body {
+    font-family: "Inter", sans-serif;
+    margin: 0;
+    background-color: #0f172a; /* dark navy background */
+    color: #e5e7eb;
+  }
+
+  /* ===== HEADER ===== */
+  .header {
+    background-color: #111827;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 28px;
+  }
+  .header .logo {
+    font-weight: 700;
+    font-size: 1.2rem;
+  }
+  .main-nav ul {
+    list-style: none;
+    display: flex;
+    gap: 1.5rem;
+  }
+  .main-nav a {
+    color: #d1d5db;
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .main-nav a:hover {
+    color: white;
+  }
+
+  /* ===== SUMMARY CONTAINER BELOW NAVBAR ===== */
+  .summary-wrapper {
+    width: 100%;
+    background-color: #1e293b;
+    padding: 20px 0;
+    display: flex;
+    justify-content: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  }
+
+  .summary-container {
+    display: flex;
+    justify-content: space-around;
+    background-color: #0f172a;
+    border-radius: 12px;
+    padding: 18px 40px;
+    width: 80%;
+    max-width: 900px;
+    transition: all 0.4s ease;
+  }
+
+  .summary-box {
+    text-align: center;
+    width: 45%;
+  }
+  .summary-box h3 {
+    margin: 0;
+    color: #94a3b8;
+    font-size: 0.95rem;
+  }
+  .summary-box p {
+    margin: 6px 0 0;
+    font-weight: 600;
+    font-size: 1.05rem;
+    transition: opacity 0.4s ease;
+  }
+
+  .profit { color: #22c55e; }
+  .loss { color: #ef4444; }
+
+  /* ===== MAIN CONTENT ===== */
+  main.content {
+    max-width: 900px;
+    margin: 30px auto;
+    padding: 20px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #1e293b;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  th, td {
+    padding: 12px;
+    text-align: center;
+  }
+  th {
+    background-color: #334155;
+    font-weight: 600;
+  }
+  tr:hover {
+    background-color: #334155;
+    cursor: pointer;
+  }
+  tfoot td {
+    background-color: #0f172a;
+    font-weight: 600;
+    border-top: 1px solid #475569;
+  }
+
+  .status {
+    text-align: right;
+    font-size: 0.9rem;
+    margin-top: 8px;
+    color: #94a3b8;
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo">Stock Market Simulator</div>
+  <nav class="main-nav">
+    <ul>
+      <li><a href="/static/dashboard.html">Dashboard</a></li>
+      <li><a href="/static/watchlist.html">Watchlist</a></li>
+      <li><a href="/static/tradingterminal.html">Trading-Terminal</a></li>
+      <li><a href="/static/login.html">Logout</a></li>
+    </ul>
+  </nav>
+</header>
+
+<!-- ===== SUMMARY SECTION BELOW NAVBAR ===== -->
+<section class="summary-wrapper">
+  <div class="summary-container" id="summary-container">
+    <div class="summary-box">
+      <h3>Total Profit / Loss</h3>
+      <p id="total-pl-amount" class="profit">₹0.00 (+0.00%)</p>
+    </div>
+    <div class="summary-box">
+      <h3>24H Profit / Loss</h3>
+      <p id="daily-pl-amount" class="profit">₹0.00 (+0.00%)</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== MAIN CONTENT ===== -->
+<main class="content">
+  <section class="card">
+    <table>
+      <thead>
+        <tr>
+          <th>Stock</th>
+          <th>Quantity</th>
+          <th>Avg. Buy Price (₹)</th>
+          <th>Total Investment (₹)</th>
+          <th>Current Price (₹)</th>
+          <th id="pl-header">Profit / Loss (₹)</th>
+        </tr>
+      </thead>
+      <tbody id="portfolio-body"></tbody>
+      <tfoot>
+        <tr>
+          <td><strong>Totals</strong></td>
+          <td id="sum-quantity">0</td>
+          <td id="sum-avg-price">₹0.00</td>
+          <td id="sum-investment">₹0.00</td>
+          <td id="sum-current">₹0.00</td>
+          <td id="sum-profit-loss" class="profit">₹0.00</td>
+        </tr>
+      </tfoot>
+    </table>
+    <div class="status" id="status-text">Showing: Total Profit/Loss</div>
+  </section>
+</main>
+
+<script>
+const dummyPortfolio = [
+  {symbol: "RELIANCE", quantity: 10, avg_price: 2500, current_price: 2550, change_24h: 25},
+  {symbol: "TCS", quantity: 15, avg_price: 3200, current_price: 3180, change_24h: -40},
+  {symbol: "HDFC", quantity: 20, avg_price: 1500, current_price: 1525, change_24h: 10},
+  {symbol: "INFY", quantity: 12, avg_price: 1450, current_price: 1440, change_24h: -8},
+  {symbol: "ICICI", quantity: 18, avg_price: 780, current_price: 800, change_24h: 12}
+];
+
+let show24h = false;
+let autoSwitchInterval;
+
+// ===== Calculate Totals =====
+function calculateTotals() {
+  let totalQty = 0, totalInvestment = 0, totalCurrent = 0, totalPL = 0, total24hPL = 0;
+
+  dummyPortfolio.forEach(stock => {
+    totalQty += stock.quantity;
+    totalInvestment += stock.quantity * stock.avg_price;
+    totalCurrent += stock.quantity * stock.current_price;
+    totalPL += (stock.current_price - stock.avg_price) * stock.quantity;
+    total24hPL += stock.change_24h * stock.quantity;
+  });
+
+  const totalPercent = (totalPL / totalInvestment) * 100;
+  const dailyPercent = (total24hPL / totalInvestment) * 100;
+
+  updateSummary(totalPL, totalPercent, total24hPL, dailyPercent);
+}
+
+// ===== Update Summary =====
+function updateSummary(totalPL, totalPercent, dailyPL, dailyPercent) {
+  const totalElem = document.getElementById("total-pl-amount");
+  const dailyElem = document.getElementById("daily-pl-amount");
+
+  totalElem.textContent = `₹${totalPL.toFixed(2)} (${totalPercent.toFixed(2)}%)`;
+  totalElem.className = totalPL >= 0 ? "profit" : "loss";
+
+  dailyElem.textContent = `₹${dailyPL.toFixed(2)} (${dailyPercent.toFixed(2)}%)`;
+  dailyElem.className = dailyPL >= 0 ? "profit" : "loss";
+}
+
+// ===== Render Portfolio =====
+function renderPortfolio(is24h = false) {
+  const tbody = document.getElementById("portfolio-body");
+  tbody.innerHTML = "";
+
+  let totalQty = 0, totalInvestment = 0, totalCurrent = 0, totalProfitLoss = 0;
+
+  dummyPortfolio.forEach(stock => {
+    const totalInvest = stock.quantity * stock.avg_price;
+    const plValue = is24h ? stock.change_24h * stock.quantity
+                          : (stock.current_price - stock.avg_price) * stock.quantity;
+    const profitClass = plValue >= 0 ? "profit" : "loss";
+    const row = document.createElement("tr");
+
+    row.innerHTML = `
+      <td>${stock.symbol}</td>
+      <td>${stock.quantity}</td>
+      <td>₹${stock.avg_price.toFixed(2)}</td>
+      <td>₹${totalInvest.toFixed(2)}</td>
+      <td>₹${stock.current_price.toFixed(2)}</td>
+      <td class="${profitClass}">₹${plValue.toFixed(2)}</td>
+    `;
+    tbody.appendChild(row);
+
+    totalQty += stock.quantity;
+    totalInvestment += totalInvest;
+    totalCurrent += stock.current_price * stock.quantity;
+    totalProfitLoss += plValue;
+
+    // Hover instantly switches to 24H mode
+    row.addEventListener("mouseenter", () => {
+      show24h = true;
+      renderPortfolio(show24h);
+    });
+  });
+
+  const avgBuyPrice = totalInvestment / totalQty;
+
+  document.getElementById("sum-quantity").textContent = totalQty;
+  document.getElementById("sum-avg-price").textContent = "₹" + avgBuyPrice.toFixed(2);
+  document.getElementById("sum-investment").textContent = "₹" + totalInvestment.toFixed(2);
+  document.getElementById("sum-current").textContent = "₹" + totalCurrent.toFixed(2);
+  const sumPL = document.getElementById("sum-profit-loss");
+  sumPL.textContent = "₹" + totalProfitLoss.toFixed(2);
+  sumPL.className = totalProfitLoss >= 0 ? "profit" : "loss";
+
+  document.getElementById("status-text").textContent = is24h
+    ? "Showing: 24H Profit/Loss"
+    : "Showing: Total Profit/Loss";
+
+  // Smooth fade for transition
+  document.getElementById("summary-container").style.opacity = "0.5";
+  setTimeout(() => (document.getElementById("summary-container").style.opacity = "1"), 300);
+}
+
+// ===== Toggle View =====
+function toggleView() {
+  show24h = !show24h;
+  renderPortfolio(show24h);
+}
+
+// ===== Auto Switch Every 10 Seconds =====
+function startAutoSwitch() {
+  if (autoSwitchInterval) clearInterval(autoSwitchInterval);
+  autoSwitchInterval = setInterval(toggleView, 10000);
+}
+
+// ===== Initialize =====
+calculateTotals();
+renderPortfolio();
+startAutoSwitch();
+</script>
+
+</body>
+</html>

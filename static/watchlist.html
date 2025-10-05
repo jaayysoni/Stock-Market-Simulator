@@ -5,10 +5,98 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Watchlist — Stock Market Simulator</title>
 <link rel="stylesheet" href="/static/css/watchlist.css" />
+<style>
+/* ===== Navbar (Dashboard Style) ===== */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #161b22;     /* Deep dashboard tone */
+  color: #f5f5f5;
+  padding: 14px 40px;
+  border-bottom: 1px solid #2b2b2b;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #00c2ff;
+}
+
+.main-nav ul {
+  list-style: none;
+  display: flex;
+  gap: 28px;
+  margin: 0;
+  padding: 0;
+}
+
+.main-nav ul li a {
+  text-decoration: none;
+  color: #dcdcdc;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  transition: all 0.3s ease;
+  position: relative;
+  padding-bottom: 4px;
+}
+
+/* .main-nav ul li a:hover,
+.main-nav ul li a.active {
+  color: #00c2ff;
+} */
+
+/* .main-nav ul li a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 0%;
+  height: 2px;
+  background: #00c2ff;
+  transition: width 0.3s ease;
+} */
+
+.main-nav ul li a:hover::after,
+.main-nav ul li a.active::after {
+  width: 100%;
+}
+
+/* Mobile-friendly */
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 16px 20px;
+  }
+  .main-nav ul {
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 8px;
+  }
+}
+</style>
+  </style>
 </head>
 <body>
-<!-- back button -->
-  <button class="back-btn" onclick="window.location.href='/dashboard'">← Back to Dashboard</button>
+  <header class="header">
+    <nav class="main-nav">
+        <ul>
+            <li><a href="/static/dashboard.html">Dashboard</a></li>
+            <li><a href="/static/portfolio.html">Portfolio</a></li>
+            <li><a href="/static/tradingterminal.html">Trading-Terminal</a></li>
+            <li><a href="/static/login.html">Logout</a></li>
+        </ul>
+    </nav>
+</header>
+
+<main class="content">
+
 <!-- TOP: Search bar -->
 <div style="display:flex; justify-content:center; margin: 12px 0; gap:8px;">
   <input type="text" id="w-search" placeholder="Search or add stock..." />

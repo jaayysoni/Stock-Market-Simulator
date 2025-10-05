@@ -130,6 +130,25 @@ tbody tr:hover {
     color: #ef6464;
     font-weight: 700;
 }
+#top-winners-body .index-card,
+#top-losers-body .index-card {
+    background-color: #161b22;   /* same as market overview */
+    border: 1px solid #30363d;   /* visible border */
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+    cursor: pointer;
+    flex: 1;
+    text-align: center;
+}
+
+#top-winners-body .index-card:hover,
+#top-losers-body .index-card:hover {
+    border-color: #58a6ff;
+    box-shadow: 0 4px 12px rgba(88,166,255,0.4);
+    transform: translateY(-3px);
+}
 
 /* ===== TRADE BUTTON ===== */
 .trade-btn {
@@ -229,5 +248,92 @@ tbody tr:hover {
 
     .main-nav ul {
         display: none;
+    }
+}
+
+/* ===== DASHBOARD BALANCE SECTION ===== */
+.dashboard-balance {
+    background-color: #1e293b; /* dark card background */
+    padding: 20px 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    max-width: 400px;
+    margin: 20px auto;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.dashboard-balance h2 {
+    margin: 0 0 10px;
+    font-size: 1.3rem;
+    color: #e5e7eb;
+}
+
+.dashboard-balance p#balance {
+    font-size: 1.6rem;
+    font-weight: 600;
+    margin: 10px 0 15px;
+    color: #22c55e; /* green for positive balance */
+}
+
+.funds-controls {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.funds-controls input[type="number"] {
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: none;
+    outline: none;
+    width: 130px;
+    font-size: 1rem;
+    background-color: #0f172a;
+    color: #e5e7eb;
+}
+
+.funds-controls input[type="number"]::placeholder {
+    color: #94a3b8;
+}
+
+.funds-controls .btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #fff;
+}
+
+.funds-controls .btn.add {
+    background-color: #22c55e; /* green */
+}
+
+.funds-controls .btn.add:hover {
+    background-color: #16a34a;
+}
+
+.funds-controls .btn.remove {
+    background-color: #ef4444; /* red */
+}
+
+.funds-controls .btn.remove:hover {
+    background-color: #dc2626;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 480px) {
+    .dashboard-balance {
+        padding: 15px 20px;
+    }
+    .funds-controls {
+        flex-direction: column;
+    }
+    .funds-controls input[type="number"], 
+    .funds-controls .btn {
+        width: 100%;
     }
 }

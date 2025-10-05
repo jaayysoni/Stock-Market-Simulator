@@ -1,0 +1,120 @@
+body {
+    font-family: "Poppins", sans-serif;
+    margin: 0;
+    background: #0b0e11;
+    color: #e4e4e4;
+  }
+  
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #111418;
+    padding: 1rem 2rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+  
+  .logo {
+    font-size: 1.4rem;
+    font-weight: 600;
+  }
+  
+  .main-nav ul {
+    list-style: none;
+    display: flex;
+    gap: 1.5rem;
+  }
+  
+  .main-nav a {
+    color: #e4e4e4;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s;
+  }
+  
+  .main-nav a:hover {
+    color: #00b894;
+  }
+  
+  .profit-container {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    padding: 1rem;
+    background: #161a1f;
+    margin: 0;
+    box-shadow: inset 0 -1px 0 rgba(255,255,255,0.05);
+    transition: all 0.3s ease;
+  }
+  
+  .profit-box {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem 2rem;
+    background: #1c2128;
+    border-radius: 12px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    cursor: pointer;
+    transition: transform 0.3s ease;
+  }
+  
+  .profit-box:hover {
+    transform: scale(1.02);
+  }
+  
+  .profit-box h3 {
+    margin: 0;
+    color: #bbb;
+    font-size: 0.95rem;
+  }
+  
+  .profit-box p {
+    margin: 0.3rem 0 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+  }
+  
+  main.content {
+    padding: 2rem;
+  }
+  
+  .card {
+    background: #161a1f;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+  }
+  
+  .card h2 {
+    margin-bottom: 1rem;
+    color: #e4e4e4;
+  }
+  
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: center;
+  }
+  
+  th, td {
+    padding: 0.8rem;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+  
+  th {
+    background: #1c2128;
+  }
+  
+  .profit {
+    color: #00e676;
+  }
+  
+  .loss {
+    color: #ff5252;
+  }
+  
+  .summary-row {
+    font-weight: 600;
+    background: #1e242c;
+  }
