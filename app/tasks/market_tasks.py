@@ -1,67 +1,66 @@
 # app/tasks/market_tasks.py
 import asyncio
 import yfinance as yf
-from app.utils.cache import get_redis
 import json
+from app.utils.cache import get_redis
+from app.services.stock_service import load_nse_top_500
+
+TOP_GAINERS_KEY = "top_gainers"
+TOP_LOSERS_KEY = "top_losers"
+MARKET_INDICES_KEY = "market_indices"
+
+INDICES_REFRESH_INTERVAL = 60
+TOP_MOVERS_REFRESH_INTERVAL = 120
+
+async def fetch_stock_info(symbol: str):
+    try:
+        info = await asyncio.to_thread(lambda: yf.Ticker(symbol).info)
+        return {
+            "symbol": symbol,
+            "price": info.get("regularMarketPrice"),
+            "change": info.get("regularMarketChangePercent") or 0
+        }
+    except Exception:
+        return None
 
 async def refresh_market_indices():
-    """
-    Refresh BSE, NSE, Bank Nifty prices every 60 seconds.
-    Store them in Redis as a hash.
-    """
     redis_client = await get_redis()
-    
     while True:
         try:
-            bse = yf.Ticker("^BSESN").info
-            nse = yf.Ticker("^NSEI").info
-            bank_nifty = yf.Ticker("^NSEBANK").info
-            
-            await redis_client.hset("market_indices", mapping={
-                "BSE_price": bse.get("regularMarketPrice"),
-                "BSE_change": bse.get("regularMarketChangePercent"),
-                "NSE_price": nse.get("regularMarketPrice"),
-                "NSE_change": nse.get("regularMarketChangePercent"),
-                "BankNifty_price": bank_nifty.get("regularMarketPrice"),
-                "BankNifty_change": bank_nifty.get("regularMarketChangePercent"),
+            bse, nse, bank_nifty = await asyncio.gather(
+                fetch_stock_info("^BSESN"),
+                fetch_stock_info("^NSEI"),
+                fetch_stock_info("^NSEBANK")
+            )
+            await redis_client.hset(MARKET_INDICES_KEY, mapping={
+                "BSE_price": bse["price"],
+                "BSE_change": bse["change"],
+                "NSE_price": nse["price"],
+                "NSE_change": nse["change"],
+                "BankNifty_price": bank_nifty["price"],
+                "BankNifty_change": bank_nifty["change"],
             })
         except Exception as e:
             print("Error refreshing market indices:", e)
-        
-        await asyncio.sleep(60)  # refresh every 60s
-
+        await asyncio.sleep(INDICES_REFRESH_INTERVAL)
 
 async def refresh_top_movers():
-    """
-    Refresh top 4 gainers and top 4 losers every 60 seconds.
-    Store them in Redis as JSON strings.
-    """
     redis_client = await get_redis()
-    symbols = ["RELIANCE.NS", "TCS.NS", "INFY.NS", "HDFCBANK.NS"]  # example top stocks
+    symbols = [s + ".NS" for s in load_nse_top_500()]
 
     while True:
         try:
-            data = []
-            for sym in symbols:
-                try:
-                    stock = yf.Ticker(sym).info
-                    data.append({
-                        "symbol": sym,
-                        "price": stock.get("regularMarketPrice"),
-                        "change": stock.get("regularMarketChangePercent")
-                    })
-                except Exception as e:
-                    print(f"Error fetching {sym}: {e}")
-                    continue
+            # Fetch stock info concurrently in batches
+            tasks = [fetch_stock_info(sym) for sym in symbols]
+            results = await asyncio.gather(*tasks)
 
-            # Sort top 4 gainers
-            gainers = sorted(data, key=lambda x: x["change"] or 0, reverse=True)[:4]
-            # Sort top 4 losers
-            losers = sorted(data, key=lambda x: x["change"] or 0)[:4]
+            data = [r for r in results if r is not None]
 
-            await redis_client.set("top_gainers", json.dumps(gainers))
-            await redis_client.set("top_losers", json.dumps(losers))
+            gainers = sorted(data, key=lambda x: x["change"], reverse=True)[:4]
+            losers = sorted(data, key=lambda x: x["change"])[:4]
+
+            await redis_client.set(TOP_GAINERS_KEY, json.dumps(gainers))
+            await redis_client.set(TOP_LOSERS_KEY, json.dumps(losers))
         except Exception as e:
             print("Error refreshing top movers:", e)
-
-        await asyncio.sleep(30)  # refresh every 30s
+        await asyncio.sleep(TOP_MOVERS_REFRESH_INTERVAL)
