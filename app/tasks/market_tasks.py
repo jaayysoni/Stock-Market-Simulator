@@ -9,7 +9,7 @@ TOP_GAINERS_KEY = "top_gainers"
 TOP_LOSERS_KEY = "top_losers"
 MARKET_INDICES_KEY = "market_indices"
 
-INDICES_REFRESH_INTERVAL = 60
+INDICES_REFRESH_INTERVAL = 150
 TOP_MOVERS_REFRESH_INTERVAL = 120
 
 async def fetch_stock_info(symbol: str):

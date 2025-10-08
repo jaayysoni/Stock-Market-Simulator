@@ -10,6 +10,7 @@ from fastapi.responses import FileResponse, HTMLResponse
 import os
 import asyncio
 from app.routers import market_router
+from app.tasks.nifty_tasks import refresh_nifty_cache
 
 from app.routers import ws_router  
 from app.database.db import user_engine, UserBase, market_engine, MarketBase
@@ -117,6 +118,10 @@ async def startup_event():
     asyncio.create_task(refresh_market_indices())
     asyncio.create_task(refresh_top_movers())
     print("🟢 Redis market indices and top movers tasks started")
+
+    # 🟢 Start Nifty 50 historical cache task
+    asyncio.create_task(refresh_nifty_cache())
+    print("🟢 Redis market indices, top movers, and Nifty cache tasks started")
 
 @app.on_event("shutdown")
 def shutdown_event():

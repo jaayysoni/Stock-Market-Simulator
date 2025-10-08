@@ -1,13 +1,6 @@
 # app/config.py
 
-from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
-from pathlib import Path
-import os
-
-# Load .env file explicitly
-env_path = Path('.') / '.env'
-load_dotenv(dotenv_path=env_path)
 
 class Settings(BaseSettings):
     # -------------------------
@@ -18,42 +11,45 @@ class Settings(BaseSettings):
     # -------------------------
     # Internal API key
     # -------------------------
-    API_KEY: str = os.getenv("API_KEY", "your-default-api-key")
+    API_KEY: str = "your-default-api-key"
 
     # -------------------------
     # Debug mode
     # -------------------------
-    DEBUG: bool = os.getenv("DEBUG", "False").lower() == "true"
+    DEBUG: bool = False
 
     # -------------------------
     # JWT settings
     # -------------------------
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "your-secret-key")
+    SECRET_KEY: str = "your-secret-key"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
     # -------------------------
     # Google OAuth
     # -------------------------
-    GOOGLE_CLIENT_ID: str = os.getenv("GOOGLE_CLIENT_ID", "")
-    GOOGLE_CLIENT_SECRET: str = os.getenv("GOOGLE_CLIENT_SECRET", "")
-    GOOGLE_REDIRECT_URI: str = os.getenv(
-        "GOOGLE_REDIRECT_URI",
-        "http://localhost:8000/auth/google/callback"
-    )
+    GOOGLE_CLIENT_ID: str = ""
+    GOOGLE_CLIENT_SECRET: str = ""
+    GOOGLE_REDIRECT_URI: str = "http://localhost:8000/auth/google/callback"
 
     # -------------------------
     # Finnhub API
     # -------------------------
-    FINNHUB_API_KEY: str = os.getenv("FINNHUB_API_KEY", "")
+    FINNHUB_API_KEY: str = ""
+
+    # -------------------------
+    # Financial Modeling Prep (FMP) API
+    # -------------------------
+    FMP_API_KEY: str  # <-- mandatory, must be in .env or environment
 
     # -------------------------
     # Pydantic config
     # -------------------------
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        extra = "forbid"  # Do not allow unknown env vars to silently pass
+    model_config = {
+        "env_file": ".env",
+        "env_file_encoding": "utf-8",
+        "extra": "forbid",  # Do not allow unknown env vars
+    }
 
 # Instantiate global settings object
 settings = Settings()
