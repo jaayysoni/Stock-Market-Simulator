@@ -85,6 +85,10 @@ def trading_terminal_page():
     return FileResponse(os.path.join(BASE_DIR, "static/tradingterminal.html"))
 
 # ----------------- Events -----------------
+# ----------------- Events -----------------
+
+RUN_FINNHUB_WS = os.getenv("RUN_FINNHUB_WS", "1") == "1"
+RUN_YFINANCE = os.getenv("RUN_YFINANCE", "1") == "1"
 
 @app.on_event("startup")
 async def startup_event():
@@ -110,19 +114,24 @@ async def startup_event():
     start_scheduler()
     print("⏰ Scheduler started")
 
-    # 📡 Start Finnhub WebSocket in background
-    asyncio.create_task(finnhub_client.connect())
-    print("📡 Finnhub WebSocket started")
+    # 📡 Start Finnhub WebSocket in background if allowed
+    if RUN_FINNHUB_WS:
+        asyncio.create_task(finnhub_client.connect())
+        print("📡 Finnhub WebSocket started")
+    else:
+        print("⚠️ Finnhub WebSocket temporarily halted")
 
-    # 🟢 Start Redis market refresh tasks
-    asyncio.create_task(refresh_market_indices())
-    asyncio.create_task(refresh_top_movers())
-    print("🟢 Redis market indices and top movers tasks started")
+    # 🟢 Start Redis market refresh tasks if allowed (yfinance)
+    if RUN_YFINANCE:
+        asyncio.create_task(refresh_market_indices())
+        asyncio.create_task(refresh_top_movers())
+        print("🟢 Redis market indices and top movers tasks started")
+    else:
+        print("⚠️ yfinance tasks temporarily halted")
 
-    # 🟢 Start Nifty 50 historical cache task
+    # 🟢 Start Nifty 50 historical cache task (optional, can also halt if needed)
     asyncio.create_task(refresh_nifty_cache())
     print("🟢 Redis market indices, top movers, and Nifty cache tasks started")
-
 @app.on_event("shutdown")
 def shutdown_event():
     print("👋 Application is shutting down... cleaning up.")

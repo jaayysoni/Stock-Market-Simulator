@@ -20,18 +20,11 @@
   </select>
 </div>
 
-<div id="transactions-container"></div>
+<div id="transactions-container">Loading transactions...</div>
 
 <script>
-// ===== Dummy Data =====
-const transactions = [
-  { type: "buy", symbol: "RELIANCE", quantity: 10, price: 2450, date: "2025-09-30T10:30:00", status: "completed" },
-  { type: "sell", symbol: "INFY", quantity: 5, price: 1525, date: "2025-09-28T15:00:00", status: "completed" },
-  { type: "money-add", amount: 50000, date: "2025-09-25T12:15:00", status: "completed" },
-  { type: "money-remove", amount: 10000, date: "2025-08-20T11:00:00", status: "completed" },
-  { type: "buy", symbol: "TCS", quantity: 7, price: 3190, date: "2025-08-18T09:45:00", status: "completed" },
-  { type: "sell", symbol: "HDFC", quantity: 3, price: 1580, date: "2025-07-22T14:30:00", status: "completed" },
-];
+let transactions = [];
+let filteredTransactions = [];
 
 // ===== Helper =====
 function formatDateTime(dt) {
@@ -48,13 +41,20 @@ function groupByMonth(transactions) {
   }, {});
 }
 
+// ===== Render Transactions =====
 function renderTransactions(filter="", sort="date-desc") {
   const container = document.getElementById("transactions-container");
   container.innerHTML = "";
 
-  let filtered = transactions.filter(tx => {
+  if(!filteredTransactions || filteredTransactions.length === 0){
+    container.textContent = "No transactions yet.";
+    return;
+  }
+
+  let filtered = filteredTransactions.filter(tx => {
     if(!filter) return true;
-    return (tx.symbol && tx.symbol.toLowerCase().includes(filter.toLowerCase())) || tx.type.toLowerCase().includes(filter.toLowerCase());
+    return (tx.symbol && tx.symbol.toLowerCase().includes(filter.toLowerCase())) 
+           || tx.type.toLowerCase().includes(filter.toLowerCase());
   });
 
   // ===== Sorting =====
@@ -75,7 +75,6 @@ function renderTransactions(filter="", sort="date-desc") {
     const table = document.createElement("table");
     table.className = "transaction-table";
 
-    // Table Header
     table.innerHTML = `<thead>
       <tr>
         <th>Type</th>
@@ -100,21 +99,21 @@ function renderTransactions(filter="", sort="date-desc") {
         typeClass = "buy";
         details = tx.symbol;
         quantityAmount = tx.quantity;
-        price = `₹${tx.price.toLocaleString('en-IN')}`;
+        price = `₹${tx.price?.toLocaleString('en-IN') || '-'}`;
       } else if(tx.type === "sell") {
         typeClass = "sell";
         details = tx.symbol;
         quantityAmount = tx.quantity;
-        price = `₹${tx.price.toLocaleString('en-IN')}`;
+        price = `₹${tx.price?.toLocaleString('en-IN') || '-'}`;
       } else if(tx.type === "money-add") {
         typeClass = "money-add";
         details = "Money Added";
-        quantityAmount = `₹${tx.amount.toLocaleString('en-IN')}`;
+        quantityAmount = `₹${tx.amount?.toLocaleString('en-IN') || '-'}`;
         price = "-";
       } else if(tx.type === "money-remove") {
         typeClass = "money-remove";
         details = "Money Deducted";
-        quantityAmount = `₹${tx.amount.toLocaleString('en-IN')}`;
+        quantityAmount = `₹${tx.amount?.toLocaleString('en-IN') || '-'}`;
         price = "-";
       }
 
@@ -124,7 +123,7 @@ function renderTransactions(filter="", sort="date-desc") {
         <td>${quantityAmount}</td>
         <td>${price}</td>
         <td>${formatDateTime(tx.date)}</td>
-        <td>${tx.status}</td>
+        <td>${tx.status || "completed"}</td>
       `;
       tbody.appendChild(tr);
     });
@@ -133,6 +132,43 @@ function renderTransactions(filter="", sort="date-desc") {
     section.appendChild(table);
     container.appendChild(section);
   });
+}
+
+// ===== Fetch Transactions from Backend =====
+async function fetchTransactions() {
+  try {
+    const res = await fetch("/portfolio/transactions", {
+      method: "GET",
+      credentials: "include" // <-- send cookie for JWT auth
+    });
+    if(!res.ok) throw new Error("Network response was not ok");
+
+    const data = await res.json();
+
+    if(!Array.isArray(data) || data.length === 0) {
+      transactions = [];
+      filteredTransactions = [];
+      renderTransactions();
+      return;
+    }
+
+    // Map backend response to frontend format
+    transactions = data.map(tx => ({
+      type: tx.type.toLowerCase(),
+      symbol: tx.symbol || null,
+      quantity: tx.quantity || null,
+      price: tx.price || null,
+      amount: tx.amount || null,
+      date: tx.timestamp,
+      status: "completed"
+    }));
+
+    filteredTransactions = [...transactions];
+    renderTransactions();
+  } catch(err) {
+    console.error("Failed to fetch transactions:", err);
+    document.getElementById("transactions-container").textContent = "Failed to load transactions.";
+  }
 }
 
 // ===== Event Listeners =====
@@ -144,8 +180,8 @@ document.getElementById("transaction-sort").addEventListener("change", e=>{
   renderTransactions(document.getElementById("transaction-search").value, e.target.value);
 });
 
-// ===== Initial Render =====
-renderTransactions();
+// ===== Initial Fetch =====
+fetchTransactions();
 </script>
 
 </body>

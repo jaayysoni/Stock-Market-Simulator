@@ -9,11 +9,9 @@
   body {
     font-family: "Inter", sans-serif;
     margin: 0;
-    background-color: #0f172a; /* dark navy background */
+    background-color: #0f172a; 
     color: #e5e7eb;
   }
-
-  /* ===== HEADER ===== */
   .header {
     background-color: #111827;
     color: white;
@@ -22,25 +20,10 @@
     align-items: center;
     padding: 14px 28px;
   }
-  .header .logo {
-    font-weight: 700;
-    font-size: 1.2rem;
-  }
-  .main-nav ul {
-    list-style: none;
-    display: flex;
-    gap: 1.5rem;
-  }
-  .main-nav a {
-    color: #d1d5db;
-    text-decoration: none;
-    font-weight: 500;
-  }
-  .main-nav a:hover {
-    color: white;
-  }
-
-  /* ===== SUMMARY CONTAINER BELOW NAVBAR ===== */
+  .header .logo { font-weight: 700; font-size: 1.2rem; }
+  .main-nav ul { list-style: none; display: flex; gap: 1.5rem; }
+  .main-nav a { color: #d1d5db; text-decoration: none; font-weight: 500; }
+  .main-nav a:hover { color: white; }
   .summary-wrapper {
     width: 100%;
     background-color: #1e293b;
@@ -49,7 +32,6 @@
     justify-content: center;
     box-shadow: 0 2px 10px rgba(0,0,0,0.3);
   }
-
   .summary-container {
     display: flex;
     justify-content: space-around;
@@ -60,64 +42,18 @@
     max-width: 900px;
     transition: all 0.4s ease;
   }
-
-  .summary-box {
-    text-align: center;
-    width: 45%;
-  }
-  .summary-box h3 {
-    margin: 0;
-    color: #94a3b8;
-    font-size: 0.95rem;
-  }
-  .summary-box p {
-    margin: 6px 0 0;
-    font-weight: 600;
-    font-size: 1.05rem;
-    transition: opacity 0.4s ease;
-  }
-
+  .summary-box { text-align: center; width: 45%; }
+  .summary-box h3 { margin: 0; color: #94a3b8; font-size: 0.95rem; }
+  .summary-box p { margin: 6px 0 0; font-weight: 600; font-size: 1.05rem; transition: opacity 0.4s ease; }
   .profit { color: #22c55e; }
   .loss { color: #ef4444; }
-
-  /* ===== MAIN CONTENT ===== */
-  main.content {
-    max-width: 900px;
-    margin: 30px auto;
-    padding: 20px;
-  }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    background-color: #1e293b;
-    border-radius: 12px;
-    overflow: hidden;
-  }
-  th, td {
-    padding: 12px;
-    text-align: center;
-  }
-  th {
-    background-color: #334155;
-    font-weight: 600;
-  }
-  tr:hover {
-    background-color: #334155;
-    cursor: pointer;
-  }
-  tfoot td {
-    background-color: #0f172a;
-    font-weight: 600;
-    border-top: 1px solid #475569;
-  }
-
-  .status {
-    text-align: right;
-    font-size: 0.9rem;
-    margin-top: 8px;
-    color: #94a3b8;
-  }
+  main.content { max-width: 900px; margin: 30px auto; padding: 20px; }
+  table { width: 100%; border-collapse: collapse; background-color: #1e293b; border-radius: 12px; overflow: hidden; }
+  th, td { padding: 12px; text-align: center; }
+  th { background-color: #334155; font-weight: 600; }
+  tr:hover { background-color: #334155; cursor: pointer; }
+  tfoot td { background-color: #0f172a; font-weight: 600; border-top: 1px solid #475569; }
+  .status { text-align: right; font-size: 0.9rem; margin-top: 8px; color: #94a3b8; }
 </style>
 </head>
 <body>
@@ -134,7 +70,6 @@
   </nav>
 </header>
 
-<!-- ===== SUMMARY SECTION BELOW NAVBAR ===== -->
 <section class="summary-wrapper">
   <div class="summary-container" id="summary-container">
     <div class="summary-box">
@@ -148,7 +83,6 @@
   </div>
 </section>
 
-<!-- ===== MAIN CONTENT ===== -->
 <main class="content">
   <section class="card">
     <table>
@@ -179,32 +113,38 @@
 </main>
 
 <script>
-const dummyPortfolio = [
-  {symbol: "RELIANCE", quantity: 10, avg_price: 2500, current_price: 2550, change_24h: 25},
-  {symbol: "TCS", quantity: 15, avg_price: 3200, current_price: 3180, change_24h: -40},
-  {symbol: "HDFC", quantity: 20, avg_price: 1500, current_price: 1525, change_24h: 10},
-  {symbol: "INFY", quantity: 12, avg_price: 1450, current_price: 1440, change_24h: -8},
-  {symbol: "ICICI", quantity: 18, avg_price: 780, current_price: 800, change_24h: 12}
-];
-
+let portfolio = [];
 let show24h = false;
 let autoSwitchInterval;
 
+// ===== Fetch Portfolio from Backend =====
+async function fetchPortfolio() {
+  try {
+    const res = await fetch("/portfolio/holdings");
+    const data = await res.json();
+    portfolio = Array.isArray(data) ? data : [];
+    calculateTotals();
+    renderPortfolio();
+  } catch (err) {
+    console.error("Failed to fetch portfolio:", err);
+  }
+}
+
 // ===== Calculate Totals =====
 function calculateTotals() {
-  let totalQty = 0, totalInvestment = 0, totalCurrent = 0, totalPL = 0, total24hPL = 0;
+  let totalQty = 0, totalInvest = 0, totalCurrent = 0, totalPL = 0, total24hPL = 0;
 
-  dummyPortfolio.forEach(stock => {
+  portfolio.forEach(stock => {
+    const livePrice = stock.live_price || 0;
     totalQty += stock.quantity;
-    totalInvestment += stock.quantity * stock.avg_price;
-    totalCurrent += stock.quantity * stock.current_price;
-    totalPL += (stock.current_price - stock.avg_price) * stock.quantity;
-    total24hPL += stock.change_24h * stock.quantity;
+    totalInvest += stock.quantity * stock.avg_price;
+    totalCurrent += stock.quantity * livePrice;
+    totalPL += (livePrice - stock.avg_price) * stock.quantity;
+    total24hPL += (stock.change_24h || 0) * stock.quantity;
   });
 
-  const totalPercent = (totalPL / totalInvestment) * 100;
-  const dailyPercent = (total24hPL / totalInvestment) * 100;
-
+  const totalPercent = totalInvest ? (totalPL / totalInvest) * 100 : 0;
+  const dailyPercent = totalInvest ? (total24hPL / totalInvest) * 100 : 0;
   updateSummary(totalPL, totalPercent, total24hPL, dailyPercent);
 }
 
@@ -227,36 +167,37 @@ function renderPortfolio(is24h = false) {
 
   let totalQty = 0, totalInvestment = 0, totalCurrent = 0, totalProfitLoss = 0;
 
-  dummyPortfolio.forEach(stock => {
+  portfolio.forEach(stock => {
+    const livePrice = stock.live_price || 0;
     const totalInvest = stock.quantity * stock.avg_price;
-    const plValue = is24h ? stock.change_24h * stock.quantity
-                          : (stock.current_price - stock.avg_price) * stock.quantity;
+    const plValue = is24h ? (stock.change_24h || 0) * stock.quantity
+                          : (livePrice - stock.avg_price) * stock.quantity;
     const profitClass = plValue >= 0 ? "profit" : "loss";
-    const row = document.createElement("tr");
 
+    const row = document.createElement("tr");
     row.innerHTML = `
       <td>${stock.symbol}</td>
       <td>${stock.quantity}</td>
       <td>₹${stock.avg_price.toFixed(2)}</td>
       <td>₹${totalInvest.toFixed(2)}</td>
-      <td>₹${stock.current_price.toFixed(2)}</td>
+      <td>₹${livePrice.toFixed(2)}</td>
       <td class="${profitClass}">₹${plValue.toFixed(2)}</td>
     `;
     tbody.appendChild(row);
 
     totalQty += stock.quantity;
     totalInvestment += totalInvest;
-    totalCurrent += stock.current_price * stock.quantity;
+    totalCurrent += livePrice * stock.quantity;
     totalProfitLoss += plValue;
 
-    // Hover instantly switches to 24H mode
+    // Hover switches to 24H P/L
     row.addEventListener("mouseenter", () => {
       show24h = true;
       renderPortfolio(show24h);
     });
   });
 
-  const avgBuyPrice = totalInvestment / totalQty;
+  const avgBuyPrice = totalInvestment / (totalQty || 1);
 
   document.getElementById("sum-quantity").textContent = totalQty;
   document.getElementById("sum-avg-price").textContent = "₹" + avgBuyPrice.toFixed(2);
@@ -270,7 +211,6 @@ function renderPortfolio(is24h = false) {
     ? "Showing: 24H Profit/Loss"
     : "Showing: Total Profit/Loss";
 
-  // Smooth fade for transition
   document.getElementById("summary-container").style.opacity = "0.5";
   setTimeout(() => (document.getElementById("summary-container").style.opacity = "1"), 300);
 }
@@ -288,8 +228,7 @@ function startAutoSwitch() {
 }
 
 // ===== Initialize =====
-calculateTotals();
-renderPortfolio();
+fetchPortfolio();
 startAutoSwitch();
 </script>
 

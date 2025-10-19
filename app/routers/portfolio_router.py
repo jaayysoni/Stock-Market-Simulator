@@ -33,7 +33,7 @@ def buy_stock(
     price_data = get_multiple_stock_prices([symbol])
     if not price_data or price_data[symbol]["price"] is None:
         raise HTTPException(status_code=404, detail="Stock price not available")
-    
+
     price = price_data[symbol]["price"]
     total_cost = price * quantity
 
@@ -147,15 +147,16 @@ def get_portfolio_holdings(
     if not portfolio_items:
         return {"message": "No holdings yet."}
 
-    symbols = [item.stock.symbol for item in portfolio_items]
+    symbols = [item.stock.symbol for item in portfolio_items if item.stock]
     prices_data = get_multiple_stock_prices(symbols)
 
     result = []
     for item in portfolio_items:
-        live_price = prices_data[item.stock.symbol]["price"] if prices_data.get(item.stock.symbol) else None
+        symbol = item.stock.symbol if item.stock else None
+        live_price = prices_data[symbol]["price"] if symbol and prices_data.get(symbol) else None
         pl = (live_price - item.avg_price) * item.quantity if live_price else None
         result.append({
-            "symbol": item.stock.symbol,
+            "symbol": symbol,
             "quantity": item.quantity,
             "avg_price": item.avg_price,
             "live_price": live_price,
@@ -166,6 +167,7 @@ def get_portfolio_holdings(
 # ==============================
 # Transaction History
 # ==============================
+# app/routers/portfolio_router.py
 @router.get("/transactions")
 def get_transaction_history(
     market_db: Session = Depends(get_market_db),
@@ -178,10 +180,10 @@ def get_transaction_history(
     result = []
     for t in transactions:
         result.append({
-            "symbol": t.stock.symbol,
+            "symbol": t.stock.symbol if t.stock else None,
             "quantity": t.quantity,
             "price": t.price,
-            "type": t.transaction_type,
+            "type": t.transaction_type.lower(),
             "timestamp": t.timestamp
         })
     return result
