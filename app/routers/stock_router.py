@@ -20,7 +20,7 @@ router = APIRouter(tags=["Stocks"])
 # ==============================
 # Cache for Top 500 (Finnhub)
 # ==============================
-CACHE_TTL = 300  # 5 minutes
+CACHE_TTL = 900  # 5 minutes
 _top500_cache = {"data": {}, "timestamp": 0}
 
 # ==============================
@@ -167,7 +167,7 @@ async def websocket_stocks(ws: WebSocket):
             symbol = msg_data.get("symbol")
             if not symbol:
                 continue
-            if action == "subscribe":
+            if action == "subscribe" and symbol not in client_symbols:
                 client_symbols.add(symbol)
                 await finnhub_client.subscribe(symbol)
             elif action == "unsubscribe":

@@ -42,12 +42,54 @@
 .index-card .price { font-size: 1.5rem; font-weight: bold; margin-bottom: 5px; }
 .index-card .change { font-size: 1rem; }
 
-/* ===== Chart Styling ===== */
-#chartCanvas {
-    width: 100%;
-    height: 300px;
-    background-color: #2a2a3e;
-    border-radius: 10px;
+/* ===== DASHBOARD BALANCE SECTION ===== */
+.dashboard-balance {
+    background-color: #161b22;
+    padding: 20px 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    max-width: 400px;
+    margin: 20px auto;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+.dashboard-balance h2 {
+    margin: 0 0 10px;
+    font-size: 1.3rem;
+    color: #e5e7eb;
+}
+.dashboard-balance p#balance {
+    font-size: 1.6rem;
+    font-weight: 600;
+    margin: 10px 0 15px;
+    color: #22c55e;
+}
+.funds-controls {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+.funds-controls input[type="number"] {
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: none;
+    outline: none;
+    width: 130px;
+    font-size: 1rem;
+    background-color: #0f172a;
+    color: #e5e7eb;
+}
+.funds-controls input[type="number"]::placeholder { color: #94a3b8 }
+.funds-controls .btn { padding: 8px 16px; border: none; border-radius: 6px; font-weight: 500; cursor: pointer; transition: all 0.2s ease; color: #fff; }
+.funds-controls .btn.add { background-color: #22c55e; }
+.funds-controls .btn.add:hover { background-color: #16a34a; }
+.funds-controls .btn.remove { background-color: #ef4444; }
+.funds-controls .btn.remove:hover { background-color: #dc2626; }
+@media (max-width: 480px) {
+    .dashboard-balance { padding: 15px 20px; }
+    .funds-controls { flex-direction: column; }
+    .funds-controls input[type="number"], .funds-controls .btn { width: 100%; }
 }
 </style>
 </head>
@@ -93,15 +135,12 @@
                 <p class="change" id="banknifty-change">--</p>
             </div>
         </div>
-    </div>
-
-    <canvas id="chartCanvas"></canvas>
-
-    <div class="market-container">
-        <div class="index-card" data-symbol="NIFTY50">
-            <h3>Nifty 50</h3>
-            <p class="price" id="nifty50-price">--</p>
-            <p class="change" id="nifty50-change">--</p>
+        <div class="market-container">
+            <div class="index-card" data-symbol="NIFTY50">
+                <h3>Nifty 50</h3>
+                <p class="price" id="nifty50-price">--</p>
+                <p class="change" id="nifty50-change">--</p>
+            </div>
         </div>
     </div>
 </section>
@@ -109,317 +148,149 @@
 <!-- ===== Top Winners ===== -->
 <section id="top-winners" class="card">
     <h2>Top Winners of the Day</h2>
-    <div class="market-overview" id="top-winners-body">
-        <!-- Winner cards will be injected here -->
-    </div>
+    <div class="market-overview" id="top-winners-body"></div>
 </section>
 
 <!-- ===== Top Losers ===== -->
 <section id="top-losers" class="card">
     <h2>Top Losers of the Day</h2>
-    <div class="market-overview" id="top-losers-body">
-        <!-- Loser cards will be injected here -->
-    </div>
+    <div class="market-overview" id="top-losers-body"></div>
 </section>
 
-<!-- ===== Portfolio Summary ===== -->
-<!-- <section id="portfolio" class="card">
-    <h2>Portfolio Summary</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>Stock</th>
-                <th>Quantity</th>
-                <th>Avg. Buy Price (₹)</th>
-                <th>Total (₹)</th>
-                <th>Current Price (₹)</th>
-            </tr>
-        </thead>
-        <tbody id="portfolio-summary-body"></tbody>
-    </table>
-</section> -->
-
-<!-- ===== Orders ===== -->
-<!-- <section id="orders" class="card">
-    <h2>Recent Orders</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>Order ID</th>
-                <th>Type</th>
-                <th>Quantity</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-        <tbody id="orders-body"></tbody>
-    </table>
-</section> -->
-<style>
-    /* ===== DASHBOARD BALANCE SECTION ===== */
-    .dashboard-balance {
-        background-color: #161b22;
-        padding: 20px 25px;
-        border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        max-width: 400px;
-        margin: 20px auto;
-        text-align: center;
-        transition: all 0.3s ease;
-    }
-    
-    .dashboard-balance h2 {
-        margin: 0 0 10px;
-        font-size: 1.3rem;
-        color: #e5e7eb;
-    }
-    
-    .dashboard-balance p#balance {
-        font-size: 1.6rem;
-        font-weight: 600;
-        margin: 10px 0 15px;
-        color: #22c55e; /* green for positive balance */
-    }
-    
-    .funds-controls {
-        display: flex;
-        gap: 10px;
-        justify-content: center;
-        flex-wrap: wrap;
-    }
-    
-    .funds-controls input[type="number"] {
-        padding: 8px 12px;
-        border-radius: 6px;
-        border: none;
-        outline: none;
-        width: 130px;
-        font-size: 1rem;
-        background-color: #0f172a;
-        color: #e5e7eb;
-    }
-    
-    .funds-controls input[type="number"]::placeholder {
-        color: #94a3b8
-    }
-    
-    .funds-controls .btn {
-        padding: 8px 16px;
-        border: none;
-        border-radius: 6px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        color: #fff;
-    }
-    
-    .funds-controls .btn.add {
-        background-color: #22c55e; /* green */
-    }
-    
-    .funds-controls .btn.add:hover {
-        background-color: #16a34a;
-    }
-    
-    .funds-controls .btn.remove {
-        background-color: #ef4444; /* red */
-    }
-    
-    .funds-controls .btn.remove:hover {
-        background-color: #dc2626;
-    }
-    
-    /* ===== Responsive ===== */
-    @media (max-width: 480px) {
-        .dashboard-balance {
-            padding: 15px 20px;
-        }
-        .funds-controls {
-            flex-direction: column;
-        }
-        .funds-controls input[type="number"], 
-        .funds-controls .btn {
-            width: 100%;
-        }
-    }
-    </style>
-
-<!-- ===== Balance Section ===== -->
+<!-- ===== Dashboard Balance ===== -->
 <section class="dashboard-balance">
     <h2>💰 Available Balance</h2>
     <p id="balance">₹100000</p>
-  
     <div class="funds-controls">
       <input type="number" id="balanceInput" placeholder="Enter Amount" />
       <button id="addFundsBtn" class="btn add">Add Funds</button>
       <button id="removeFundsBtn" class="btn remove">Remove Funds</button>
     </div>
-  </section>
+</section>
 
 </main>
+
 <script>
-    let topChart;
-    let stockPrices = {}; // Stores live prices for portfolio & top movers
-    let niftyPrice = 0;
-    
-    // ===== Market Overview =====
-    async function fetchMarketOverview() {
-        try {
-            const res = await fetch("/stocks/indices");
-            if (!res.ok) throw new Error("Failed to fetch indices");
-            const data = await res.json();
-    
-            const setValue = (id, value, change) => {
-                const formattedPrice = value != null 
-                    ? value.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) 
-                    : "--";
-                const formattedChange = change != null ? change.toFixed(2) : "--";
-    
-                document.getElementById(`${id}-price`).innerText = formattedPrice;
-                const changeEl = document.getElementById(`${id}-change`);
-                changeEl.innerText = formattedChange !== "--" ? `${formattedChange}%` : "--";
-                changeEl.style.color = change >= 0 ? "#4ade80" : "#f87171";
-            };
-    
-            setValue("bse", data.BSE?.price, data.BSE?.change);
-            setValue("nse", data.NSE?.price, data.NSE?.change);
-            setValue("banknifty", data.BankNifty?.price, data.BankNifty?.change);
-    
-            // Update Nifty 50 card price
-            niftyPrice = data.Nifty50?.price || 0;
-            const niftyPriceEl = document.getElementById("nifty50-price");
-            const niftyChangeEl = document.getElementById("nifty50-change");
-            if(niftyPriceEl) niftyPriceEl.innerText = niftyPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            if(niftyChangeEl) {
-                const change = data.Nifty50?.change || 0;
-                niftyChangeEl.innerText = change.toFixed(2) + "%";
-                niftyChangeEl.style.color = change >= 0 ? "#4ade80" : "#f87171";
-            }
-    
-        } catch (err) {
-            console.error("Market overview error:", err);
-        }
-    }
-    
-    // ===== Nifty 50 Chart =====
-    async function initNifty50Chart(days = 30) {
-        try {
-            const res = await fetch(`/stocks/nifty50/history?days=${days}`);
-            if (!res.ok) throw new Error("Failed to fetch Nifty 50 history");
-            const data = await res.json();
-    
-            if (!data.dates || !data.prices || data.dates.length !== data.prices.length) {
-                console.error("Invalid Nifty 50 data:", data);
-                return;
-            }
-    
-            const prices = data.prices.map(p => parseFloat(p) || 0);
-            const ctx = document.getElementById("chartCanvas").getContext("2d");
-    
-            if (topChart) topChart.destroy();
-    
-            topChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: data.dates,
-                    datasets: [{
-                        label: 'Nifty 50',
-                        data: prices,
-                        borderColor: 'rgba(75,192,192,1)',
-                        backgroundColor: 'rgba(75,192,192,0.2)',
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { display: true },
-                        tooltip: { mode: 'index', intersect: false }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: false,
-                            ticks: { callback: value => "₹" + value.toLocaleString() }
-                        }
-                    }
-                }
-            });
-    
-        } catch (err) {
-            console.error("Nifty 50 chart error:", err);
-        }
-    }
-    
+let stockPrices = {};
+let niftyPrice = 0;
 
-    // ===== Top Movers =====
-    async function fetchTopMovers() {
-        try {
-            const res = await fetch("/market/top-movers");
-            if (!res.ok) throw new Error("Failed to fetch top movers");
-            const data = await res.json();
-    
-            const formatPrice = val => val != null ? val.toLocaleString('en-IN',{ minimumFractionDigits:2, maximumFractionDigits:2 }) : "--";
-            const formatChange = val => val != null ? val.toFixed(2) : "--";
-    
-            const winnersContainer = document.getElementById("top-winners-body");
-            winnersContainer.innerHTML = "";
-            data.gainers.forEach(s => {
-                const card = document.createElement("div");
-                card.className = "index-card";
-                card.innerHTML = `<h3>${s.symbol}</h3><p class="price">₹${formatPrice(s.price)}</p><p class="change" style="color:#4ade80;">${formatChange(s.change)}%</p>`;
-                winnersContainer.appendChild(card);
-            });
-    
-            const losersContainer = document.getElementById("top-losers-body");
-            losersContainer.innerHTML = "";
-            data.losers.forEach(s => {
-                const card = document.createElement("div");
-                card.className = "index-card";
-                card.innerHTML = `<h3>${s.symbol}</h3><p class="price">₹${formatPrice(s.price)}</p><p class="change" style="color:#f87171;">${formatChange(s.change)}%</p>`;
-                losersContainer.appendChild(card);
-            });
-    
-        } catch(err) {
-            console.error("Top movers fetch error:", err);
-        }
-    }
-    
-    // ===== WebSocket for live portfolio & top movers =====
-    function setupWebSocket() {
-        const wsProtocol = location.protocol === "https:" ? "wss" : "ws";
-        const ws = new WebSocket(`${wsProtocol}://${location.host}/ws/stocks`);
-    
-        ws.onopen = () => console.log("✅ Connected to WebSocket");
-    
-        ws.onmessage = (event) => {
-            try {
-                const data = JSON.parse(event.data);
-                if (!data?.symbol || data.price == null) return;
-                stockPrices[data.symbol] = { price: data.price, change: data.change || 0 };
-                fetchPortfolio();
-                fetchTopMovers();
-            } catch(err) {
-                console.error("WebSocket message error:", err);
-            }
+// ===== Market Overview =====
+async function fetchMarketOverview() {
+    try {
+        const res = await fetch("/stocks/indices");
+        if (!res.ok) throw new Error("Failed to fetch indices");
+        const data = await res.json();
+
+        const setValue = (id, value, change) => {
+            const formattedPrice = value != null ? value.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "--";
+            const formattedChange = change != null ? change.toFixed(2) : "--";
+
+            document.getElementById(`${id}-price`).innerText = formattedPrice;
+            const changeEl = document.getElementById(`${id}-change`);
+            changeEl.innerText = formattedChange !== "--" ? `${formattedChange}%` : "--";
+            changeEl.style.color = change >= 0 ? "#4ade80" : "#f87171";
         };
-    
-        ws.onclose = () => setTimeout(setupWebSocket, 15000);
-        ws.onerror = (err) => console.error("WebSocket error:", err);
-    }
-    
-    // ===== Initialization =====
-    document.addEventListener("DOMContentLoaded", () => {
-        fetchMarketOverview();
-        initNifty50Chart();
-        fetchTopMovers();
-        setupWebSocket();
-    
-        setInterval(fetchMarketOverview, 50000); // refresh indices every 15s
-        setInterval(fetchTopMovers, 400000);       // refresh top movers every 20s
-        setInterval(() => initNifty50Chart(), 60*60*1000); // refresh Nifty chart every 1h
-    });
-    </script>
 
+        setValue("bse", data.BSE?.price, data.BSE?.change);
+        setValue("nse", data.NSE?.price, data.NSE?.change);
+        setValue("banknifty", data.BankNifty?.price, data.BankNifty?.change);
+
+        niftyPrice = data.Nifty50?.price || 0;
+        const niftyPriceEl = document.getElementById("nifty50-price");
+        const niftyChangeEl = document.getElementById("nifty50-change");
+        if(niftyPriceEl) niftyPriceEl.innerText = niftyPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        if(niftyChangeEl) {
+            const change = data.Nifty50?.change || 0;
+            niftyChangeEl.innerText = change.toFixed(2) + "%";
+            niftyChangeEl.style.color = change >= 0 ? "#4ade80" : "#f87171";
+        }
+    } catch (err) {
+        console.error("Market overview error:", err);
+    }
+}
+
+// ===== Top Movers =====
+async function fetchTopMovers() {
+    try {
+        const res = await fetch("/market/top-movers");
+        if (!res.ok) throw new Error("Failed to fetch top movers");
+        const data = await res.json();
+
+        const formatPrice = val => val != null ? val.toLocaleString('en-IN',{ minimumFractionDigits:2, maximumFractionDigits:2 }) : "--";
+        const formatChange = val => val != null ? val.toFixed(2) : "--";
+
+        const winnersContainer = document.getElementById("top-winners-body");
+        winnersContainer.innerHTML = "";
+        data.gainers.forEach(s => {
+            const card = document.createElement("div");
+            card.className = "index-card";
+            card.innerHTML = `<h3>${s.symbol}</h3><p class="price">₹${formatPrice(s.price)}</p><p class="change" style="color:#4ade80;">${formatChange(s.change)}%</p>`;
+            winnersContainer.appendChild(card);
+        });
+
+        const losersContainer = document.getElementById("top-losers-body");
+        losersContainer.innerHTML = "";
+        data.losers.forEach(s => {
+            const card = document.createElement("div");
+            card.className = "index-card";
+            card.innerHTML = `<h3>${s.symbol}</h3><p class="price">₹${formatPrice(s.price)}</p><p class="change" style="color:#f87171;">${formatChange(s.change)}%</p>`;
+            losersContainer.appendChild(card);
+        });
+    } catch(err) {
+        console.error("Top movers fetch error:", err);
+    }
+}
+
+// ===== Balance Controls =====
+function updateBalance(amount) {
+    const balanceEl = document.getElementById("balance");
+    let current = parseFloat(balanceEl.innerText.replace(/₹|,/g, ""));
+    current += amount;
+    balanceEl.innerText = "₹" + current.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+document.getElementById("addFundsBtn").addEventListener("click", () => {
+    const val = parseFloat(document.getElementById("balanceInput").value);
+    if(!isNaN(val) && val > 0) updateBalance(val);
+});
+
+document.getElementById("removeFundsBtn").addEventListener("click", () => {
+    const val = parseFloat(document.getElementById("balanceInput").value);
+    if(!isNaN(val) && val > 0) updateBalance(-val);
+});
+
+// ===== WebSocket for live portfolio & top movers =====
+function setupWebSocket() {
+    const wsProtocol = location.protocol === "https:" ? "wss" : "ws";
+    const ws = new WebSocket(`${wsProtocol}://${location.host}/ws/stocks`);
+
+    ws.onopen = () => console.log("✅ Connected to WebSocket");
+
+    ws.onmessage = (event) => {
+        try {
+            const data = JSON.parse(event.data);
+            if (!data?.symbol || data.price == null) return;
+            stockPrices[data.symbol] = { price: data.price, change: data.change || 0 };
+            fetchMarketOverview();
+            fetchTopMovers();
+        } catch(err) {
+            console.error("WebSocket message error:", err);
+        }
+    };
+
+    ws.onclose = () => setTimeout(setupWebSocket, 5 * 60 * 1000);
+    ws.onerror = (err) => console.error("WebSocket error:", err);
+}
+
+// ===== Initialization =====
+document.addEventListener("DOMContentLoaded", () => {
+    fetchMarketOverview();
+    fetchTopMovers();
+    setupWebSocket();
+
+    setInterval(fetchMarketOverview, 10 * 60 * 1000);
+    setInterval(fetchTopMovers, 10 * 60 * 1000);
+});
+</script>
 </body>
 </html>

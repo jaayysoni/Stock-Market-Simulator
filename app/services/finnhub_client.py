@@ -5,10 +5,17 @@ import asyncio
 import json
 import websockets
 import logging
+from dotenv import load_dotenv
 from app.utils.cache import get_redis
 
-# Load Finnhub API key from environment
+# Load environment variables from .env file
+load_dotenv()
+
+# Load Finnhub API key
 FINNHUB_API_KEY = os.getenv("FINNHUB_API_KEY")
+if not FINNHUB_API_KEY:
+    raise ValueError("FINNHUB_API_KEY is not set in environment or .env file")
+
 FINNHUB_WS_URL = f"wss://ws.finnhub.io?token={FINNHUB_API_KEY}"
 
 # Logger setup
@@ -104,5 +111,5 @@ class FinnhubWebSocketClient:
                 logger.info(f"📉 Unsubscribed: {symbol}")
 
 
-# Singleton instance
+# Singleton instance (remove trailing comma)
 finnhub_client = FinnhubWebSocketClient()
