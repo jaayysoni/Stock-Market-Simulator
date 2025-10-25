@@ -46,37 +46,50 @@ async def market_indices():
     CACHE_KEY = "market_indices"
     CACHE_TTL = 60  # cache 1 min
 
-    cached = await redis_client.get(CACHE_KEY)
-    if cached:
-        return json.loads(cached)
+    try:
+        # Ensure the key type is correct before using .get()
+        key_type = await redis_client.type(CACHE_KEY)
+        if key_type and key_type != b"string":
+            # If the key holds a wrong type, delete it to avoid WRONGTYPE error
+            await redis_client.delete(CACHE_KEY)
+
+        cached = await redis_client.get(CACHE_KEY)
+        if cached:
+            return json.loads(cached)
+    except Exception as e:
+        print(f"⚠️ Redis cache fetch failed: {e}")
 
     result = {}
 
-    # BSE, NSE, BankNifty using yfinance (or keep your previous live method)
     import yfinance as yf
     symbols = {"BSE": "^BSESN", "NSE": "^NSEI", "BankNifty": "^NSEBANK"}
     for name, symbol in symbols.items():
         try:
             ticker = yf.Ticker(symbol)
             hist = ticker.history(period="2d")
-            if not hist.empty and len(hist['Close']) >= 2:
-                latest_price = float(hist['Close'].iloc[-1])
-                previous_price = float(hist['Close'].iloc[-2])
+            if not hist.empty and len(hist["Close"]) >= 2:
+                latest_price = float(hist["Close"].iloc[-1])
+                previous_price = float(hist["Close"].iloc[-2])
                 change_percent = ((latest_price - previous_price) / previous_price) * 100
-                result[name] = {"price": round(latest_price,2), "change": round(change_percent,2)}
+                result[name] = {"price": round(latest_price, 2), "change": round(change_percent, 2)}
             else:
                 result[name] = {"price": 0, "change": 0}
-        except Exception:
+        except Exception as e:
             result[name] = {"price": 0, "change": 0}
 
-    # Nifty50 from Redis cache
+    # Add Nifty50 from Redis background cache
     try:
         nifty = await get_cached_nifty_latest()
         result["Nifty50"] = nifty
     except Exception:
         result["Nifty50"] = {"price": 0, "change": 0}
 
-    await redis_client.set(CACHE_KEY, json.dumps(result), ex=CACHE_TTL)
+    # Save to Redis cache
+    try:
+        await redis_client.set(CACHE_KEY, json.dumps(result), ex=CACHE_TTL)
+    except Exception as e:
+        print(f"⚠️ Redis cache set failed: {e}")
+
     return result
 
 # ==============================
