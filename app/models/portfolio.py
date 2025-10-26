@@ -14,11 +14,12 @@ class Portfolio(MarketBase):
 
     # Relationships
     stock = relationship("Stock", back_populates="portfolios")
-    transactions = relationship("Transaction", back_populates="portfolio", cascade="all, delete-orphan")
+    transactions = relationship("PortfolioTransaction", back_populates="portfolio", cascade="all, delete-orphan")
 
-# ================= Transaction Model =================
-class Transaction(MarketBase):
-    __tablename__ = "transactions"
+
+# ================= Portfolio Transaction Model =================
+class PortfolioTransaction(MarketBase):
+    __tablename__ = "portfolio_transactions"  # changed table name to avoid clash
 
     id = Column(Integer, primary_key=True, index=True)
     portfolio_id = Column(Integer, ForeignKey("portfolios.id"), nullable=False)

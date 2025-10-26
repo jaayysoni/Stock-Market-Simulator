@@ -8,7 +8,8 @@ from datetime import datetime
 from app.database.session import get_user_db, get_market_db
 from app.dependencies.auth import get_current_user
 from app.models.user import User
-from app.models.portfolio import Portfolio, Transaction
+from app.models.portfolio import Portfolio  # portfolio model only
+from app.models.transaction import Transaction  # user transactions
 from app.models.stock import Stock
 from app.services.stock_service import get_multiple_stock_prices
 
@@ -65,7 +66,7 @@ def buy_stock(
         )
         market_db.add(portfolio_item)
 
-    # Record transaction
+    # Record user transaction
     transaction = Transaction(
         user_id=current_user.id,
         stock_id=stock.id,
@@ -119,7 +120,7 @@ def sell_stock(
     user_db.add(current_user)
     user_db.commit()
 
-    # Record transaction
+    # Record user transaction
     transaction = Transaction(
         user_id=current_user.id,
         stock_id=stock.id,
@@ -167,7 +168,6 @@ def get_portfolio_holdings(
 # ==============================
 # Transaction History
 # ==============================
-# app/routers/portfolio_router.py
 @router.get("/transactions")
 def get_transaction_history(
     market_db: Session = Depends(get_market_db),

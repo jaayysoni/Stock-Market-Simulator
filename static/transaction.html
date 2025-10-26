@@ -34,7 +34,7 @@ function formatDateTime(dt) {
 
 function groupByMonth(transactions) {
   return transactions.reduce((acc, tx) => {
-    const month = new Date(tx.date).toLocaleString('en-IN', { month: 'long', year: 'numeric' });
+    const month = new Date(tx.timestamp).toLocaleString('en-IN', { month: 'long', year: 'numeric' });
     if(!acc[month]) acc[month] = [];
     acc[month].push(tx);
     return acc;
@@ -53,16 +53,16 @@ function renderTransactions(filter="", sort="date-desc") {
 
   let filtered = filteredTransactions.filter(tx => {
     if(!filter) return true;
-    return (tx.symbol && tx.symbol.toLowerCase().includes(filter.toLowerCase())) 
-           || tx.type.toLowerCase().includes(filter.toLowerCase());
+    return (tx.stock_symbol && tx.stock_symbol.toLowerCase().includes(filter.toLowerCase())) 
+           || tx.transaction_type.toLowerCase().includes(filter.toLowerCase());
   });
 
   // ===== Sorting =====
   filtered.sort((a,b)=>{
-    if(sort === "date-desc") return new Date(b.date) - new Date(a.date);
-    if(sort === "date-asc") return new Date(a.date) - new Date(b.date);
-    if(sort === "stock-asc") return (a.symbol||"").localeCompare(b.symbol||"");
-    if(sort === "stock-desc") return (b.symbol||"").localeCompare(a.symbol||"");
+    if(sort === "date-desc") return new Date(b.timestamp) - new Date(a.timestamp);
+    if(sort === "date-asc") return new Date(a.timestamp) - new Date(b.timestamp);
+    if(sort === "stock-asc") return (a.stock_symbol||"").localeCompare(b.stock_symbol||"");
+    if(sort === "stock-desc") return (b.stock_symbol||"").localeCompare(a.stock_symbol||"");
     return 0;
   });
 
@@ -95,22 +95,22 @@ function renderTransactions(filter="", sort="date-desc") {
       let quantityAmount = "";
       let price = "";
 
-      if(tx.type === "buy") {
+      if(tx.transaction_type === "buy") {
         typeClass = "buy";
-        details = tx.symbol;
+        details = tx.stock_symbol || "-";
         quantityAmount = tx.quantity;
         price = `₹${tx.price?.toLocaleString('en-IN') || '-'}`;
-      } else if(tx.type === "sell") {
+      } else if(tx.transaction_type === "sell") {
         typeClass = "sell";
-        details = tx.symbol;
+        details = tx.stock_symbol || "-";
         quantityAmount = tx.quantity;
         price = `₹${tx.price?.toLocaleString('en-IN') || '-'}`;
-      } else if(tx.type === "money-add") {
+      } else if(tx.transaction_type === "money-add") {
         typeClass = "money-add";
         details = "Money Added";
         quantityAmount = `₹${tx.amount?.toLocaleString('en-IN') || '-'}`;
         price = "-";
-      } else if(tx.type === "money-remove") {
+      } else if(tx.transaction_type === "money-remove") {
         typeClass = "money-remove";
         details = "Money Deducted";
         quantityAmount = `₹${tx.amount?.toLocaleString('en-IN') || '-'}`;
@@ -118,11 +118,11 @@ function renderTransactions(filter="", sort="date-desc") {
       }
 
       tr.innerHTML = `
-        <td class="${typeClass}">${tx.type.replace("-", " ")}</td>
+        <td class="${typeClass}">${tx.transaction_type.replace("-", " ")}</td>
         <td>${details}</td>
         <td>${quantityAmount}</td>
         <td>${price}</td>
-        <td>${formatDateTime(tx.date)}</td>
+        <td>${formatDateTime(tx.timestamp)}</td>
         <td>${tx.status || "completed"}</td>
       `;
       tbody.appendChild(tr);
@@ -137,10 +137,12 @@ function renderTransactions(filter="", sort="date-desc") {
 // ===== Fetch Transactions from Backend =====
 async function fetchTransactions() {
   try {
-    const res = await fetch("/portfolio/transactions", {
+    // ⚡ NOTE: Added trailing slash to match FastAPI route
+    const res = await fetch("/transactions/", {
       method: "GET",
-      credentials: "include" // <-- send cookie for JWT auth
+      credentials: "include"
     });
+
     if(!res.ok) throw new Error("Network response was not ok");
 
     const data = await res.json();
@@ -154,12 +156,12 @@ async function fetchTransactions() {
 
     // Map backend response to frontend format
     transactions = data.map(tx => ({
-      type: tx.type.toLowerCase(),
-      symbol: tx.symbol || null,
+      transaction_type: tx.transaction_type.toLowerCase(),
+      stock_symbol: tx.stock_symbol || null,
       quantity: tx.quantity || null,
       price: tx.price || null,
       amount: tx.amount || null,
-      date: tx.timestamp,
+      timestamp: tx.timestamp,
       status: "completed"
     }));
 
