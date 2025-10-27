@@ -1,6 +1,6 @@
 # app/main.py
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from sqlalchemy.exc import OperationalError
@@ -11,7 +11,8 @@ import os
 import asyncio
 from app.routers import market_router
 from app.tasks.nifty_tasks import refresh_nifty_cache
-
+from app.dependencies.auth import get_current_user
+from app.models.user import User
 from app.routers import ws_router  
 from app.database.db import user_engine, UserBase, market_engine, MarketBase
 from app.models import user, stock, transaction, portfolio, watchlist
@@ -79,6 +80,14 @@ def dashboard_page():
 @app.get("/watchlist", include_in_schema=False)
 def watchlist_page():
     return FileResponse(os.path.join(BASE_DIR, "static/watchlist.html"))
+
+@app.get("/transactions", include_in_schema=False)
+def transactions_page(current_user: User = Depends(get_current_user)):
+    """
+    Serve transaction.html only if user is authenticated.
+    """
+    return FileResponse(os.path.join(BASE_DIR, "static/transaction.html"))
+
 
 @app.get("/tradingterminal", include_in_schema=False)
 def trading_terminal_page():

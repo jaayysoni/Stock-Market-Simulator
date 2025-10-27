@@ -50,8 +50,10 @@ def get_user_transactions(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_user_db)
 ):
-    transactions = db.query(Transaction)\
-                     .filter_by(user_id=current_user.id)\
-                     .order_by(Transaction.timestamp.desc())\
-                     .all()
+    transactions = (
+        db.query(Transaction)
+        .filter(Transaction.user_email == current_user.email)
+        .order_by(Transaction.timestamp.desc())
+        .all()
+)
     return transactions

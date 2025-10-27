@@ -24,51 +24,57 @@
 
 <script>
 let transactions = [];
-let filteredTransactions = [];
 
 // ===== Helper =====
 function formatDateTime(dt) {
+  if (!dt) return "-";
   const d = new Date(dt);
+  if (isNaN(d)) return dt;
   return d.toLocaleDateString('en-IN') + " " + d.toLocaleTimeString('en-IN', { hour12: false });
 }
 
 function groupByMonth(transactions) {
   return transactions.reduce((acc, tx) => {
     const month = new Date(tx.timestamp).toLocaleString('en-IN', { month: 'long', year: 'numeric' });
-    if(!acc[month]) acc[month] = [];
+    if (!acc[month]) acc[month] = [];
     acc[month].push(tx);
     return acc;
   }, {});
 }
 
 // ===== Render Transactions =====
-function renderTransactions(filter="", sort="date-desc") {
+function renderTransactions(filter = "", sort = "date-desc") {
   const container = document.getElementById("transactions-container");
   container.innerHTML = "";
 
-  if(!filteredTransactions || filteredTransactions.length === 0){
+  if (!transactions || transactions.length === 0) {
     container.textContent = "No transactions yet.";
     return;
   }
 
-  let filtered = filteredTransactions.filter(tx => {
-    if(!filter) return true;
-    return (tx.stock_symbol && tx.stock_symbol.toLowerCase().includes(filter.toLowerCase())) 
-           || tx.transaction_type.toLowerCase().includes(filter.toLowerCase());
+  let filtered = transactions.filter(tx => {
+    if (!filter) return true;
+    return (tx.stock_symbol && tx.stock_symbol.toLowerCase().includes(filter.toLowerCase()))
+      || tx.transaction_type.toLowerCase().includes(filter.toLowerCase());
   });
 
   // ===== Sorting =====
-  filtered.sort((a,b)=>{
-    if(sort === "date-desc") return new Date(b.timestamp) - new Date(a.timestamp);
-    if(sort === "date-asc") return new Date(a.timestamp) - new Date(b.timestamp);
-    if(sort === "stock-asc") return (a.stock_symbol||"").localeCompare(b.stock_symbol||"");
-    if(sort === "stock-desc") return (b.stock_symbol||"").localeCompare(a.stock_symbol||"");
+  filtered.sort((a, b) => {
+    if (sort === "date-desc") return new Date(b.timestamp) - new Date(a.timestamp);
+    if (sort === "date-asc") return new Date(a.timestamp) - new Date(b.timestamp);
+    if (sort === "stock-asc") return (a.stock_symbol || "").localeCompare(b.stock_symbol || "");
+    if (sort === "stock-desc") return (b.stock_symbol || "").localeCompare(a.stock_symbol || "");
     return 0;
   });
 
+  if (filtered.length === 0) {
+    container.textContent = "No matching transactions.";
+    return;
+  }
+
   const grouped = groupByMonth(filtered);
 
-  Object.keys(grouped).forEach(month=>{
+  Object.keys(grouped).forEach(month => {
     const section = document.createElement("div");
     section.className = "month-section";
     section.innerHTML = `<div class="month-title">${month}</div>`;
@@ -88,33 +94,43 @@ function renderTransactions(filter="", sort="date-desc") {
 
     const tbody = document.createElement("tbody");
 
-    grouped[month].forEach(tx=>{
+    grouped[month].forEach(tx => {
       const tr = document.createElement("tr");
       let typeClass = "";
       let details = "";
       let quantityAmount = "";
       let price = "";
 
-      if(tx.transaction_type === "buy") {
-        typeClass = "buy";
-        details = tx.stock_symbol || "-";
-        quantityAmount = tx.quantity;
-        price = `₹${tx.price?.toLocaleString('en-IN') || '-'}`;
-      } else if(tx.transaction_type === "sell") {
-        typeClass = "sell";
-        details = tx.stock_symbol || "-";
-        quantityAmount = tx.quantity;
-        price = `₹${tx.price?.toLocaleString('en-IN') || '-'}`;
-      } else if(tx.transaction_type === "money-add") {
-        typeClass = "money-add";
-        details = "Money Added";
-        quantityAmount = `₹${tx.amount?.toLocaleString('en-IN') || '-'}`;
-        price = "-";
-      } else if(tx.transaction_type === "money-remove") {
-        typeClass = "money-remove";
-        details = "Money Deducted";
-        quantityAmount = `₹${tx.amount?.toLocaleString('en-IN') || '-'}`;
-        price = "-";
+      switch (tx.transaction_type) {
+        case "buy":
+          typeClass = "buy";
+          details = tx.stock_symbol || "-";
+          quantityAmount = tx.quantity;
+          price = `₹${tx.price?.toLocaleString('en-IN') || '-'}`;
+          break;
+        case "sell":
+          typeClass = "sell";
+          details = tx.stock_symbol || "-";
+          quantityAmount = tx.quantity;
+          price = `₹${tx.price?.toLocaleString('en-IN') || '-'}`;
+          break;
+        case "money-add":
+          typeClass = "money-add";
+          details = "Money Added";
+          quantityAmount = `₹${tx.amount?.toLocaleString('en-IN') || '-'}`;
+          price = "-";
+          break;
+        case "money-remove":
+          typeClass = "money-remove";
+          details = "Money Deducted";
+          quantityAmount = `₹${tx.amount?.toLocaleString('en-IN') || '-'}`;
+          price = "-";
+          break;
+        default:
+          typeClass = "";
+          details = tx.stock_symbol || "-";
+          quantityAmount = tx.quantity || "-";
+          price = tx.price ? `₹${tx.price.toLocaleString('en-IN')}` : "-";
       }
 
       tr.innerHTML = `
@@ -134,56 +150,83 @@ function renderTransactions(filter="", sort="date-desc") {
   });
 }
 
+// ===== Verify Login =====
+async function verifyLogin() {
+  try {
+    const res = await fetch("/auth/me", { credentials: "include" });
+    if (!res.ok) {
+      window.location.href = "/static/login.html";
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error("Login verification failed:", err);
+    window.location.href = "/static/login.html";
+    return false;
+  }
+}
+
 // ===== Fetch Transactions from Backend =====
 async function fetchTransactions() {
+  const container = document.getElementById("transactions-container");
+  container.textContent = "Loading transactions...";
+
   try {
-    // ⚡ NOTE: Added trailing slash to match FastAPI route
-    const res = await fetch("/transactions/", {
+    const res = await fetch("/transactions", {
       method: "GET",
-      credentials: "include"
+      credentials: "include"  // ✅ Sends HttpOnly cookie automatically
     });
 
-    if(!res.ok) throw new Error("Network response was not ok");
+    if (res.status === 401) {
+      window.location.href = "/static/login.html";
+      return;
+    }
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
 
     const data = await res.json();
 
-    if(!Array.isArray(data) || data.length === 0) {
+    if (!Array.isArray(data) || data.length === 0) {
       transactions = [];
-      filteredTransactions = [];
       renderTransactions();
       return;
     }
 
-    // Map backend response to frontend format
     transactions = data.map(tx => ({
-      transaction_type: tx.transaction_type.toLowerCase(),
+      transaction_type: tx.transaction_type?.toLowerCase() || "unknown",
       stock_symbol: tx.stock_symbol || null,
       quantity: tx.quantity || null,
       price: tx.price || null,
       amount: tx.amount || null,
       timestamp: tx.timestamp,
-      status: "completed"
+      status: tx.status || "completed"
     }));
 
-    filteredTransactions = [...transactions];
     renderTransactions();
-  } catch(err) {
+  } catch (err) {
     console.error("Failed to fetch transactions:", err);
-    document.getElementById("transactions-container").textContent = "Failed to load transactions.";
+    container.textContent = "⚠️ Failed to load transactions. Please try again.";
   }
 }
 
 // ===== Event Listeners =====
-document.getElementById("transaction-search").addEventListener("input", e=>{
+document.getElementById("transaction-search").addEventListener("input", e => {
   renderTransactions(e.target.value, document.getElementById("transaction-sort").value);
 });
 
-document.getElementById("transaction-sort").addEventListener("change", e=>{
+document.getElementById("transaction-sort").addEventListener("change", e => {
   renderTransactions(document.getElementById("transaction-search").value, e.target.value);
 });
 
-// ===== Initial Fetch =====
-fetchTransactions();
+// ===== Initial Load =====
+(async () => {
+  const loggedIn = await verifyLogin();
+  if (loggedIn) {
+    await fetchTransactions();
+    // Optional: Auto-refresh every 30s
+    setInterval(fetchTransactions, 30000);
+  }
+})();
 </script>
 
 </body>
