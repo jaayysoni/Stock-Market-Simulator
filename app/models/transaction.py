@@ -1,14 +1,12 @@
-# app/models/transaction.py
-
 from sqlalchemy import Column, Integer, ForeignKey, Float, String, DateTime
 from sqlalchemy.orm import relationship
 from datetime import datetime
-from app.database.db import MarketBase  # Use MarketBase for market_data.db
+from app.database.db import Base  # ✅ unified Base for user_data.db
 
 
-class Transaction(MarketBase):
+class Transaction(Base):
     __tablename__ = "transactions"
-    __table_args__ = {"extend_existing": True}  # Fix for "table already defined"
+    __table_args__ = {"extend_existing": True}  # avoids table redefinition errors
 
     id = Column(Integer, primary_key=True, index=True)
 
@@ -20,7 +18,7 @@ class Transaction(MarketBase):
         index=True
     )
 
-    # Optional: store username for readability / sorting / reports
+    # Optional: store username for readability / reports
     user_name = Column(String, nullable=False)
 
     # Reference to Stock table

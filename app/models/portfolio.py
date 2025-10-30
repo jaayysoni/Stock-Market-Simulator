@@ -1,10 +1,10 @@
 from sqlalchemy import Column, Integer, Float, String, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from datetime import datetime
-from app.database.db import MarketBase  # Use MarketBase for market_data.db
+from app.database.db import Base  # ✅ unified Base for user_data.db
 
 # ================= Portfolio Model =================
-class Portfolio(MarketBase):
+class Portfolio(Base):
     __tablename__ = "portfolios"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -18,7 +18,7 @@ class Portfolio(MarketBase):
 
 
 # ================= Portfolio Transaction Model =================
-class PortfolioTransaction(MarketBase):
+class PortfolioTransaction(Base):
     __tablename__ = "portfolio_transactions"  # changed table name to avoid clash
 
     id = Column(Integer, primary_key=True, index=True)

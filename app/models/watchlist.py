@@ -1,9 +1,9 @@
 # app/models/watchlist.py
 
 from sqlalchemy import Column, Integer, String
-from app.database.db import MarketBase  # Use MarketBase for market_data.db
+from app.database.db import Base  # ✅ unified Base
 
-class Watchlist(MarketBase):
+class Watchlist(Base):
     __tablename__ = "watchlist"
 
     id = Column(Integer, primary_key=True, index=True)

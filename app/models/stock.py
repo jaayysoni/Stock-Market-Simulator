@@ -1,9 +1,8 @@
-# app/models/stock.py
 from sqlalchemy import Column, Integer, String, Float
 from sqlalchemy.orm import relationship
-from app.database.db import MarketBase  # Use MarketBase for market_data.db
+from app.database.db import Base  # ✅ unified Base for user_data.db
 
-class Stock(MarketBase):
+class Stock(Base):
     __tablename__ = "stocks"
 
     id = Column(Integer, primary_key=True, index=True)

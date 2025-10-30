@@ -5,11 +5,113 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Transactions — Stock Market Simulator</title>
 <link rel="stylesheet" href="/static/css/transaction.css" />
+<style>
+.user-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background-color: #121212;
+  color: #fff;
+  font-size: 0.95rem;
+}
+
+.logout-btn {
+  background: #ff4d4d;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.logout-btn:hover { background: #ff3333; }
+
+.back-btn {
+  margin: 10px;
+  padding: 8px 14px;
+  background-color: #222;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+.back-btn:hover { background-color: #333; }
+
+.search-sort-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+}
+
+#transaction-search, #transaction-sort {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.month-section {
+  margin: 20px;
+  border-radius: 8px;
+  background-color: #1b1b1b;
+  color: #fff;
+  overflow-x: auto;
+}
+
+.month-title {
+  background-color: #222;
+  padding: 10px;
+  font-weight: bold;
+  font-size: 1.1rem;
+  border-radius: 8px 8px 0 0;
+}
+
+.transaction-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 5px;
+}
+.transaction-table th, .transaction-table td {
+  padding: 8px 10px;
+  text-align: center;
+}
+.transaction-table th { background-color: #2a2a2a; }
+
+.buy { color: #4CAF50; }
+.sell { color: #FF5252; }
+.money-add { color: #2196F3; }
+.money-remove { color: #FF9800; }
+
+/* Skeleton loader */
+.skeleton {
+  height: 18px;
+  width: 100%;
+  background: linear-gradient(90deg, #2a2a2a 25%, #3a3a3a 50%, #2a2a2a 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+}
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+</style>
 </head>
 <body>
 
+<!-- ===== User Info & Logout ===== -->
+<div class="user-info">
+  <span id="userWelcome">Welcome</span>
+  <button onclick="logout()" class="logout-btn">Logout</button>
+</div>
+
+<!-- ===== Back Button ===== -->
 <button class="back-btn" onclick="window.location.href='/dashboard'">← Back to Dashboard</button>
 
+<!-- ===== Search + Sort ===== -->
 <div class="search-sort-container">
   <input type="text" id="transaction-search" placeholder="Search by stock or type..." />
   <select id="transaction-sort">
@@ -20,7 +122,12 @@
   </select>
 </div>
 
-<div id="transactions-container">Loading transactions...</div>
+<!-- ===== Transactions Container ===== -->
+<div id="transactions-container">
+  <div class="skeleton"></div>
+  <div class="skeleton"></div>
+  <div class="skeleton"></div>
+</div>
 
 <script>
 let transactions = [];
@@ -29,36 +136,37 @@ let transactions = [];
 function formatDateTime(dt) {
   if (!dt) return "-";
   const d = new Date(dt);
-  if (isNaN(d)) return dt;
-  return d.toLocaleDateString('en-IN') + " " + d.toLocaleTimeString('en-IN', { hour12: false });
+  return isNaN(d) ? dt : d.toLocaleString("en-IN", { hour12: false });
 }
 
 function groupByMonth(transactions) {
   return transactions.reduce((acc, tx) => {
-    const month = new Date(tx.timestamp).toLocaleString('en-IN', { month: 'long', year: 'numeric' });
+    const t = tx.timestamp ? new Date(tx.timestamp) : new Date();
+    const month = t.toLocaleString("en-IN", { month: "long", year: "numeric" });
     if (!acc[month]) acc[month] = [];
     acc[month].push(tx);
     return acc;
   }, {});
 }
 
-// ===== Render Transactions =====
+// ===== Render =====
 function renderTransactions(filter = "", sort = "date-desc") {
   const container = document.getElementById("transactions-container");
   container.innerHTML = "";
 
-  if (!transactions || transactions.length === 0) {
+  if (!transactions.length) {
     container.textContent = "No transactions yet.";
     return;
   }
 
   let filtered = transactions.filter(tx => {
     if (!filter) return true;
-    return (tx.stock_symbol && tx.stock_symbol.toLowerCase().includes(filter.toLowerCase()))
-      || tx.transaction_type.toLowerCase().includes(filter.toLowerCase());
+    return (
+      (tx.stock_symbol && tx.stock_symbol.toLowerCase().includes(filter.toLowerCase())) ||
+      tx.transaction_type.toLowerCase().includes(filter.toLowerCase())
+    );
   });
 
-  // ===== Sorting =====
   filtered.sort((a, b) => {
     if (sort === "date-desc") return new Date(b.timestamp) - new Date(a.timestamp);
     if (sort === "date-asc") return new Date(a.timestamp) - new Date(b.timestamp);
@@ -67,7 +175,7 @@ function renderTransactions(filter = "", sort = "date-desc") {
     return 0;
   });
 
-  if (filtered.length === 0) {
+  if (!filtered.length) {
     container.textContent = "No matching transactions.";
     return;
   }
@@ -83,12 +191,7 @@ function renderTransactions(filter = "", sort = "date-desc") {
 
     table.innerHTML = `<thead>
       <tr>
-        <th>Type</th>
-        <th>Stock / Details</th>
-        <th>Quantity / Amount</th>
-        <th>Price</th>
-        <th>Date & Time</th>
-        <th>Status</th>
+        <th>Type</th><th>Stock / Details</th><th>Quantity / Amount</th><th>Price</th><th>Date & Time</th><th>Status</th>
       </tr>
     </thead>`;
 
@@ -96,45 +199,48 @@ function renderTransactions(filter = "", sort = "date-desc") {
 
     grouped[month].forEach(tx => {
       const tr = document.createElement("tr");
+      const type = tx.transaction_type?.toLowerCase() || "unknown";
+      const priceVal = Number(tx.price) || null;
+      const amtVal = Number(tx.amount) || null;
+
       let typeClass = "";
       let details = "";
       let quantityAmount = "";
       let price = "";
 
-      switch (tx.transaction_type) {
+      switch (type) {
         case "buy":
           typeClass = "buy";
           details = tx.stock_symbol || "-";
-          quantityAmount = tx.quantity;
-          price = `₹${tx.price?.toLocaleString('en-IN') || '-'}`;
+          quantityAmount = tx.quantity || "-";
+          price = priceVal ? `₹${priceVal.toLocaleString("en-IN")}` : "-";
           break;
         case "sell":
           typeClass = "sell";
           details = tx.stock_symbol || "-";
-          quantityAmount = tx.quantity;
-          price = `₹${tx.price?.toLocaleString('en-IN') || '-'}`;
+          quantityAmount = tx.quantity || "-";
+          price = priceVal ? `₹${priceVal.toLocaleString("en-IN")}` : "-";
           break;
         case "money-add":
           typeClass = "money-add";
           details = "Money Added";
-          quantityAmount = `₹${tx.amount?.toLocaleString('en-IN') || '-'}`;
+          quantityAmount = amtVal ? `₹${amtVal.toLocaleString("en-IN")}` : "-";
           price = "-";
           break;
         case "money-remove":
           typeClass = "money-remove";
           details = "Money Deducted";
-          quantityAmount = `₹${tx.amount?.toLocaleString('en-IN') || '-'}`;
+          quantityAmount = amtVal ? `₹${amtVal.toLocaleString("en-IN")}` : "-";
           price = "-";
           break;
         default:
-          typeClass = "";
           details = tx.stock_symbol || "-";
           quantityAmount = tx.quantity || "-";
-          price = tx.price ? `₹${tx.price.toLocaleString('en-IN')}` : "-";
+          price = priceVal ? `₹${priceVal.toLocaleString("en-IN")}` : "-";
       }
 
       tr.innerHTML = `
-        <td class="${typeClass}">${tx.transaction_type.replace("-", " ")}</td>
+        <td class="${typeClass}">${type.replace("-", " ")}</td>
         <td>${details}</td>
         <td>${quantityAmount}</td>
         <td>${price}</td>
@@ -153,54 +259,60 @@ function renderTransactions(filter = "", sort = "date-desc") {
 // ===== Verify Login =====
 async function verifyLogin() {
   try {
-    const res = await fetch("/auth/me", { credentials: "include" });
-    if (!res.ok) {
+    const res = await fetch("/auth/me", {
+      method: "GET",
+      credentials: "include",
+      headers: { "Accept": "application/json", "Cache-Control": "no-store" }
+    });
+    if (res.status === 401) {
       window.location.href = "/static/login.html";
       return false;
     }
+    const user = await res.json();
+    document.getElementById("userWelcome").textContent = `Welcome, ${user.email}`;
     return true;
   } catch (err) {
-    console.error("Login verification failed:", err);
+    console.error("Auth check error:", err);
     window.location.href = "/static/login.html";
     return false;
   }
 }
 
-// ===== Fetch Transactions from Backend =====
+// ===== Fetch Transactions =====
 async function fetchTransactions() {
   const container = document.getElementById("transactions-container");
-  container.textContent = "Loading transactions...";
+  container.innerHTML = `<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>`;
 
   try {
-    const res = await fetch("/transactions", {
+    const baseUrl = window.location.origin;
+    // ✅ FIXED ENDPOINT (now calls JSON API)
+    const res = await fetch(`${baseUrl}/api/transactions`, {
       method: "GET",
-      credentials: "include"  // ✅ Sends HttpOnly cookie automatically
+      credentials: "include",
+      cache: "no-store",
+      headers: { "Accept": "application/json", "Cache-Control": "no-store" }
     });
 
-    if (res.status === 401) {
-      window.location.href = "/static/login.html";
+    if (!res.ok) {
+      if (res.status === 401) window.location.href = "/static/login.html";
+      else container.textContent = "⚠️ Failed to load transactions.";
       return;
     }
 
-    if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+    const data = await res.json().catch(() => []);
+    console.log("Fetched transactions:", data);
 
-    const data = await res.json();
-
-    if (!Array.isArray(data) || data.length === 0) {
-      transactions = [];
-      renderTransactions();
-      return;
-    }
-
-    transactions = data.map(tx => ({
-      transaction_type: tx.transaction_type?.toLowerCase() || "unknown",
-      stock_symbol: tx.stock_symbol || null,
-      quantity: tx.quantity || null,
-      price: tx.price || null,
-      amount: tx.amount || null,
-      timestamp: tx.timestamp,
-      status: tx.status || "completed"
-    }));
+    transactions = Array.isArray(data)
+      ? data.map(tx => ({
+          transaction_type: tx.transaction_type?.toLowerCase() || "unknown",
+          stock_symbol: tx.stock_symbol || null,
+          quantity: tx.quantity || null,
+          price: tx.price || null,
+          amount: tx.amount || null,
+          timestamp: tx.timestamp,
+          status: tx.status || "completed"
+        }))
+      : [];
 
     renderTransactions();
   } catch (err) {
@@ -209,11 +321,19 @@ async function fetchTransactions() {
   }
 }
 
-// ===== Event Listeners =====
+// ===== Logout =====
+function logout() {
+  fetch("/auth/logout", { method: "POST", credentials: "include" })
+    .finally(() => {
+      document.cookie = "access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      window.location.href = "/static/login.html";
+    });
+}
+
+// ===== Search + Sort =====
 document.getElementById("transaction-search").addEventListener("input", e => {
   renderTransactions(e.target.value, document.getElementById("transaction-sort").value);
 });
-
 document.getElementById("transaction-sort").addEventListener("change", e => {
   renderTransactions(document.getElementById("transaction-search").value, e.target.value);
 });
@@ -223,7 +343,6 @@ document.getElementById("transaction-sort").addEventListener("change", e => {
   const loggedIn = await verifyLogin();
   if (loggedIn) {
     await fetchTransactions();
-    // Optional: Auto-refresh every 30s
     setInterval(fetchTransactions, 30000);
   }
 })();

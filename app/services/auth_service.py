@@ -46,7 +46,7 @@ def register_user(db: Session, user_data: UserCreate):
         username=user_data.username,
         email=user_data.email,
         password=hashed_pwd,
-        oauth_provider="manual"  # <-- explicitly mark as manual signup
+        oauth_provider="manual"
     )
     db.add(new_user)
     db.commit()
@@ -79,7 +79,7 @@ async def google_oauth_callback(request: Request, db: Session):
     resp = await google.get("userinfo", token=token)
     user_info = resp.json()
 
-    # Check/create user
+    # Check or create user
     user = db.query(User).filter(User.email == user_info["email"]).first()
     if not user:
         user = User(
@@ -92,8 +92,8 @@ async def google_oauth_callback(request: Request, db: Session):
         db.commit()
         db.refresh(user)
 
-    # JWT using user.id
-    access_token = create_access_token({"sub": str(user.id)})
+    # ✅ JWT now uses email as 'sub' (not id)
+    access_token = create_access_token({"sub": user.email})
 
     # Redirect to dashboard with cookie
     response = RedirectResponse(url="/dashboard", status_code=302)
@@ -103,6 +103,6 @@ async def google_oauth_callback(request: Request, db: Session):
         httponly=True,
         secure=False,
         samesite="lax",
-        max_age=60*60*24
+        max_age=60 * 60 * 24
     )
     return response

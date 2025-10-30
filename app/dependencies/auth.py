@@ -1,18 +1,19 @@
-# app/auth/auth.py
 from fastapi import Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 from jose import JWTError, jwt
 from typing import Optional
 
-from app.database.session import get_user_db
+# ✅ updated import
+from app.database.db import get_db  
 from app.models.user import User
 from app.config import settings  # contains SECRET_KEY, ALGORITHM
 
 
-def get_current_user(request: Request, db: Session = Depends(get_user_db)) -> User:
+def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
     """
     FastAPI dependency to fetch the authenticated user.
     Checks both Authorization header and cookie for JWT.
+    ✅ Updated to use email (sub) instead of numeric user_id.
     """
     token: Optional[str] = None
 
@@ -35,21 +36,20 @@ def get_current_user(request: Request, db: Session = Depends(get_user_db)) -> Us
     # 4️⃣ Decode and validate JWT
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        user_id_str: Optional[str] = payload.get("sub")
-        if not user_id_str or not user_id_str.isdigit():
+        user_email: Optional[str] = payload.get("sub")  # ✅ now using email
+        if not user_email or "@" not in user_email:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid token payload",
             )
-        user_id: int = int(user_id_str)
     except JWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token",
         )
 
-    # 5️⃣ Fetch user from DB
-    user: Optional[User] = db.query(User).filter(User.id == user_id).first()
+    # 5️⃣ Fetch user from DB by email instead of ID
+    user: Optional[User] = db.query(User).filter(User.email == user_email).first()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

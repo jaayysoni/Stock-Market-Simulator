@@ -1,5 +1,3 @@
-# app/services/transaction_services.py
-
 from sqlalchemy.orm import Session
 from datetime import datetime
 
@@ -12,9 +10,17 @@ from app.utils.stock_data import get_stock_price
 
 
 def buy_stock(db: Session, user: User, data: TransactionCreate) -> Transaction:
+    """
+    Handles stock buy operation using unified DB session.
+    """
+
     # Fetch current stock price
     stock_price = data.price if data.price is not None else get_stock_price(data.stock_id)
     total_cost = stock_price * data.quantity
+
+    # Refresh user record from DB
+    db.merge(user)
+    db.refresh(user)
 
     if user.virtual_balance < total_cost:
         raise ValueError(
@@ -23,45 +29,61 @@ def buy_stock(db: Session, user: User, data: TransactionCreate) -> Transaction:
 
     # Deduct balance
     user.virtual_balance -= total_cost
+    db.commit()
 
     # Record transaction
     transaction = Transaction(
-        user_id=user.id,
+        user_email=user.email,  # ✅ using email instead of ID
         stock_id=data.stock_id,
         transaction_type="buy",
         quantity=data.quantity,
         price=stock_price,
-        timestamp=data.timestamp or datetime.utcnow()
+        timestamp=data.timestamp or datetime.utcnow(),
     )
     db.add(transaction)
 
     # Update or create portfolio entry
-    portfolio = db.query(Portfolio).filter_by(user_id=user.id, stock_id=data.stock_id).first()
+    portfolio = (
+        db.query(Portfolio)
+        .filter_by(user_email=user.email, stock_id=data.stock_id)
+        .first()
+    )
+
     if portfolio:
         old_quantity = portfolio.quantity
         new_quantity = old_quantity + data.quantity
-        portfolio.avg_price = ((portfolio.avg_price * old_quantity) + total_cost) / new_quantity
+        portfolio.avg_price = (
+            (portfolio.avg_price * old_quantity) + total_cost
+        ) / new_quantity
         portfolio.quantity = new_quantity
     else:
         portfolio = Portfolio(
-            user_id=user.id,
+            user_email=user.email,
             stock_id=data.stock_id,
             quantity=data.quantity,
-            avg_price=stock_price
+            avg_price=stock_price,
         )
         db.add(portfolio)
 
     db.commit()
-    db.refresh(user)
+    db.refresh(transaction)
     return transaction
 
 
 def sell_stock(db: Session, user: User, data: TransactionCreate) -> Transaction:
-    # Fetch current stock price
+    """
+    Handles stock sell operation using unified DB session.
+    """
+
     stock_price = data.price if data.price is not None else get_stock_price(data.stock_id)
 
     # Fetch portfolio entry
-    portfolio = db.query(Portfolio).filter_by(user_id=user.id, stock_id=data.stock_id).first()
+    portfolio = (
+        db.query(Portfolio)
+        .filter_by(user_email=user.email, stock_id=data.stock_id)
+        .first()
+    )
+
     if not portfolio or portfolio.quantity < data.quantity:
         raise ValueError(
             f"Not enough shares to sell. "
@@ -70,12 +92,12 @@ def sell_stock(db: Session, user: User, data: TransactionCreate) -> Transaction:
 
     # Record transaction
     transaction = Transaction(
-        user_id=user.id,
+        user_email=user.email,
         stock_id=data.stock_id,
         transaction_type="sell",
         quantity=data.quantity,
         price=stock_price,
-        timestamp=data.timestamp or datetime.utcnow()
+        timestamp=data.timestamp or datetime.utcnow(),
     )
     db.add(transaction)
 
@@ -85,5 +107,10 @@ def sell_stock(db: Session, user: User, data: TransactionCreate) -> Transaction:
         db.delete(portfolio)
 
     db.commit()
-    db.refresh(user)
+
+    # Add funds back to user balance
+    user.virtual_balance += stock_price * data.quantity
+    db.commit()
+
+    db.refresh(transaction)
     return transaction

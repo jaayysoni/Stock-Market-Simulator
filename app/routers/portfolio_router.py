@@ -2,18 +2,19 @@
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from typing import List, Dict
+from typing import List
 from datetime import datetime
 
-from app.database.session import get_user_db, get_market_db
+from app.database.session import get_db
 from app.dependencies.auth import get_current_user
 from app.models.user import User
-from app.models.portfolio import Portfolio  # portfolio model only
-from app.models.transaction import Transaction  # user transactions
+from app.models.portfolio import Portfolio
+from app.models.transaction import Transaction
 from app.models.stock import Stock
 from app.services.stock_service import get_multiple_stock_prices
 
 router = APIRouter(prefix="/portfolio", tags=["Portfolio"])
+
 
 # ==============================
 # Buy Stock
@@ -22,12 +23,11 @@ router = APIRouter(prefix="/portfolio", tags=["Portfolio"])
 def buy_stock(
     symbol: str = Query(...),
     quantity: int = Query(...),
-    user_db: Session = Depends(get_user_db),
-    market_db: Session = Depends(get_market_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     symbol = symbol.upper()
-    stock = market_db.query(Stock).filter(Stock.symbol == symbol).first()
+    stock = db.query(Stock).filter(Stock.symbol == symbol).first()
     if not stock:
         raise HTTPException(status_code=404, detail="Stock not found")
 
@@ -43,11 +43,11 @@ def buy_stock(
 
     # Deduct cash
     current_user.cash_balance -= total_cost
-    user_db.add(current_user)
-    user_db.commit()
+    db.add(current_user)
+    db.commit()
 
     # Update portfolio
-    portfolio_item = market_db.query(Portfolio).filter(
+    portfolio_item = db.query(Portfolio).filter(
         Portfolio.user_id == current_user.id,
         Portfolio.stock_id == stock.id
     ).first()
@@ -64,9 +64,9 @@ def buy_stock(
             quantity=quantity,
             avg_price=price
         )
-        market_db.add(portfolio_item)
+        db.add(portfolio_item)
 
-    # Record user transaction
+    # Record transaction
     transaction = Transaction(
         user_id=current_user.id,
         stock_id=stock.id,
@@ -75,10 +75,11 @@ def buy_stock(
         transaction_type="BUY",
         timestamp=datetime.utcnow()
     )
-    market_db.add(transaction)
-    market_db.commit()
+    db.add(transaction)
+    db.commit()
 
     return {"message": f"Bought {quantity} shares of {symbol} at {price} each."}
+
 
 # ==============================
 # Sell Stock
@@ -87,16 +88,15 @@ def buy_stock(
 def sell_stock(
     symbol: str = Query(...),
     quantity: int = Query(...),
-    user_db: Session = Depends(get_user_db),
-    market_db: Session = Depends(get_market_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     symbol = symbol.upper()
-    stock = market_db.query(Stock).filter(Stock.symbol == symbol).first()
+    stock = db.query(Stock).filter(Stock.symbol == symbol).first()
     if not stock:
         raise HTTPException(status_code=404, detail="Stock not found")
 
-    portfolio_item = market_db.query(Portfolio).filter(
+    portfolio_item = db.query(Portfolio).filter(
         Portfolio.user_id == current_user.id,
         Portfolio.stock_id == stock.id
     ).first()
@@ -113,14 +113,14 @@ def sell_stock(
     # Update portfolio
     portfolio_item.quantity -= quantity
     if portfolio_item.quantity == 0:
-        market_db.delete(portfolio_item)
+        db.delete(portfolio_item)
 
     # Add cash to user
     current_user.cash_balance += total_earnings
-    user_db.add(current_user)
-    user_db.commit()
+    db.add(current_user)
+    db.commit()
 
-    # Record user transaction
+    # Record transaction
     transaction = Transaction(
         user_id=current_user.id,
         stock_id=stock.id,
@@ -129,20 +129,21 @@ def sell_stock(
         transaction_type="SELL",
         timestamp=datetime.utcnow()
     )
-    market_db.add(transaction)
-    market_db.commit()
+    db.add(transaction)
+    db.commit()
 
     return {"message": f"Sold {quantity} shares of {symbol} at {price} each."}
+
 
 # ==============================
 # Get Portfolio Holdings
 # ==============================
 @router.get("/holdings")
 def get_portfolio_holdings(
-    market_db: Session = Depends(get_market_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    portfolio_items = market_db.query(Portfolio).filter(
+    portfolio_items = db.query(Portfolio).filter(
         Portfolio.user_id == current_user.id
     ).all()
     if not portfolio_items:
@@ -165,15 +166,16 @@ def get_portfolio_holdings(
         })
     return result
 
+
 # ==============================
 # Transaction History
 # ==============================
 @router.get("/transactions")
 def get_transaction_history(
-    market_db: Session = Depends(get_market_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    transactions = market_db.query(Transaction).filter(
+    transactions = db.query(Transaction).filter(
         Transaction.user_id == current_user.id
     ).order_by(Transaction.timestamp.desc()).all()
 

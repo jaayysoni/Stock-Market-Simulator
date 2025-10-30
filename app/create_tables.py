@@ -1,9 +1,6 @@
-# app/create_tables.py
+from app.database.db import engine, Base
+from app.models import user, stock, portfolio, transaction, watchlist
 
-from app.database.db import UserBase, user_engine
-from app.models.user import User
-from app.models.portfolio import Portfolio  # import other models as needed
-
-# Create all tables in the USER database
-UserBase.metadata.create_all(bind=user_engine)
-print("User tables created successfully.")
+print("⏳ Creating tables in user_data.db ...")
+Base.metadata.create_all(bind=engine)
+print("✅ All tables created successfully!")

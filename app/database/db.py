@@ -3,42 +3,46 @@
 import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
+from app.config import settings  # ✅ reads from .env if defined
 
 # -------------------------
-# Base directory
+# Base directory setup
 # -------------------------
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))        # -> app/database
+PROJECT_ROOT = os.path.dirname(os.path.dirname(BASE_DIR))    # -> Stock-Market-Simulator
 
 # -------------------------
-# USER DATABASE (user_data.db)
+# UNIFIED DATABASE (user_data.db)
 # -------------------------
-USER_DB_PATH = os.path.join(BASE_DIR, "user_data.db")
-USER_DB_URL = f"sqlite:///{USER_DB_PATH}"
+# Try reading from .env first; fallback to local path
+DB_PATH = os.path.join(PROJECT_ROOT, "user_data.db")
+DB_URL = getattr(settings, "DB_URL", None) or f"sqlite:///{DB_PATH}"
 
-user_engine = create_engine(USER_DB_URL, connect_args={"check_same_thread": False})
-UserSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=user_engine)
-UserBase = declarative_base()
+# Create single engine + session
+engine = create_engine(DB_URL, connect_args={"check_same_thread": False})
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
 
-def get_user_db():
-    db = UserSessionLocal()
+# -------------------------
+# Unified Session Dependency
+# -------------------------
+def get_db():
+    """General dependency for any database session"""
+    db = SessionLocal()
     try:
         yield db
     finally:
         db.close()
 
-# -------------------------
-# MARKET DATABASE (market_data.db)
-# -------------------------
-MARKET_DB_PATH = os.path.join(BASE_DIR, "market_data.db")
-MARKET_DB_URL = f"sqlite:///{MARKET_DB_PATH}"
 
-market_engine = create_engine(MARKET_DB_URL, connect_args={"check_same_thread": False})
-MarketSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=market_engine)
-MarketBase = declarative_base()
+# -------------------------
+# Aliases for compatibility
+# -------------------------
+def get_user_db():
+    """Alias for unified DB (used in user-related routers)"""
+    yield from get_db()
+
 
 def get_market_db():
-    db = MarketSessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+    """Alias for unified DB (used in market-related routers)"""
+    yield from get_db()

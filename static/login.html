@@ -139,7 +139,7 @@
             messageBox.textContent = "Login successful! Redirecting...";
             messageBox.style.color = "green";
 
-            setTimeout(() => window.location.href ="/dashboard", 1500);
+            setTimeout(() => window.location.href = "/static/transaction.html", 1500);
           } else {
             messageBox.textContent = data.detail || "Login failed!";
             messageBox.style.color = "red";

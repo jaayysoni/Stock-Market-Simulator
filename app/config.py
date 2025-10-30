@@ -1,13 +1,10 @@
 # app/config.py
 
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import Field
+
 
 class Settings(BaseSettings):
-    # -------------------------
-    # Database
-    # -------------------------
-    DATABASE_URL: str = "sqlite:///./stock_simulator.db"
-
     # -------------------------
     # Internal API key
     # -------------------------
@@ -43,13 +40,20 @@ class Settings(BaseSettings):
     FMP_API_KEY: str  # <-- mandatory, must be in .env or environment
 
     # -------------------------
+    # Database URLs
+    # -------------------------
+    USER_DB_URL: str = Field(default="sqlite:///./user_data.db", env="USER_DB_URL")
+    MARKET_DB_URL: str = Field(default="sqlite:///./market_data.db", env="MARKET_DB_URL")
+
+    # -------------------------
     # Pydantic config
     # -------------------------
-    model_config = {
-        "env_file": ".env",
-        "env_file_encoding": "utf-8",
-        "extra": "forbid",  # Do not allow unknown env vars
-    }
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore"  # ✅ ignore unknown .env fields safely
+    )
+
 
 # Instantiate global settings object
 settings = Settings()
