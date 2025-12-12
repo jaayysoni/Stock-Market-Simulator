@@ -17,12 +17,18 @@ from app.models import user, stock, transaction, watchlist
 from app.routers.auth_router import router as auth_router
 from app.routers.stock_router import router as stock_router
 from app.routers.transaction_router import router as transaction_router
-from app.routers import watchlist_router, google_oauth_router, market_router, ws_router
+from app.routers import (
+    watchlist_router,
+    google_oauth_router,
+    market_router,
+    ws_router
+)
 from app.tasks.scheduler import start_scheduler
 from app.tasks.market_tasks import refresh_market_indices, refresh_top_movers
 from app.tasks.nifty_tasks import refresh_nifty_cache
 from app.services.finnhub_client import finnhub_client
 from app.config import settings
+from app.utils.cache import get_redis, close_redis  # ✅ Added for Redis
 
 # ----------------- Load Environment -----------------
 load_dotenv()
@@ -58,11 +64,10 @@ app.add_middleware(
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
 
 # ----------------- Routers -----------------
-# ✅ Clean, consistent prefixing
 app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
 app.include_router(stock_router, prefix="/stocks", tags=["Stocks"])
 app.include_router(transaction_router, prefix="/api/transactions", tags=["Transactions"])
-app.include_router(watchlist_router.router, prefix="/watchlist", tags=["Watchlist"])
+app.include_router(watchlist_router.router)  # ✅ FIXED: router already has /api/watchlist prefix
 app.include_router(google_oauth_router.router, prefix="/oauth", tags=["Google OAuth"])
 app.include_router(ws_router.router, prefix="/ws", tags=["WebSocket"])
 app.include_router(market_router.router, prefix="/market", tags=["Market"])
@@ -103,7 +108,7 @@ RUN_YFINANCE = os.getenv("RUN_YFINANCE", "1") == "1"
 # ----------------- Startup Event -----------------
 @app.on_event("startup")
 async def startup_event():
-    """Initialize DB and start background tasks"""
+    """Initialize DB, Redis, and start background tasks"""
     try:
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
@@ -111,6 +116,18 @@ async def startup_event():
         print("✅ Database connected and tables ensured.")
     except OperationalError as e:
         print("❌ Database connection failed:", e)
+
+    # 🟥 Initialize Redis (with retry)
+    for attempt in range(3):
+        try:
+            await get_redis()
+            print("✅ Redis connection established successfully.")
+            break
+        except Exception as e:
+            print(f"⚠️ Redis connection attempt {attempt+1} failed: {e}")
+            await asyncio.sleep(2)
+    else:
+        print("❌ Redis connection unavailable. Continuing without cache.")
 
     # ⏰ Start Scheduler
     start_scheduler()
@@ -137,8 +154,9 @@ async def startup_event():
 
 # ----------------- Shutdown Event -----------------
 @app.on_event("shutdown")
-def shutdown_event():
+async def shutdown_event():
     print("👋 Application shutting down... cleaning up.")
+    await close_redis()  # ✅ Clean Redis disconnect
 
 # ----------------- Debug Logs -----------------
 print("🔗 DATABASE_URL:", engine.url)

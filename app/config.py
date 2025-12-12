@@ -2,7 +2,14 @@
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field
+from pathlib import Path
+from dotenv import load_dotenv
 
+# -------------------------
+# Load .env file manually
+# -------------------------
+BASE_DIR = Path(__file__).parent.parent  # project root
+load_dotenv(dotenv_path=BASE_DIR / ".env")  # ensures env variables are loaded
 
 class Settings(BaseSettings):
     # -------------------------
@@ -30,14 +37,10 @@ class Settings(BaseSettings):
     GOOGLE_REDIRECT_URI: str = "http://localhost:8000/auth/google/callback"
 
     # -------------------------
-    # Finnhub API
+    # Finnhub API keys
     # -------------------------
-    FINNHUB_API_KEY: str = ""
-
-    # -------------------------
-    # Financial Modeling Prep (FMP) API
-    # -------------------------
-    FMP_API_KEY: str  # <-- mandatory, must be in .env or environment
+    FINNHUB_API_KEY_1: str = Field(..., env="FINNHUB_API_KEY_1")    # WebSocket key
+    FINNHUB_API_KEY_2: str = Field(..., env="FINNHUB_API_KEY_2")  # REST API key
 
     # -------------------------
     # Database URLs
@@ -49,11 +52,13 @@ class Settings(BaseSettings):
     # Pydantic config
     # -------------------------
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=BASE_DIR / ".env",  # load .env from project root
         env_file_encoding="utf-8",
         extra="ignore"  # ✅ ignore unknown .env fields safely
     )
 
 
+# -------------------------
 # Instantiate global settings object
+# -------------------------
 settings = Settings()

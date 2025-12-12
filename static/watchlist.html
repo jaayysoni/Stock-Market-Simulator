@@ -1,316 +1,405 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Watchlist — Stock Market Simulator</title>
-<link rel="stylesheet" href="/static/css/watchlist.css" />
 <style>
-/* ===== Navbar (Dashboard Style) ===== */
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: #161b22;     /* Deep dashboard tone */
-  color: #f5f5f5;
-  padding: 14px 40px;
-  border-bottom: 1px solid #2b2b2b;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
-  position: sticky;
-  top: 0;
-  z-index: 100;
+/* ===== Theme & Layout ===== */
+:root{
+  --bg:#0f1418;
+  --panel:#1f242c;
+  --panel-hover:#252b34;
+  --muted:#9aa1ab;
+  --accent:#00c2ff;
+  --danger:#ff5757;
+  --text:#e6e6e6;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Inter,system-ui,Arial,Helvetica,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
 }
 
-.logo {
-  font-size: 1.5rem;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  color: #00c2ff;
+/* Header */
+.header{
+  display:flex;
+  justify-content:space-between;
+  gap:16px;
+  align-items:center;
+  padding:14px 20px;
+  background:#161b22;
+  border-bottom:1px solid #222;
+  position:sticky;
+  top:0;
+  z-index:100;
+}
+.brand{font-weight:700;color:var(--accent);font-size:1.05rem}
+.main-nav ul{display:flex;gap:14px;list-style:none;margin:0;padding:0}
+.main-nav a{color:#dcdcdc;text-decoration:none;font-weight:500}
+.main-nav a:hover{color:var(--accent)}
+
+/* Main content */
+.content{
+  max-width:960px;
+  margin:18px auto;
+  padding:0 18px 48px;
 }
 
-.main-nav ul {
-  list-style: none;
-  display: flex;
-  gap: 28px;
-  margin: 0;
-  padding: 0;
+/* Controls */
+.controls{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  justify-content:center;
+  margin-bottom:18px;
+  flex-wrap:wrap;
 }
-
-.main-nav ul li a {
-  text-decoration: none;
-  color: #dcdcdc;
-  font-weight: 500;
-  letter-spacing: 0.3px;
-  transition: all 0.3s ease;
-  position: relative;
-  padding-bottom: 4px;
+#w-search{
+  min-width:220px;
+  padding:8px 10px;
+  border-radius:8px;
+  border:1px solid #2f353b;
+  background:#0b0f11;
+  color:var(--text);
 }
-
-/* .main-nav ul li a:hover,
-.main-nav ul li a.active {
-  color: #00c2ff;
-} */
-
-/* .main-nav ul li a::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 0%;
-  height: 2px;
-  background: #00c2ff;
-  transition: width 0.3s ease;
-} */
-
-.main-nav ul li a:hover::after,
-.main-nav ul li a.active::after {
-  width: 100%;
+.btn{
+  padding:8px 12px;border-radius:8px;border:0;font-weight:700;cursor:pointer;
 }
+.btn-primary{background:var(--accent);color:#07202a}
+.btn-ghost{background:transparent;color:#dcdcdc;border:1px solid #2b2b2b}
+.btn-disabled{opacity:.6;cursor:not-allowed}
 
-/* Mobile-friendly */
-@media (max-width: 768px) {
-  .header {
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 16px 20px;
-  }
-  .main-nav ul {
-    flex-wrap: wrap;
-    gap: 16px;
-    margin-top: 8px;
-  }
+/* Watchlist */
+.wl-list{list-style:none;padding:0;margin:0 auto;max-width:840px}
+.wl-item{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  background:var(--panel);
+  padding:12px 14px;
+  margin-bottom:10px;
+  border-radius:10px;
+  transition:background .12s ease, transform .08s ease;
+}
+.wl-item:hover{background:var(--panel-hover)}
+.wl-left{display:flex;gap:12px;align-items:center;min-width:0}
+.wl-symbol{font-weight:800;color:var(--accent);font-size:1.05rem;white-space:nowrap}
+.wl-company{color:var(--muted);font-size:0.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:360px}
+.wl-right{display:flex;align-items:center;gap:10px}
+.wl-price{font-weight:700;color:#dcdcdc;min-width:110px;text-align:right;font-variant-numeric:tabular-nums}
+.wl-price.unknown{color:var(--muted)}
+.wl-change{font-weight:700;font-variant-numeric:tabular-nums}
+.remove-stock{background:transparent;border:0;color:var(--danger);font-size:1.15rem;cursor:pointer;padding:6px;border-radius:6px}
+.remove-stock:hover{transform:scale(1.06)}
+
+/* Skeleton & empty */
+.skeleton-wrapper{margin:12px auto;max-width:840px}
+.skeleton{height:56px;border-radius:8px;margin-bottom:10px;background:linear-gradient(90deg,#1f242c 25%,#252b34 50%,#1f242c 75%);background-size:200% 100%;animation:shimmer 1s linear infinite}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.empty-state{text-align:center;color:var(--muted);margin-top:14px;font-size:15px}
+
+/* toast */
+.toast{position:fixed;right:18px;bottom:18px;background:rgba(18,18,18,0.96);color:#fff;padding:10px 14px;border-radius:8px;box-shadow:0 8px 20px rgba(0,0,0,0.5);z-index:2000}
+
+/* responsive */
+@media(max-width:600px){
+  .wl-item{flex-direction:column;align-items:flex-start}
+  .wl-price{text-align:left;min-width:auto}
+  .main-nav ul{display:none}
+  .content{padding:0 12px 48px}
 }
 </style>
-  </style>
 </head>
 <body>
-  <header class="header">
-    <nav class="main-nav">
-        <ul>
-            <li><a href="/static/dashboard.html">Dashboard</a></li>
-            <li><a href="/static/portfolio.html">Portfolio</a></li>
-            <li><a href="/static/tradingterminal.html">Trading-Terminal</a></li>
-            <li><a href="/static/login.html">Logout</a></li>
-        </ul>
-    </nav>
+<header class="header">
+  <div style="display:flex;align-items:center;gap:12px">
+    <div class="brand">Stock Simulator</div>
+  </div>
+  <nav class="main-nav" aria-label="Main navigation">
+    <ul>
+      <li><a href="/static/dashboard.html">Dashboard</a></li>
+      <li><a href="/static/portfolio.html">Portfolio</a></li>
+      <li><a href="/static/tradingterminal.html">Trading-Terminal</a></li>
+      <li><a href="/static/login.html">Logout</a></li>
+    </ul>
+  </nav>
 </header>
 
-<main class="content">
+<main class="content" role="main">
+  <div class="controls" aria-label="Watchlist controls">
+    <input id="w-search" type="text" placeholder="Add stock symbol (e.g. AAPL)" aria-label="Stock symbol" />
+    <button id="add-to-watchlist" class="btn btn-primary">Add</button>
+    <button id="refresh-watchlist" class="btn btn-ghost">Refresh</button>
+  </div>
 
-<!-- TOP: Search bar -->
-<div style="display:flex; justify-content:center; margin: 12px 0; gap:8px;">
-  <input type="text" id="w-search" placeholder="Search or add stock..." />
-  <select id="select-watchlist"></select>
-  <button id="add-to-watchlist">Add</button>
-</div>
+  <div id="skeleton" class="skeleton-wrapper" aria-hidden="true" style="display:none">
+    <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
+  </div>
 
-<!-- WATCHLISTS -->
-<div id="watchlists-container"></div>
+  <div id="watchlist-container" style="text-align:center"></div>
+  <div id="empty-state" class="empty-state" style="display:none">Your watchlist is empty.</div>
+</main>
 
-<!-- FOOTER: Create new watchlist -->
-<div style="display:flex; justify-content:center; margin: 20px 0;">
-  <button id="create-watchlist">Create New Watchlist</button>
-</div>
+<!-- Toast root -->
+<div id="toast-root" aria-live="polite" aria-atomic="true" style="pointer-events:none"></div>
 
 <script>
-const STORAGE_KEY = "multi-watchlists-v3";
-const container = document.getElementById("watchlists-container");
-const searchInput = document.getElementById("w-search");
+/*
+  Single-file, copy-paste ready watchlist UI.
+  Uses delete-by-symbol. Keeps full features: add, refresh, cache, optimistic UI.
+*/
+
+// ---------- Config ----------
+const API_ADD = "/api/watchlist";         // POST { symbol }
+const API_FULL = "/api/watchlist/full";   // GET -> array or {data: [...]}
+const API_DELETE_BASE = "/api/watchlist"; // DELETE /{symbol}
+const LOCAL_CACHE_KEY = "watchlist_local_cache_v2";
+const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
+
+// ---------- Elements ----------
+const container = document.getElementById("watchlist-container");
 const addBtn = document.getElementById("add-to-watchlist");
-const selectWL = document.getElementById("select-watchlist");
-const createBtn = document.getElementById("create-watchlist");
+const refreshBtn = document.getElementById("refresh-watchlist");
+const searchInput = document.getElementById("w-search");
+const skeletonEl = document.getElementById("skeleton");
+const emptyEl = document.getElementById("empty-state");
+const toastRoot = document.getElementById("toast-root");
 
-// --- Dummy Indian stocks
-const dummyStocks = [
-  { symbol: "RELIANCE", avg_price: 2400, current_price: 2450 },
-  { symbol: "TCS", avg_price: 3200, current_price: 3190 },
-  { symbol: "INFY", avg_price: 1500, current_price: 1525 },
-  { symbol: "HDFC", avg_price: 1600, current_price: 1580 },
-];
+// ---------- Helpers ----------
+function showSkeleton(show){ skeletonEl.style.display = show ? "block" : "none"; }
+function showEmpty(show){ emptyEl.style.display = show ? "block" : "none"; }
+function nowTs(){ return Date.now(); }
+function safeParse(s){ try{return JSON.parse(s);}catch{return null;} }
+function formatPrice(v){ if (v===null||v===undefined||isNaN(v)) return "—"; return Number(v).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); }
 
-// --- Load or initialize watchlists
-let watchlists = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [
-  { name: "Tech Giants", stocks: [...dummyStocks] },
-  { name: "My Portfolio", stocks: [{ symbol:"DUMMY", avg_price:140, current_price:150 }] }
-];
-
-// --- Populate watchlist selector
-function populateSelector() {
-  selectWL.innerHTML = "";
-  watchlists.forEach((wl, index) => {
-    const option = document.createElement("option");
-    option.value = index;
-    option.textContent = wl.name;
-    selectWL.appendChild(option);
-  });
+function showToast(msg, ms=3000){
+  const t = document.createElement("div");
+  t.className = "toast";
+  t.style.pointerEvents = "auto";
+  t.textContent = msg;
+  toastRoot.appendChild(t);
+  setTimeout(()=>{ t.style.opacity="0"; setTimeout(()=>t.remove(),250); }, ms);
 }
 
-// --- Render all watchlists
-function renderWatchlists(filter="") {
+// ---------- Local Cache ----------
+function writeLocalCache(data){
+  try{ localStorage.setItem(LOCAL_CACHE_KEY, JSON.stringify({ts:nowTs(),data})); } catch(e){ console.warn("cache write failed", e); }
+}
+function readLocalCache(){
+  try{
+    const raw = localStorage.getItem(LOCAL_CACHE_KEY);
+    if(!raw) return null;
+    const parsed = safeParse(raw);
+    if(!parsed || !parsed.ts || !parsed.data) return null;
+    if(nowTs() - parsed.ts > CACHE_TTL_MS) return null;
+    return parsed.data;
+  } catch(e){ return null; }
+}
+
+// ---------- Normalization ----------
+function normalizeServerItems(arr){
+  return (arr||[]).map(it => ({
+    id: it.id ?? null,
+    symbol: (it.symbol || "").toUpperCase(),
+    stock_name: it.stock_name ?? it.name ?? it.company_name ?? null,
+    current_price: (typeof it.current_price !== "undefined") ? it.current_price : (it.currentPrice ?? null),
+    change_percent: (typeof it.change_percent !== "undefined") ? it.change_percent : (it.change ?? null)
+  }));
+}
+
+// ---------- Render ----------
+function renderWatchlist(items){
   container.innerHTML = "";
-  watchlists.forEach((wl, index) => {
-    const section = document.createElement("section");
-    section.className = "wl-wrap";
-    section.dataset.index = index;
+  if(!items || items.length === 0){
+    showEmpty(true);
+    return;
+  }
+  showEmpty(false);
 
-    section.innerHTML = `
-      <header class="wl-head">
-        <h2 class="wl-title">${wl.name}</h2>
-        <button class="wl-reset" data-index="${index}">Reset</button>
-      </header>
-      <ul class="wl-list" id="wl-${index}"></ul>
-      <footer class="wl-foot">
-        <small class="muted">
-          Drag handle to reorder. Order auto-saves.
-          <button class="delete-watchlist" data-index="${index}">Delete List</button>
-        </small>
-      </footer>
-    `;
-    container.appendChild(section);
+  const ul = document.createElement("ul");
+  ul.className = "wl-list";
 
-    const ul = section.querySelector(".wl-list");
+  items.forEach(it => {
+    const symbol = it.symbol;
+    const company = it.stock_name || "";
+    const priceRaw = it.current_price;
+    const priceText = (priceRaw === null || priceRaw === undefined) ? "—" : `$${formatPrice(priceRaw)}`;
+    const priceClass = (priceRaw === null || priceRaw === undefined) ? "wl-price unknown" : "wl-price";
 
-    wl.stocks.filter(s => s.symbol.toLowerCase().includes(filter.toLowerCase()))
-      .forEach(stock => {
-        const price = stock.current_price ?? 0;
-        const change = price - stock.avg_price;
-        const changeClass = change >= 0 ? "up" : "down";
-        const changeSign = change >= 0 ? "+" : "";
-        const li = document.createElement("li");
-        li.className = "wl-item";
-        li.dataset.symbol = stock.symbol;
-        li.draggable = true;
-        li.innerHTML = `
-          <span class="wl-handle">⋮⋮</span>
-          <div class="wl-main">
-            <div class="wl-symbol">${stock.symbol}</div>
-            <div class="wl-meta">
-              <span>₹${price.toFixed(2)}</span>
-              <span class="wl-subtext">Avg Buy: ₹${stock.avg_price.toFixed(2)}</span>
-            </div>
-          </div>
-          <div class="wl-badges">
-            <span class="badge ${changeClass}">${changeSign}${change.toFixed(2)}</span>
-            <button class="trade-stock" data-symbol="${stock.symbol}">Trade</button>
-            <button class="remove-stock" data-symbol="${stock.symbol}">✖</button>
-          </div>
-        `;
-        ul.appendChild(li);
-      });
+    let changeHtml = "";
+    if (typeof it.change_percent !== "undefined" && it.change_percent !== null) {
+      const c = Number(it.change_percent);
+      const sign = c >= 0 ? "+" : "";
+      const color = c >= 0 ? "var(--accent)" : "var(--danger)";
+      changeHtml = `<div class="wl-change" style="color:${color};font-size:0.95rem">${sign}${c.toFixed(2)}%</div>`;
+    }
 
-    // --- Drag & Drop
-    let draggingEl = null;
-    ul.addEventListener("dragstart", e => {
-      const li = e.target.closest(".wl-item");
-      if(!li) return;
-      draggingEl = li;
-      li.classList.add("dragging");
-      e.dataTransfer.effectAllowed = "move";
-      e.dataTransfer.setData("text/plain", li.dataset.symbol);
-    });
-    ul.addEventListener("dragend", e => {
-      if(e.target.closest(".wl-item")) e.target.closest(".wl-item").classList.remove("dragging");
-      draggingEl = null;
-      persistOrder(ul, wl);
-    });
-    ul.addEventListener("dragover", e => {
-      e.preventDefault();
-      const afterEl = getDragAfterElement(ul, e.clientY);
-      Array.from(ul.children).forEach(li => li.classList.remove("drop-target"));
-      if(!afterEl) ul.appendChild(draggingEl);
-      else { ul.insertBefore(draggingEl, afterEl); afterEl.classList.add("drop-target"); }
-    });
-    ul.addEventListener("drop", e => {
-      e.preventDefault();
-      Array.from(ul.children).forEach(li => li.classList.remove("drop-target"));
-      persistOrder(ul, wl);
-    });
+    const li = document.createElement("li");
+    li.className = "wl-item";
+    if (it.id !== null) li.setAttribute("data-id", it.id);
+    li.setAttribute("data-symbol", symbol);
 
-    // --- Stock actions
-    ul.addEventListener("click", e => {
-      if(e.target.classList.contains("remove-stock")) {
-        const sym = e.target.dataset.symbol;
-        wl.stocks = wl.stocks.filter(s => s.symbol !== sym);
-        saveWatchlists();
-        renderWatchlists(searchInput.value);
-      }
-      if(e.target.classList.contains("trade-stock")) {
-        const sym = e.target.dataset.symbol;
-        alert(`Trading interface for ${sym} will open here.`);
-      }
-    });
+    li.innerHTML = `
+      <div class="wl-left">
+        <div>
+          <div class="wl-symbol">${symbol}</div>
+          <div class="wl-company">${company}</div>
+        </div>
+      </div>
 
-    // --- Reset
-    section.querySelector(".wl-reset").addEventListener("click", () => {
-      wl.stocks = [...dummyStocks];
-      saveWatchlists();
-      renderWatchlists(searchInput.value);
-    });
+      <div class="wl-right">
+        <div class="${priceClass}">${priceText}</div>
+        ${changeHtml}
+        <button class="remove-stock" data-symbol="${symbol}" title="Remove ${symbol}" aria-label="Remove ${symbol}">✖</button>
+      </div>
+    `.trim();
 
-    // --- Delete watchlist
-    section.querySelector(".delete-watchlist").addEventListener("click", () => {
-      watchlists.splice(index,1);
-      saveWatchlists();
-      populateSelector();
-      renderWatchlists(searchInput.value);
-    });
+    ul.appendChild(li);
   });
+
+  container.appendChild(ul);
+
+  // Event delegation for remove (delete-by-symbol)
+  ul.addEventListener("click", async (e) => {
+    const btn = e.target.closest(".remove-stock");
+    if (!btn) return;
+    const li = btn.closest(".wl-item");
+    const sym = btn.dataset.symbol;
+    if (!sym) return;
+    btn.disabled = true;
+
+    try {
+      await deleteBySymbol(sym);
+      showToast(`Removed ${sym}`);
+      localStorage.removeItem(LOCAL_CACHE_KEY);
+      await loadWatchlist();
+    } catch (err) {
+      console.error("remove error", err);
+      let message = "Failed to remove stock";
+      if (err && err.message) message = err.message;
+      showToast(message);
+      btn.disabled = false;
+    }
+  }, { once: false });
 }
 
-// --- Drag helper
-function getDragAfterElement(container, y){
-  const els = [...container.querySelectorAll(".wl-item:not(.dragging)")];
-  return els.reduce((closest, child) => {
-    const box = child.getBoundingClientRect();
-    const offset = y - (box.top + box.height / 2);
-    if(offset < 0 && offset > closest.offset) return { offset, element: child };
-    return closest;
-  }, { offset: Number.NEGATIVE_INFINITY }).element;
-}
-
-// --- Persist order after drag
-function persistOrder(ul, wl){
-  wl.stocks = [...ul.children].map(li => {
-    const sym = li.dataset.symbol;
-    return wl.stocks.find(s => s.symbol === sym);
+// ---------- Network calls ----------
+async function fetchFullFromServer(){
+  const res = await fetch(API_FULL, {
+    method: "GET",
+    credentials: "include",
+    headers: { "Accept": "application/json", "Cache-Control": "no-cache" }
   });
-  saveWatchlists();
+  if (!res.ok) {
+    const txt = await res.text().catch(()=>"");
+    throw new Error(`Server ${res.status} ${txt}`);
+  }
+  const json = await res.json();
+  if (Array.isArray(json)) return json;
+  if (json && Array.isArray(json.data)) return json.data;
+  return [];
 }
 
-// --- Save to localStorage
-function saveWatchlists(){
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(watchlists));
+async function addStock(symbol){
+  const res = await fetch(API_ADD, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json", "Accept": "application/json" },
+    body: JSON.stringify({ symbol })
+  });
+  if (!res.ok) {
+    let msg = `Server ${res.status}`;
+    try { const j = await res.json(); if (j && (j.detail || j.message)) msg = j.detail || j.message; } catch(_) {}
+    throw new Error(msg);
+  }
+  try { return await res.json(); } catch { return null; }
 }
 
-// --- Search filter
-searchInput.addEventListener("input", e => renderWatchlists(e.target.value));
+async function deleteBySymbol(symbol){
+  const url = `${API_DELETE_BASE}/${encodeURIComponent(String(symbol))}`;
+  const res = await fetch(url, { method: "DELETE", credentials: "include" });
+  if (!res.ok && res.status !== 204) {
+    let msg = `Server ${res.status}`;
+    try { const j = await res.json(); if (j && j.detail) msg = j.detail; } catch(_) {}
+    throw new Error(msg);
+  }
+}
 
-// --- Add stock to selected watchlist
-addBtn.addEventListener("click", () => {
-  const sym = searchInput.value.trim().toUpperCase();
-  const wlIndex = selectWL.value;
-  if(sym && watchlists[wlIndex] && !watchlists[wlIndex].stocks.find(s => s.symbol === sym)) {
-    watchlists[wlIndex].stocks.push({ symbol: sym, avg_price: 100, current_price: 100 });
-    saveWatchlists();
-    renderWatchlists(searchInput.value);
+// ---------- Load flow ----------
+async function loadWatchlist(){
+  showSkeleton(true);
+  container.innerHTML = "";
+  showEmpty(false);
+
+  try {
+    const raw = await fetchFullFromServer();
+    const normalized = normalizeServerItems(raw);
+    renderWatchlist(normalized);
+    writeLocalCache(normalized);
+    if (!normalized.length) {
+      container.innerHTML = "";
+      showEmpty(true);
+    }
+  } catch (err) {
+    console.warn("fetch failed", err);
+    const cached = readLocalCache();
+    if (cached && Array.isArray(cached) && cached.length) {
+      renderWatchlist(cached);
+      showToast("⚡ Showing cached watchlist (offline)");
+    } else {
+      showEmpty(true);
+      container.innerHTML = `<div style="color:#ffb86b;margin-top:12px;text-align:center;">Unable to fetch watchlist from server and no cached data found.</div>`;
+    }
+  } finally {
+    showSkeleton(false);
+  }
+}
+
+// ---------- UI actions ----------
+addBtn.addEventListener("click", async (e) => {
+  e.preventDefault();
+  const sym = (searchInput.value || "").trim().toUpperCase();
+  if (!sym) return showToast("Please enter a stock symbol");
+  addBtn.disabled = true;
+  addBtn.classList.add("btn-disabled");
+  const prevText = addBtn.textContent;
+  addBtn.textContent = "Adding...";
+  try {
+    await addStock(sym);
+    localStorage.removeItem(LOCAL_CACHE_KEY);
     searchInput.value = "";
+    showToast(`${sym} added`);
+    await loadWatchlist();
+  } catch (err) {
+    console.error("add failed", err);
+    const message = (err && err.message) ? err.message : "Error adding stock";
+    showToast(message);
+  } finally {
+    addBtn.disabled = false;
+    addBtn.classList.remove("btn-disabled");
+    addBtn.textContent = prevText;
   }
 });
 
-// --- Create new watchlist
-createBtn.addEventListener("click", () => {
-  const name = prompt("Enter new watchlist name:");
-  if(name){
-    watchlists.push({ name, stocks: [] });
-    saveWatchlists();
-    populateSelector();
-    renderWatchlists(searchInput.value);
-  }
+refreshBtn.addEventListener("click", async (e) => {
+  e.preventDefault();
+  localStorage.removeItem(LOCAL_CACHE_KEY);
+  await loadWatchlist();
 });
 
-// --- Initial load
-populateSelector();
-renderWatchlists();
+// enter => add
+searchInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") { e.preventDefault(); addBtn.click(); }
+});
+
+// initial load
+document.addEventListener("DOMContentLoaded", loadWatchlist);
 </script>
 </body>
 </html>

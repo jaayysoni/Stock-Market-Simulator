@@ -1,1 +1,0 @@
-# Unit and API tests for stock endpoints
