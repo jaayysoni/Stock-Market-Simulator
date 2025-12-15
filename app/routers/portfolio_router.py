@@ -2,54 +2,53 @@
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from typing import List
 from datetime import datetime
 
-from app.database.session import get_db
+from app.database.db import get_user_db as get_db
 from app.dependencies.auth import get_current_user
 from app.models.user import User
 from app.models.portfolio import Portfolio
 from app.models.transaction import Transaction
-from app.models.stock import Stock
-from app.services.stock_service import get_multiple_stock_prices
+from app.models.crypto import Crypto
+from app.services.price_service import get_all_crypto_prices
 
-router = APIRouter(prefix="/portfolio", tags=["Portfolio"])
-
+router = APIRouter(prefix="/portfolio", tags=["Crypto Portfolio"])
 
 # ==============================
-# Buy Stock
+# Buy Crypto
 # ==============================
 @router.post("/buy")
-def buy_stock(
+async def buy_crypto(
     symbol: str = Query(...),
-    quantity: int = Query(...),
+    quantity: float = Query(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     symbol = symbol.upper()
-    stock = db.query(Stock).filter(Stock.symbol == symbol).first()
-    if not stock:
-        raise HTTPException(status_code=404, detail="Stock not found")
+    crypto = db.query(Crypto).filter(Crypto.universal_symbol == symbol).first()
+    if not crypto:
+        raise HTTPException(status_code=404, detail="Crypto not found")
 
-    price_data = get_multiple_stock_prices([symbol])
-    if not price_data or price_data[symbol]["price"] is None:
-        raise HTTPException(status_code=404, detail="Stock price not available")
+    prices = await get_all_crypto_prices()
+    price_data = next((p for p in prices if p["symbol"] == symbol), None)
+    if not price_data or price_data["price"] is None:
+        raise HTTPException(status_code=404, detail="Price not available")
 
-    price = price_data[symbol]["price"]
+    price = price_data["price"]
     total_cost = price * quantity
 
-    if current_user.cash_balance < total_cost:
-        raise HTTPException(status_code=400, detail="Insufficient balance")
+    if current_user.virtual_balance < total_cost:
+        raise HTTPException(status_code=400, detail="Insufficient virtual balance")
 
-    # Deduct cash
-    current_user.cash_balance -= total_cost
+    # Deduct user balance
+    current_user.virtual_balance -= total_cost
     db.add(current_user)
     db.commit()
 
     # Update portfolio
     portfolio_item = db.query(Portfolio).filter(
         Portfolio.user_id == current_user.id,
-        Portfolio.stock_id == stock.id
+        Portfolio.crypto_id == crypto.id
     ).first()
 
     if portfolio_item:
@@ -60,7 +59,7 @@ def buy_stock(
     else:
         portfolio_item = Portfolio(
             user_id=current_user.id,
-            stock_id=stock.id,
+            crypto_id=crypto.id,
             quantity=quantity,
             avg_price=price
         )
@@ -69,7 +68,7 @@ def buy_stock(
     # Record transaction
     transaction = Transaction(
         user_id=current_user.id,
-        stock_id=stock.id,
+        crypto_id=crypto.id,
         quantity=quantity,
         price=price,
         transaction_type="BUY",
@@ -78,36 +77,37 @@ def buy_stock(
     db.add(transaction)
     db.commit()
 
-    return {"message": f"Bought {quantity} shares of {symbol} at {price} each."}
+    return {"message": f"Bought {quantity} {symbol} at {price} each."}
 
 
 # ==============================
-# Sell Stock
+# Sell Crypto
 # ==============================
 @router.post("/sell")
-def sell_stock(
+async def sell_crypto(
     symbol: str = Query(...),
-    quantity: int = Query(...),
+    quantity: float = Query(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     symbol = symbol.upper()
-    stock = db.query(Stock).filter(Stock.symbol == symbol).first()
-    if not stock:
-        raise HTTPException(status_code=404, detail="Stock not found")
+    crypto = db.query(Crypto).filter(Crypto.universal_symbol == symbol).first()
+    if not crypto:
+        raise HTTPException(status_code=404, detail="Crypto not found")
 
     portfolio_item = db.query(Portfolio).filter(
         Portfolio.user_id == current_user.id,
-        Portfolio.stock_id == stock.id
+        Portfolio.crypto_id == crypto.id
     ).first()
     if not portfolio_item or portfolio_item.quantity < quantity:
-        raise HTTPException(status_code=400, detail="Not enough shares to sell")
+        raise HTTPException(status_code=400, detail="Not enough crypto to sell")
 
-    price_data = get_multiple_stock_prices([symbol])
-    if not price_data or price_data[symbol]["price"] is None:
-        raise HTTPException(status_code=404, detail="Stock price not available")
+    prices = await get_all_crypto_prices()
+    price_data = next((p for p in prices if p["symbol"] == symbol), None)
+    if not price_data or price_data["price"] is None:
+        raise HTTPException(status_code=404, detail="Price not available")
 
-    price = price_data[symbol]["price"]
+    price = price_data["price"]
     total_earnings = price * quantity
 
     # Update portfolio
@@ -115,15 +115,15 @@ def sell_stock(
     if portfolio_item.quantity == 0:
         db.delete(portfolio_item)
 
-    # Add cash to user
-    current_user.cash_balance += total_earnings
+    # Add funds to user balance
+    current_user.virtual_balance += total_earnings
     db.add(current_user)
     db.commit()
 
     # Record transaction
     transaction = Transaction(
         user_id=current_user.id,
-        stock_id=stock.id,
+        crypto_id=crypto.id,
         quantity=quantity,
         price=price,
         transaction_type="SELL",
@@ -132,14 +132,14 @@ def sell_stock(
     db.add(transaction)
     db.commit()
 
-    return {"message": f"Sold {quantity} shares of {symbol} at {price} each."}
+    return {"message": f"Sold {quantity} {symbol} at {price} each."}
 
 
 # ==============================
 # Get Portfolio Holdings
 # ==============================
 @router.get("/holdings")
-def get_portfolio_holdings(
+async def get_portfolio_holdings(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -149,14 +149,18 @@ def get_portfolio_holdings(
     if not portfolio_items:
         return {"message": "No holdings yet."}
 
-    symbols = [item.stock.symbol for item in portfolio_items if item.stock]
-    prices_data = get_multiple_stock_prices(symbols)
-
+    prices_data = await get_all_crypto_prices()
     result = []
+
     for item in portfolio_items:
-        symbol = item.stock.symbol if item.stock else None
-        live_price = prices_data[symbol]["price"] if symbol and prices_data.get(symbol) else None
+        crypto_obj = db.query(Crypto).get(item.crypto_id)
+        if not crypto_obj:
+            continue
+        symbol = crypto_obj.universal_symbol
+        price_entry = next((p for p in prices_data if p["symbol"] == symbol), None)
+        live_price = price_entry["price"] if price_entry else None
         pl = (live_price - item.avg_price) * item.quantity if live_price else None
+
         result.append({
             "symbol": symbol,
             "quantity": item.quantity,
@@ -181,8 +185,9 @@ def get_transaction_history(
 
     result = []
     for t in transactions:
+        crypto_obj = db.query(Crypto).get(t.crypto_id)
         result.append({
-            "symbol": t.stock.symbol if t.stock else None,
+            "symbol": crypto_obj.universal_symbol if crypto_obj else None,
             "quantity": t.quantity,
             "price": t.price,
             "type": t.transaction_type.lower(),

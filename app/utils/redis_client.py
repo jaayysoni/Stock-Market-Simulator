@@ -1,12 +1,23 @@
+# app/utils/redis_client.py
 import os
-import redis.asyncio as redis  # updated import for asyncio support
+from redis.asyncio import Redis, from_url
 
-REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
-redis_client = redis.from_url(REDIS_URL, decode_responses=True)
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
+redis_client: Redis | None = None  # type hint fixed
 
-async def set_data(key: str, value: dict, expire: int = 30):
-    await redis_client.set(key, str(value), ex=expire)
+async def get_redis() -> Redis:
+    """Initialize and return a Redis connection."""
+    global redis_client
+    if not redis_client:
+        redis_client = from_url(REDIS_URL, decode_responses=True)
+    return redis_client
 
-async def get_data(key: str):
-    data = await redis_client.get(key)
-    return eval(data) if data else None
+async def close_redis():
+    """Close Redis connection."""
+    global redis_client
+    if redis_client:
+        await redis_client.close()
+        redis_client = None
+
+# Expose redis for convenience in cache.py
+redis: Redis | None = redis_client

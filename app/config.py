@@ -36,7 +36,7 @@ class Settings(BaseSettings):
     # -------------------------
     BINANCE_API_KEY: str = Field(..., env="BINANCE_API_KEY")
     BINANCE_API_SECRET: str = Field(..., env="BINANCE_API_SECRET")
-    BINANCE_WS_URL: str = Field(..., env="BINANCE_WS_URL")
+    BINANCE_WS_URL: str = Field(..., env="BINANCE_WS_URL")  # WebSocket URL from .env
 
     # -------------------------
     # Database URLs

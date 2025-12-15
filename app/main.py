@@ -11,10 +11,16 @@ import asyncio
 
 # ----------------- Internal Imports -----------------
 from app.database.db import engine, Base
-from app.models import user, transaction, watchlist, crypto
-from app.routers import auth_router, crypto_router, transaction_router, watchlist_router, google_oauth_router
+from app.models import user, transaction, crypto, portfolio
+from app.routers import (
+    auth_router,
+    crypto_router,
+    trade_router,           # transactions/trades router
+    google_oauth_router,
+    portfolio_router        # crypto portfolio router
+)
 from app.services.crypto_ws import CryptoWebSocket
-from app.utils.cache import get_redis, close_redis
+from app.utils.redis_client import get_redis, close_redis
 from app.config import settings
 
 # ----------------- Load Environment -----------------
@@ -50,8 +56,8 @@ app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), na
 # ----------------- Routers -----------------
 app.include_router(auth_router.router, prefix="/auth", tags=["Authentication"])
 app.include_router(crypto_router.router, prefix="/crypto", tags=["Crypto"])
-app.include_router(transaction_router, prefix="/api/transactions", tags=["Transactions"])
-app.include_router(watchlist_router.router)  # has its own prefix
+app.include_router(trade_router.router, prefix="/api/transactions", tags=["Transactions"])
+app.include_router(portfolio_router.router, prefix="/api/portfolio", tags=["Portfolio"])
 app.include_router(google_oauth_router.router, prefix="/oauth", tags=["Google OAuth"])
 
 # ----------------- Pages -----------------
@@ -69,10 +75,6 @@ def dashboard_page():
     with open(path, "r", encoding="utf-8") as f:
         return HTMLResponse(content=f.read())
 
-@app.get("/watchlist", include_in_schema=False)
-def watchlist_page():
-    return FileResponse(os.path.join(BASE_DIR, "static/watchlist.html"))
-
 @app.get("/transactions", include_in_schema=False)
 def transactions_page():
     return FileResponse(os.path.join(BASE_DIR, "static/transaction.html"))
@@ -84,7 +86,7 @@ def trading_terminal_page():
 # ----------------- Startup Event -----------------
 @app.on_event("startup")
 async def startup_event():
-    """Initialize DB, Redis, and start background tasks"""
+    """Initialize DB, Redis, and start WebSocket"""
 
     # 1️⃣ Ensure database tables
     try:
@@ -105,10 +107,11 @@ async def startup_event():
     else:
         print("❌ Redis connection unavailable. Continuing without cache")
 
-    # 3️⃣ Start centralized Binance WebSocket
+    # 3️⃣ Start centralized Binance WebSocket for all coins
     COINS = [
-        "btcusdt","ethusdt","solusdt","adausdt","xrpusdt",
-        # ... add all 90 coins here
+        "BTCUSDT","ETHUSDT","SOLUSDT","ADAUSDT","XRPUSDT",
+        "BNBUSDT","USDCUSDT","TRXUSDT","DOGEUSDT","LTCUSDT",
+        # ... add remaining coins up to 90
     ]
     ws_manager = CryptoWebSocket(COINS)
     asyncio.create_task(ws_manager.start())

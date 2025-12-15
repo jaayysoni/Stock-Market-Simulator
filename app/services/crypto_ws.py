@@ -1,13 +1,14 @@
+# app/services/crypto_ws.py
 import asyncio
 import json
 import websockets
-from app.config import BINANCE_WS_URL
+from app.config import settings  # ✅ import the settings object
 from app.utils.cache import set_cached_data
 
 class CryptoWebSocket:
     def __init__(self, symbols: list[str]):
         self.symbols = [s.lower() for s in symbols]  # normalize symbols
-        self.ws_url = BINANCE_WS_URL
+        self.ws_url = settings.BINANCE_WS_URL  # ✅ use settings
         self.keep_running = True
 
     def _build_url(self) -> str:
