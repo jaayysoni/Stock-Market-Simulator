@@ -13,11 +13,6 @@ load_dotenv(dotenv_path=BASE_DIR / ".env")  # ensures env variables are loaded
 
 class Settings(BaseSettings):
     # -------------------------
-    # Internal API key
-    # -------------------------
-    API_KEY: str = "your-default-api-key"
-
-    # -------------------------
     # Debug mode
     # -------------------------
     DEBUG: bool = False
@@ -25,28 +20,28 @@ class Settings(BaseSettings):
     # -------------------------
     # JWT settings
     # -------------------------
-    SECRET_KEY: str = "your-secret-key"
-    ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    SECRET_KEY: str = Field(..., env="SECRET_KEY")
+    ALGORITHM: str = Field(default="HS256", env="ALGORITHM")
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=30, env="ACCESS_TOKEN_EXPIRE_MINUTES")
 
     # -------------------------
-    # Google OAuth
+    # Google OAuth (if needed)
     # -------------------------
-    GOOGLE_CLIENT_ID: str = ""
-    GOOGLE_CLIENT_SECRET: str = ""
-    GOOGLE_REDIRECT_URI: str = "http://localhost:8000/auth/google/callback"
+    GOOGLE_CLIENT_ID: str = Field(default="", env="GOOGLE_CLIENT_ID")
+    GOOGLE_CLIENT_SECRET: str = Field(default="", env="GOOGLE_CLIENT_SECRET")
+    GOOGLE_REDIRECT_URI: str = Field(default="http://localhost:8000/auth/google-callback", env="GOOGLE_REDIRECT_URI")
 
     # -------------------------
-    # Finnhub API keys
+    # Binance / Crypto API
     # -------------------------
-    FINNHUB_API_KEY_1: str = Field(..., env="FINNHUB_API_KEY_1")    # WebSocket key
-    FINNHUB_API_KEY_2: str = Field(..., env="FINNHUB_API_KEY_2")  # REST API key
+    BINANCE_API_KEY: str = Field(..., env="BINANCE_API_KEY")
+    BINANCE_API_SECRET: str = Field(..., env="BINANCE_API_SECRET")
+    BINANCE_WS_URL: str = Field(..., env="BINANCE_WS_URL")
 
     # -------------------------
     # Database URLs
     # -------------------------
     USER_DB_URL: str = Field(default="sqlite:///./user_data.db", env="USER_DB_URL")
-    MARKET_DB_URL: str = Field(default="sqlite:///./market_data.db", env="MARKET_DB_URL")
 
     # -------------------------
     # Pydantic config
@@ -56,7 +51,6 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         extra="ignore"  # ✅ ignore unknown .env fields safely
     )
-
 
 # -------------------------
 # Instantiate global settings object

@@ -1,0 +1,79 @@
+.
+├── app
+│   ├── auth
+│   │   └── oauth.py
+│   ├── database
+│   │   ├── db.py
+│   │   ├── init_db.py
+│   │   └── session.py
+│   ├── dependencies
+│   │   └── auth.py
+│   ├── models
+│   │   ├── __init__.py
+│   │   ├── crypto.py
+│   │   ├── portfolio.py
+│   │   ├── transaction.py
+│   │   ├── user.py
+│   │   └── watchlist.py
+│   ├── routers
+│   │   ├── auth_router.py
+│   │   ├── crypto_router.py
+│   │   ├── google_oauth_router.py
+│   │   ├── portfolio_router.py
+│   │   └── trade_router.py
+│   ├── schemas
+│   │   ├── crypto_schema.py
+│   │   ├── portfolio_schemas.py
+│   │   ├── token_schema.py
+│   │   ├── transaction_schema.py
+│   │   └── user_schema.py
+│   ├── services
+│   │   ├── auth_service.py
+│   │   ├── google_oauth.py
+│   │   ├── transaction_services.py
+│   │   └── user_service.py
+│   ├── tasks
+│   │   ├── __init__.py
+│   │   └── scheduler.py
+│   ├── utils
+│   │   ├── auth_utils.py
+│   │   ├── cache.py
+│   │   ├── jwt.py
+│   │   ├── redis_client.py
+│   │   └── token.py
+│   ├── __init__.py
+│   ├── config.py
+│   └── main.py
+├── docs
+│   ├── api_docs.md
+│   └── setup_guide.md
+├── static
+│   ├── assets
+│   │   └── Logo.png
+│   ├── css
+│   │   ├── dashboard.css
+│   │   ├── login.css
+│   │   ├── portfolio.css
+│   │   ├── signup.css
+│   │   ├── tradingterminal.css
+│   │   ├── transaction.css
+│   │   └── watchlist.css
+│   ├── js
+│   │   └── watchlist.js
+│   ├── dashboard.html
+│   ├── google_redirect.html
+│   ├── login.html
+│   ├── portfolio.html
+│   ├── signup.html
+│   ├── tradingterminal.html
+│   ├── transaction.html
+│   └── watchlist.html
+├── tests
+│   └── test_auth.py
+├── docker-compose.yml
+├── Dockerfile
+├── project_tree.txt
+├── README.md
+└── requirements.txt
+
+17 directories, 60 files
