@@ -96,12 +96,11 @@
 <body>
 
 <header class="header">
-    <div class="logo">Stock Market Simulator</div>
+    <div class="logo">Crypto Trading Simulator</div>
     <nav class="main-nav">
         <ul>
             <li><a href="/static/portfolio.html">Portfolio</a></li>
             <li><a href="/static/transaction.html">Transactions</a></li>
-            <li><a href="/static/watchlist.html">Watchlist</a></li>
             <li><a href="/static/tradingterminal.html">Trading-Terminal</a></li>
             <li><a href="/static/login.html">Logout</a></li>
         </ul>
@@ -116,28 +115,28 @@
     <div class="market-overview">
         <div class="market-container">
             <div class="index-card" data-symbol="BSE">
-                <h3>BSE</h3>
+                <h3>Bitcoin</h3>
                 <p class="price" id="bse-price">--</p>
                 <p class="change" id="bse-change">--</p>
             </div>
         </div>
         <div class="market-container">
             <div class="index-card" data-symbol="NSE">
-                <h3>NSE</h3>
+                <h3>Etherium</h3>
                 <p class="price" id="nse-price">--</p>
                 <p class="change" id="nse-change">--</p>
             </div>
         </div>
         <div class="market-container">
             <div class="index-card" data-symbol="BANKNIFTY">
-                <h3>Bank Nifty</h3>
+                <h3>Doge</h3>
                 <p class="price" id="banknifty-price">--</p>
                 <p class="change" id="banknifty-change">--</p>
             </div>
         </div>
         <div class="market-container">
             <div class="index-card" data-symbol="NIFTY50">
-                <h3>Nifty 50</h3>
+                <h3>Shiba Inu</h3>
                 <p class="price" id="nifty50-price">--</p>
                 <p class="change" id="nifty50-change">--</p>
             </div>
@@ -146,20 +145,14 @@
 </section>
 
 <!-- ===== Top Winners ===== -->
-<section id="top-winners" class="card">
-    <h2>Top Winners of the Day</h2>
+<section id="top-90" class="card">
+    <h2>Top 90 With Most Market-Cap</h2>
     <div class="market-overview" id="top-winners-body"></div>
-</section>
-
-<!-- ===== Top Losers ===== -->
-<section id="top-losers" class="card">
-    <h2>Top Losers of the Day</h2>
-    <div class="market-overview" id="top-losers-body"></div>
 </section>
 
 <!-- ===== Dashboard Balance ===== -->
 <section class="dashboard-balance">
-    <h2>💰 Available Balance</h2>
+    <h2>Virtual Balance</h2>
     <p id="balance">₹100000</p>
     <div class="funds-controls">
       <input type="number" id="balanceInput" placeholder="Enter Amount" />
@@ -169,128 +162,5 @@
 </section>
 
 </main>
-
-<script>
-let stockPrices = {};
-let niftyPrice = 0;
-
-// ===== Market Overview =====
-async function fetchMarketOverview() {
-    try {
-        const res = await fetch("/stocks/indices");
-        if (!res.ok) throw new Error("Failed to fetch indices");
-        const data = await res.json();
-
-        const setValue = (id, value, change) => {
-            const formattedPrice = value != null ? value.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "--";
-            const formattedChange = change != null ? change.toFixed(2) : "--";
-
-            document.getElementById(`${id}-price`).innerText = formattedPrice;
-            const changeEl = document.getElementById(`${id}-change`);
-            changeEl.innerText = formattedChange !== "--" ? `${formattedChange}%` : "--";
-            changeEl.style.color = change >= 0 ? "#4ade80" : "#f87171";
-        };
-
-        setValue("bse", data.BSE?.price, data.BSE?.change);
-        setValue("nse", data.NSE?.price, data.NSE?.change);
-        setValue("banknifty", data.BankNifty?.price, data.BankNifty?.change);
-
-        niftyPrice = data.Nifty50?.price || 0;
-        const niftyPriceEl = document.getElementById("nifty50-price");
-        const niftyChangeEl = document.getElementById("nifty50-change");
-        if(niftyPriceEl) niftyPriceEl.innerText = niftyPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        if(niftyChangeEl) {
-            const change = data.Nifty50?.change || 0;
-            niftyChangeEl.innerText = change.toFixed(2) + "%";
-            niftyChangeEl.style.color = change >= 0 ? "#4ade80" : "#f87171";
-        }
-    } catch (err) {
-        console.error("Market overview error:", err);
-    }
-}
-
-// ===== Top Movers =====
-async function fetchTopMovers() {
-    try {
-        const res = await fetch("/market/top-movers");
-        if (!res.ok) throw new Error("Failed to fetch top movers");
-        const data = await res.json();
-
-        const formatPrice = val => val != null ? val.toLocaleString('en-IN',{ minimumFractionDigits:2, maximumFractionDigits:2 }) : "--";
-        const formatChange = val => val != null ? val.toFixed(2) : "--";
-
-        const winnersContainer = document.getElementById("top-winners-body");
-        winnersContainer.innerHTML = "";
-        data.gainers.forEach(s => {
-            const card = document.createElement("div");
-            card.className = "index-card";
-            card.innerHTML = `<h3>${s.symbol}</h3><p class="price">₹${formatPrice(s.price)}</p><p class="change" style="color:#4ade80;">${formatChange(s.change)}%</p>`;
-            winnersContainer.appendChild(card);
-        });
-
-        const losersContainer = document.getElementById("top-losers-body");
-        losersContainer.innerHTML = "";
-        data.losers.forEach(s => {
-            const card = document.createElement("div");
-            card.className = "index-card";
-            card.innerHTML = `<h3>${s.symbol}</h3><p class="price">₹${formatPrice(s.price)}</p><p class="change" style="color:#f87171;">${formatChange(s.change)}%</p>`;
-            losersContainer.appendChild(card);
-        });
-    } catch(err) {
-        console.error("Top movers fetch error:", err);
-    }
-}
-
-// ===== Balance Controls =====
-function updateBalance(amount) {
-    const balanceEl = document.getElementById("balance");
-    let current = parseFloat(balanceEl.innerText.replace(/₹|,/g, ""));
-    current += amount;
-    balanceEl.innerText = "₹" + current.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
-document.getElementById("addFundsBtn").addEventListener("click", () => {
-    const val = parseFloat(document.getElementById("balanceInput").value);
-    if(!isNaN(val) && val > 0) updateBalance(val);
-});
-
-document.getElementById("removeFundsBtn").addEventListener("click", () => {
-    const val = parseFloat(document.getElementById("balanceInput").value);
-    if(!isNaN(val) && val > 0) updateBalance(-val);
-});
-
-// ===== WebSocket for live portfolio & top movers =====
-function setupWebSocket() {
-    const wsProtocol = location.protocol === "https:" ? "wss" : "ws";
-    const ws = new WebSocket(`${wsProtocol}://${location.host}/ws/stocks`);
-
-    ws.onopen = () => console.log("✅ Connected to WebSocket");
-
-    ws.onmessage = (event) => {
-        try {
-            const data = JSON.parse(event.data);
-            if (!data?.symbol || data.price == null) return;
-            stockPrices[data.symbol] = { price: data.price, change: data.change || 0 };
-            fetchMarketOverview();
-            fetchTopMovers();
-        } catch(err) {
-            console.error("WebSocket message error:", err);
-        }
-    };
-
-    ws.onclose = () => setTimeout(setupWebSocket, 5 * 60 * 1000);
-    ws.onerror = (err) => console.error("WebSocket error:", err);
-}
-
-// ===== Initialization =====
-document.addEventListener("DOMContentLoaded", () => {
-    fetchMarketOverview();
-    fetchTopMovers();
-    setupWebSocket();
-
-    setInterval(fetchMarketOverview, 10 * 60 * 1000);
-    setInterval(fetchTopMovers, 10 * 60 * 1000);
-});
-</script>
 </body>
 </html>

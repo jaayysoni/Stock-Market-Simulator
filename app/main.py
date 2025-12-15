@@ -1,5 +1,3 @@
-# app/main.py
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -15,11 +13,11 @@ from app.models import user, transaction, crypto, portfolio
 from app.routers import (
     auth_router,
     crypto_router,
-    trade_router,           # transactions/trades router
+    trade_router,
     google_oauth_router,
-    portfolio_router        # crypto portfolio router
+    portfolio_router
 )
-from app.services.crypto_ws import CryptoWebSocket
+from app.services.crypto_ws import start_crypto_ws   # ✅ 1 WS per coin
 from app.utils.redis_client import get_redis, close_redis
 from app.config import settings
 
@@ -86,7 +84,7 @@ def trading_terminal_page():
 # ----------------- Startup Event -----------------
 @app.on_event("startup")
 async def startup_event():
-    """Initialize DB, Redis, and start WebSocket"""
+    """Initialize DB, Redis, and start Binance WebSocket (1 WS per crypto)"""
 
     # 1️⃣ Ensure database tables
     try:
@@ -102,20 +100,14 @@ async def startup_event():
             print("✅ Redis connection established successfully")
             break
         except Exception as e:
-            print(f"⚠️ Redis connection attempt {attempt+1} failed:", e)
+            print(f"⚠️ Redis connection attempt {attempt + 1} failed:", e)
             await asyncio.sleep(2)
     else:
-        print("❌ Redis connection unavailable. Continuing without cache")
+        raise RuntimeError("❌ Redis is required for price streaming")
 
-    # 3️⃣ Start centralized Binance WebSocket for all coins
-    COINS = [
-        "BTCUSDT","ETHUSDT","SOLUSDT","ADAUSDT","XRPUSDT",
-        "BNBUSDT","USDCUSDT","TRXUSDT","DOGEUSDT","LTCUSDT",
-        # ... add remaining coins up to 90
-    ]
-    ws_manager = CryptoWebSocket(COINS)
-    asyncio.create_task(ws_manager.start())
-    print("⏰ Binance WebSocket started")
+    # 3️⃣ Start Binance WS (1 per crypto)
+    asyncio.create_task(start_crypto_ws())
+    print("🚀 Binance WebSocket started for ALL cryptos")
 
 # ----------------- Shutdown Event -----------------
 @app.on_event("shutdown")

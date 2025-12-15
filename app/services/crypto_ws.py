@@ -1,41 +1,116 @@
 # app/services/crypto_ws.py
+
 import asyncio
 import json
 import websockets
-from app.config import settings  # ✅ import the settings object
+from typing import List
+
+from app.config import settings
+from app.database.db import SessionLocal
+from app.models.crypto import Crypto
 from app.utils.cache import set_cached_data
 
-class CryptoWebSocket:
-    def __init__(self, symbols: list[str]):
-        self.symbols = [s.lower() for s in symbols]  # normalize symbols
-        self.ws_url = settings.BINANCE_WS_URL  # ✅ use settings
-        self.keep_running = True
 
-    def _build_url(self) -> str:
-        streams = [f"{s}@ticker" for s in self.symbols]
-        return f"{self.ws_url}/stream?streams={'/'.join(streams)}"
+# =========================
+# SINGLE CRYPTO WS
+# =========================
 
-    async def _connect(self):
-        url = self._build_url()
-        async with websockets.connect(url) as ws:
-            print("✅ Connected to Binance WebSocket")
-            while self.keep_running:
-                try:
-                    msg = await ws.recv()
-                    data = json.loads(msg)
-                    # Binance returns {"stream": "...", "data": {...}}
-                    if "data" in data and "s" in data["data"]:
-                        symbol = data["data"]["s"].lower()  # BTCUSDT -> btcusdt
-                        await set_cached_data(f"crypto:{symbol}", data["data"], ttl=5)
-                except Exception as e:
-                    print("⚠️ WebSocket error:", e)
-                    await asyncio.sleep(1)
+class SingleCryptoWebSocket:
+    def __init__(self, symbol: str):
+        self.symbol = symbol.lower()
+        self.ws_url = settings.BINANCE_WS_URL
 
-    async def start(self):
-        """Reconnect loop if connection drops"""
+    async def run(self):
+        """
+        Runs ONE websocket for ONE crypto forever
+        """
+        url = f"{self.ws_url}/ws/{self.symbol}@ticker"
+        print(f"🚀 WS connecting: {self.symbol.upper()}")
+
         while True:
             try:
-                await self._connect()
+                async with websockets.connect(
+                    url,
+                    ping_interval=20,
+                    ping_timeout=20
+                ) as ws:
+                    print(f"✅ WS connected: {self.symbol.upper()}")
+
+                    async for msg in ws:
+                        data = json.loads(msg)
+
+                        # Binance ticker payload contains "s" (symbol)
+                        if "s" not in data:
+                            continue
+
+                        symbol = data["s"].lower()
+                        key = f"crypto:{symbol}"
+
+                        await set_cached_data(
+                            key,
+                            data,
+                            ttl=10
+                        )
+
             except Exception as e:
-                print("⚠️ Connection lost, reconnecting in 5s...", e)
-                await asyncio.sleep(5)
+                print(f"⚠️ WS reconnecting ({self.symbol}):", e)
+                await asyncio.sleep(3)
+
+
+# =========================
+# WS MANAGER
+# =========================
+
+class CryptoWebSocketManager:
+    def __init__(self, symbols: List[str]):
+        self.symbols = [s.lower() for s in symbols]
+
+    async def start(self):
+        """
+        Starts ONE websocket per crypto
+        """
+        tasks = []
+
+        for symbol in self.symbols:
+            ws = SingleCryptoWebSocket(symbol)
+            tasks.append(asyncio.create_task(ws.run()))
+
+        print(f"🚀 Binance WS started for {len(tasks)} cryptos (1 WS per crypto)")
+        await asyncio.gather(*tasks)
+
+
+# =========================
+# STARTUP HELPERS
+# =========================
+
+def get_all_binance_symbols() -> List[str]:
+    """
+    Load ALL Binance symbols from DB (must be 90)
+    """
+    db = SessionLocal()
+    try:
+        symbols = db.query(Crypto.binance_symbol).all()
+        symbol_list = [s[0].lower() for s in symbols]
+        print("📦 Loaded symbols from DB:", len(symbol_list))
+        return symbol_list
+    finally:
+        db.close()
+
+
+crypto_ws_manager: CryptoWebSocketManager | None = None
+
+
+async def start_crypto_ws():
+    """
+    Called ONCE on FastAPI startup
+    """
+    global crypto_ws_manager
+
+    symbols = get_all_binance_symbols()
+    if not symbols:
+        raise RuntimeError("❌ No crypto symbols found in DB")
+
+    crypto_ws_manager = CryptoWebSocketManager(symbols)
+
+    # Run all websockets in background
+    asyncio.create_task(crypto_ws_manager.start())
