@@ -3,38 +3,47 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional
 
-
-# ✅ Enum for transaction type (expected lowercase)
+# =========================
+# Transaction Type Enum
+# =========================
 class TransactionType(str, Enum):
     buy = "buy"
     sell = "sell"
 
-
-# ✅ Schema for creating a transaction
+# =========================
+# Transaction Create Schema
+# =========================
 class TransactionCreate(BaseModel):
-    stock_id: int
+    user_id: int
+    symbol: str
     transaction_type: TransactionType
-    quantity: int
-    price: Optional[float] = None  # Can be fetched in service if not provided
-    timestamp: Optional[datetime] = None  # Optional, set current time if not provided
+    quantity: float
+    price: Optional[float] = None
+    crypto_id: Optional[int] = None
+    timestamp: Optional[datetime] = None  # ✅ change here
 
+    @field_validator("transaction_type", mode="before")
+    def normalize_transaction_type(cls, v):
+        if isinstance(v, str):
+            return v.lower()
+        return v
 
-# ✅ Schema for reading transaction data (response)
+# =========================
+# Transaction Read Schema
+# =========================
 class TransactionRead(BaseModel):
     id: int
-    stock_id: int
-    user_email: str
-    user_name: str
+    user_id: int
+    symbol: str
     transaction_type: TransactionType
-    quantity: int
+    quantity: float
     price: float
-    timestamp: datetime
+    created_at: Optional[datetime] = None
+    crypto_id: Optional[int] = None
+    timestamp: Optional[datetime] = None  # ✅ change here
 
-    model_config = {
-        "from_attributes": True
-    }
+    model_config = {"from_attributes": True}
 
-    # ✅ Convert "BUY"/"SELL" → "buy"/"sell" before validation
     @field_validator("transaction_type", mode="before")
     def normalize_transaction_type(cls, v):
         if isinstance(v, str):

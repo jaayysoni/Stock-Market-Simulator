@@ -41,8 +41,8 @@ class Transaction(Base):
     # Executed price
     price = Column(Float, nullable=False)
 
-    # DB-controlled timestamp
-    created_at = Column(
+    # DB-controlled timestamp (renamed to match JS expectation)
+    timestamp = Column(
         DateTime(timezone=True),
         server_default=func.now(),
         nullable=False

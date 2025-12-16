@@ -13,7 +13,6 @@ from app.dependencies.auth import get_current_user
 import asyncio
 
 router = APIRouter(
-    prefix="/api/transactions",
     tags=["Transactions"]
 )
 
