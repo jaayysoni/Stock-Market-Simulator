@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Trading Dashboard – Stock Market Simulator</title>
 <link rel="stylesheet" href="/static/css/dashboard.css">
+<script src="/static/js/dashboard.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
 /* ===== General Card Styling ===== */
@@ -144,11 +145,87 @@
     </div>
 </section>
 
-<!-- ===== Top Winners ===== -->
-<section id="top-90" class="card">
-    <h2>Top 90 With Most Market-Cap</h2>
-    <div class="market-overview" id="top-winners-body"></div>
+<!-- ===== Top 90 Table Row Template ===== -->
+<section id="top-winners" class="card">
+    <h2>Top 90 Cryptos</h2>
+    <div id="top-winners-body"></div>
 </section>
+
+
+
+<style>
+/* ===== Top 90 Table Styles ===== */
+.crypto-row {
+    display: grid;
+    grid-template-columns: 50px 2fr 1fr 2fr 1fr; /* rank, name, symbol, price, 24h % */
+    gap: 10px;
+    padding: 12px 15px;
+    margin: 5px 0;
+    background-color: #0e1117;
+    border-radius: 10px;
+    color: #fff;
+    align-items: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+/* Header row styling */
+.crypto-row.header {
+    font-weight: 600;
+    text-transform: uppercase;
+    background-color: #161b22;
+    box-shadow: none;
+}
+
+/* Rank column slightly offset to left */
+.crypto-row .rank {
+    text-align: left;
+    padding-left: 5px;
+    font-weight: 500;
+}
+
+/* Name aligned left */
+.crypto-row .name {
+    text-align: left;
+    padding-left: 5px;
+}
+
+/* Symbol, price, change alignment */
+.crypto-row .symbol {
+    text-align: center;
+}
+.crypto-row .price, .crypto-row .change {
+    text-align: right;
+}
+
+/* Positive/negative change colors */
+.crypto-row .change.positive { color: #22c55e; font-weight: 500; }
+.crypto-row .change.negative { color: #ef4444; font-weight: 500; }
+
+/* Hover effect */
+.crypto-row:hover {
+    transform: translateY(-2px);
+    background-color: #1a1f2b;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .crypto-row {
+        grid-template-columns: 40px 2fr 1fr 2fr 1fr;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .crypto-row {
+        grid-template-columns: 35px 2fr 1fr 2fr 1fr;
+        font-size: 0.85rem;
+        gap: 5px;
+        padding: 8px 10px;
+    }
+}
+</style>
 
 <!-- ===== Dashboard Balance ===== -->
 <section class="dashboard-balance">

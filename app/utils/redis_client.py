@@ -3,21 +3,30 @@ import os
 from redis.asyncio import Redis, from_url
 
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
-redis_client: Redis | None = None  # type hint fixed
+
+_redis_client: Redis | None = None  # internal singleton
+
 
 async def get_redis() -> Redis:
-    """Initialize and return a Redis connection."""
-    global redis_client
-    if not redis_client:
-        redis_client = from_url(REDIS_URL, decode_responses=True)
-    return redis_client
+    """
+    Initialize and return a Redis connection.
+    Reuses the same connection for multiple calls.
+    """
+    global _redis_client
+    if not _redis_client:
+        _redis_client = from_url(REDIS_URL, decode_responses=True)
+    return _redis_client
+
 
 async def close_redis():
-    """Close Redis connection."""
-    global redis_client
-    if redis_client:
-        await redis_client.close()
-        redis_client = None
+    """
+    Close Redis connection if it exists.
+    """
+    global _redis_client
+    if _redis_client:
+        await _redis_client.close()
+        _redis_client = None
 
-# Expose redis for convenience in cache.py
-redis: Redis | None = redis_client
+
+# Optional convenience shortcut (always use get_redis() for safety)
+# redis: Redis | None = _redis_client  # not recommended directly, may be None

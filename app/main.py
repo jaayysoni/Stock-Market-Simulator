@@ -21,6 +21,32 @@ from app.services.crypto_ws import start_crypto_ws   # ✅ 1 WS per coin
 from app.utils.redis_client import get_redis, close_redis
 from app.config import settings
 
+# ----------------- Dashboard Router -----------------
+from fastapi import APIRouter
+from app.utils.cache import get_cached_data
+
+dashboard_router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
+
+@dashboard_router.get("/prices")
+async def get_prices():
+    """Fetch all crypto prices from Redis"""
+    from app.database.db import SessionLocal
+    db = SessionLocal()
+    try:
+        symbols = db.query(crypto.Crypto.binance_symbol).all()
+        result = []
+        for s in symbols:
+            key = f"crypto:{s[0].lower()}"
+            data = await get_cached_data(key)
+            if data:
+                result.append({
+                    "symbol": s[0],
+                    "price": float(data['c'])
+                })
+        return result
+    finally:
+        db.close()
+
 # ----------------- Load Environment -----------------
 load_dotenv()
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -57,6 +83,7 @@ app.include_router(crypto_router.router, prefix="/crypto", tags=["Crypto"])
 app.include_router(trade_router.router, prefix="/api/transactions", tags=["Transactions"])
 app.include_router(portfolio_router.router, prefix="/api/portfolio", tags=["Portfolio"])
 app.include_router(google_oauth_router.router, prefix="/oauth", tags=["Google OAuth"])
+app.include_router(dashboard_router)  # ✅ Dashboard endpoint
 
 # ----------------- Pages -----------------
 @app.get("/", include_in_schema=False)

@@ -54,7 +54,7 @@ class SingleCryptoWebSocket:
 
             except Exception as e:
                 print(f"⚠️ WS reconnecting ({self.symbol}):", e)
-                await asyncio.sleep(3)
+                await asyncio.sleep(5)
 
 
 # =========================
