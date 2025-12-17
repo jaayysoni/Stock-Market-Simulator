@@ -19,13 +19,10 @@ function formatPrice(price) {
     price = parseFloat(price);
 
     if (price >= 1) {
-        // For coins ≥ 1, show 2–4 decimals
         return price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 });
     } else if (price >= 0.01) {
-        // For coins ≥ 0.01, show 4–6 decimals
         return price.toLocaleString(undefined, { minimumFractionDigits: 4, maximumFractionDigits: 6 });
     } else {
-        // For very small coins, show 6–8 decimals
         return price.toLocaleString(undefined, { minimumFractionDigits: 6, maximumFractionDigits: 8 });
     }
 }
@@ -34,6 +31,10 @@ function formatPrice(price) {
 function createCryptoRow(rank, crypto) {
     const row = document.createElement("div");
     row.classList.add("crypto-row");
+
+    // ✅ store symbol in dataset (no click here)
+    row.dataset.symbol = crypto.symbol;
+    row.style.cursor = "pointer";
 
     const rankDiv = document.createElement("div");
     rankDiv.classList.add("rank");
@@ -70,7 +71,6 @@ function renderCryptoTable(cryptos) {
 
     container.innerHTML = "";
 
-    // Sort by market cap if available
     cryptos.sort((a, b) => (b.market_cap || 0) - (a.market_cap || 0));
 
     // Add header row
@@ -135,7 +135,6 @@ async function fetchCryptoPrices() {
 
         const data = json.data;
 
-        // Update Top 90 table
         const container = document.getElementById("top-winners-body");
         if (container && container.children.length === 0) {
             renderCryptoTable(data);
@@ -143,7 +142,6 @@ async function fetchCryptoPrices() {
             updateCryptoTable(data);
         }
 
-        // Update Market Overview cards
         updateMarketOverview(data);
 
     } catch (err) {
@@ -156,3 +154,16 @@ setInterval(fetchCryptoPrices, 3000);
 
 // ===== Initial fetch =====
 fetchCryptoPrices();
+
+// ===== Global click handler for crypto rows (delegation) =====
+document.addEventListener("click", (e) => {
+    const row = e.target.closest(".crypto-row");
+    if (!row || row.classList.contains("header")) return;
+
+    const symbol = row.dataset.symbol;
+    if (!symbol) return;
+
+    console.log("Redirecting to trade:", symbol); // Debug
+    window.location.href = `/trade?symbol=${symbol}`;
+});
+

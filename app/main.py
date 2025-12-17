@@ -108,6 +108,14 @@ def transactions_page():
 def trading_terminal_page():
     return FileResponse(os.path.join(BASE_DIR, "static/tradingterminal.html"))
 
+@app.get("/trade", include_in_schema=False)
+def trade_page():
+    """
+    Serve the trading terminal page.
+    The JS on this page will read `?symbol=` from the URL.
+    """
+    return FileResponse(os.path.join(BASE_DIR, "static/tradingterminal.html"))
+
 # ----------------- Startup Event -----------------
 @app.on_event("startup")
 async def startup_event():
