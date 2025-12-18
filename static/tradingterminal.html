@@ -1,290 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Trading Terminal — Dashboard</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Trading Terminal — Dashboard</title>
 
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<!-- Custom CSS -->
-<style>
-/* ===== FULL PAGE DASHBOARD THEME ===== */
-body, html {
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    width: 100%;
-    background-color: #0e1117; /* full-page dark theme */
-    font-family: Arial, sans-serif;
-    color: #c9d1d9;
-}
-
-/* ===== CONTAINER ===== */
-.trading-sim {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    padding: 2rem;
-    height: 100%;
-    box-sizing: border-box;
-}
-
-/* ===== BACK BUTTON ===== */
-.back-btn {
-    background-color: #161b22;
-    color: #58a6ff;
-    border: 1px solid #30363d;
-    padding: 0.5rem 1rem;
-    border-radius: 6px;
-    cursor: pointer;
-    width: fit-content;
-    margin-bottom: 1rem;
-    transition: 0.3s ease;
-}
-.back-btn:hover {
-    background-color: #1f242b;
-    box-shadow: 0 0 8px rgba(88,166,255,0.5);
-}
-
-/* ===== BALANCE BOX ===== */
-.balance-box {
-    background-color: #161b22;
-    padding: 14px 16px;
-    border-radius: 8px;
-    border: 1px solid #30363d;
-    color: #58a6ff;
-    font-size: 1.1rem;
-    text-align: center;
-}
-
-/* ===== TRADE FORM ===== */
-.trade-form {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    background-color: transparent;
-    padding: 0;
-}
-.sim-input {
-    flex: 1;
-    max-width: 180px;
-    background-color: #161b22;
-    border: 1px solid #30363d;
-    color: #c9d1d9;
-    padding: 6px 10px;
-    border-radius: 6px;
-    outline: none;
-    transition: 0.2s ease;
-}
-.sim-input:focus {
-    border-color: #58a6ff;
-    box-shadow: 0 0 6px rgba(88,166,255,0.3);
-}
-.sim-input::placeholder {
-    color: #8b949e;
-    font-size: 0.9rem;
-}
-
-/* ===== BUTTONS ===== */
-.sim-btn {
-    padding: 6px 12px;
-    font-size: 0.9rem;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: 0.3s ease;
-    border: none;
-    font-weight: bold;
-}
-.sim-btn.buy {
-    background: #58a6ff;
-    color: #0e1117;
-}
-.sim-btn.buy:hover {
-    background: #1f6feb;
-    box-shadow: 0 0 8px rgba(88,166,255,0.5);
-}
-.sim-btn.sell {
-    background: #ff6b6b;
-    color: #fff;
-}
-.sim-btn.sell:hover {
-    background: #ff4d4d;
-    box-shadow: 0 0 8px rgba(255,107,107,0.5);
-}
-
-/* ===== STOCK CHART ===== */
-.stock-chart {
-    background-color: #161b22;
-    padding: 1rem;
-    border-radius: 8px;
-    border: 1px solid #30363d;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-#stockChart {
-    width: 100%;
-    height: 300px;
-}
-/* ===== HISTORY BUTTONS ===== */
-.history-buttons {
-    display: grid;
-    grid-template-columns: repeat(9, 1fr);
-    gap: 6px;
-    margin-top: 6px;
-}
-.history-btn {
-    background: #0f1115;
-    color: #58a6ff;
-    border: none;
-    border-radius: 4px;
-    padding: 6px 0;
-    cursor: pointer;
-    text-align: center;
-    font-size: 0.9rem;
-    transition: 0.2s;
-}
-.history-btn:hover {
-    background: #1f242b;
-}
-
-/* ===== TABLES ===== */
-.sim-table {
-    width: 100%;
-    border-collapse: collapse;
-    background-color: #161b22;
-    border-radius: 8px;
-    border: 1px solid #30363d;
-    overflow: hidden;
-    margin-bottom: 10px;
-}
-.sim-table th, .sim-table td {
-    padding: 10px 12px;
-    color: #c9d1d9;
-    font-size: 0.9rem;
-    text-align: center;
-}
-.sim-table thead {
-    background-color: #090a0a;
-    color: #58a6ff;
-}
-.sim-table tbody tr {
-    border-bottom: 1px solid #30363d;
-    transition: background 0.3s;
-}
-.sim-table tbody tr:hover {
-    background-color: #21262d;
-}
-
-/* ===== PROFIT / LOSS COLORS ===== */
-.profit { color: #21b0a7; font-weight: bold; }
-.loss { color: #ff6b6b; font-weight: bold; }
-
-/* ===== TRADE BUTTON INSIDE TABLE ===== */
-.trade-btn {
-    padding: 4px 6px;
-    font-size: 0.8rem;
-}
-.clickable {
-    cursor: pointer;
-    text-decoration: underline;
-}
-
-/* ===== FULLSCREEN BUTTON ===== */
-.fullscreen-btn {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background-color: #58a6ff;
-    color: #0e1117;
-    border: none;
-    padding: 12px 18px;
-    border-radius: 50px;
-    font-size: 1rem;
-    cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-    z-index: 999;
-    transition: background 0.2s, transform 0.2s;
-}
-.fullscreen-btn:hover {
-    background-color: #1f83ff;
-    transform: scale(1.05);
-}
-
-/* ===== FULLSCREEN OVERLAY ===== */
-.chart-fullscreen {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background-color: #0e1117;
-    z-index: 998;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    overflow: auto;
-}
-.chart-fullscreen canvas {
-    width: 90% !important;
-    height: 70% !important;
-}
-.chart-fullscreen .trade-form {
-    margin-top: 20px;
-    display: flex;
-    gap: 10px;
-}
-.chart-fullscreen .trade-form input,
-.chart-fullscreen .trade-form button {
-    font-size: 1.1rem;
-    padding: 8px 12px;
-}
-.chart-fullscreen #closeFullscreen {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    background-color: #ef4444;
-    color: #fff;
-    border: none;
-    padding: 8px 14px;
-    border-radius: 8px;
-    cursor: pointer;
-}
-.chart-fullscreen #closeFullscreen:hover {
-    background-color: #dc2626;
-}
-
-/* ===== RESPONSIVE ===== */
-@media (max-width: 768px) {
-    .trade-form {
-        flex-direction: column;
-        gap: 6px;
-    }
-    .sim-btn, .sim-input {
-        width: 100%;
-        max-width: 100%;
-    }
-    .history-buttons {
-        justify-content: flex-start;
-    }
-}
-</style>
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/static/css/tradingterminal.css">
 </head>
 <body>
 
 <section class="trading-sim">
 
   <!-- Back Button -->
-  <button class="back-btn" onclick="window.location.href='/dashboard'">← Back to Dashboard</button>
+  <button class="back-btn" onclick="window.location.href='/dashboard'">
+    ← Back to Dashboard
+  </button>
 
   <!-- Balance Box -->
   <div class="balance-box">
-  Virtual Balance: <span id="balance">₹100000</span>
+    Virtual Balance: <span id="balance">₹100000</span>
   </div>
+
   <div class="funds-controls" style="display:flex; gap:8px; margin-top:8px;">
     <input type="number" id="balanceInput" class="sim-input" placeholder="Amount" />
     <button id="addFundsBtn" class="sim-btn buy">Add Funds</button>
@@ -293,8 +33,13 @@ body, html {
 
   <!-- Stock Chart -->
   <div class="stock-chart">
-    <h3 id="chartTitle">Select a stock to view chart</h3>
-    <canvas id="stockChart"></canvas>
+    <h3 id="chartTitle">Select a crypto to view chart</h3>
+    
+    <!-- Chart wrapper with fixed height -->
+    <div class="chart-container">
+      <canvas id="stockChart"></canvas>
+    </div>
+
     <div class="history-buttons">
       <button class="history-btn" data-range="1D">1D</button>
       <button class="history-btn" data-range="7D">7D</button>
@@ -310,8 +55,9 @@ body, html {
 
   <!-- Trade Form -->
   <div class="trade-form">
-    <input type="text" id="simStockInput" class="sim-input" placeholder="Stock"/>
+    <input type="text" id="simStockInput" class="sim-input" placeholder="Crypto"/>
     <input type="number" id="simQtyInput" class="sim-input" placeholder="Qty"/>
+
     <button id="buyBtn" class="sim-btn buy">Buy</button>
     <button id="sellBtn" class="sim-btn sell">Sell</button>
   </div>
@@ -351,112 +97,12 @@ body, html {
 </section>
 
 <!-- Full Screen Button -->
-<button id="fullscreenBtn" class="fullscreen-btn">📈 Full Screen Chart</button>
+<button id="fullscreenBtn" class="fullscreen-btn">
+  📈 Full Screen Chart
+</button>
 
-<!-- JS -->
-<script>
-// ===== BASIC TRADING LOGIC =====
-const balanceEl = document.getElementById("balance");
-const stockInput = document.getElementById("simStockInput");
-const qtyInput = document.getElementById("simQtyInput");
-const buyBtn = document.getElementById("buyBtn");
-const sellBtn = document.getElementById("sellBtn");
-const holdingsBody = document.getElementById("holdingsBody");
-const tradesBody = document.getElementById("tradesBody");
+<!-- Custom JS (FINAL, correct) -->
+<script src="/static/js/tradingterminal.js"></script>
 
-let balance = 100000;
-let holdings = { TCS:{qty:10,avgPrice:3450}, INFY:{qty:15,avgPrice:1560}, RELIANCE:{qty:5,avgPrice:2410} };
-let trades = [];
-const mockPrices = { TCS:3450, INFY:1560, RELIANCE:2410, HDFC:1700 };
-
-function getPrice(symbol){ return mockPrices[symbol.toUpperCase()]||null; }
-function updateBalance(){ balanceEl.textContent="₹"+balance.toFixed(2); }
-
-function renderHoldings(){
-  holdingsBody.innerHTML="";
-  for(let sym in holdings){
-    const stock=holdings[sym];
-    const currentPrice=getPrice(sym);
-    const pl=(currentPrice-stock.avgPrice)*stock.qty;
-    const row=document.createElement("tr");
-    row.innerHTML=`
-      <td class="clickable" data-symbol="${sym}">${sym}</td>
-      <td>${stock.qty}</td>
-      <td>₹${stock.avgPrice.toFixed(2)}</td>
-      <td>₹${currentPrice}</td>
-      <td class="${pl>=0?'profit':'loss'}">${pl.toFixed(2)}</td>
-      <td><button class="sim-btn buy trade-btn" data-symbol="${sym}">Trade</button></td>
-    `;
-    holdingsBody.appendChild(row);
-  }
-  document.querySelectorAll('.clickable').forEach(el=>{
-    el.addEventListener('click',()=> { stockInput.value=el.dataset.symbol; updateChart(el.dataset.symbol,'1D'); });
-  });
-  document.querySelectorAll('.trade-btn').forEach(btn=>{
-    btn.addEventListener('click',()=> { stockInput.value=btn.dataset.symbol; updateChart(btn.dataset.symbol,'1D'); });
-  });
-}
-
-function renderTrades(){
-  tradesBody.innerHTML="";
-  trades.forEach(tr=>{
-    const row=document.createElement('tr');
-    row.innerHTML=`<td>${tr.time}</td><td>${tr.symbol}</td><td>${tr.action}</td><td>${tr.qty}</td><td>₹${tr.price}</td><td class="${tr.pl>=0?'profit':'loss'}">${tr.pl.toFixed(2)}</td>`;
-    tradesBody.appendChild(row);
-  });
-}
-
-function buyStock(){
-  const symbol=stockInput.value.trim().toUpperCase();
-  const qty=parseInt(qtyInput.value);
-  const price=getPrice(symbol);
-  if(!symbol||!qty||!price){ alert("Enter valid stock and quantity!"); return; }
-  const cost=qty*price;
-  if(balance<cost){ alert("Not enough balance!"); return; }
-  balance-=cost;
-  if(holdings[symbol]){
-    const prev=holdings[symbol], newQty=prev.qty+qty, newAvg=((prev.avgPrice*prev.qty)+cost)/newQty;
-    holdings[symbol]={qty:newQty, avgPrice:newAvg};
-  } else { holdings[symbol]={qty, avgPrice:price}; }
-  updateBalance(); renderHoldings(); logTrade(symbol,'BUY',qty,price);
-}
-
-function sellStock(){
-  const symbol=stockInput.value.trim().toUpperCase();
-  const qty=parseInt(qtyInput.value);
-  const price=getPrice(symbol);
-  if(!symbol||!qty||!price){ alert("Enter valid stock and quantity!"); return; }
-  if(!holdings[symbol]||holdings[symbol].qty<qty){ alert("Not enough holdings!"); return; }
-  balance+=qty*price; holdings[symbol].qty-=qty; if(holdings[symbol].qty===0) delete holdings[symbol];
-  updateBalance(); renderHoldings(); logTrade(symbol,'SELL',qty,price);
-}
-
-function logTrade(symbol,action,qty,price){
-  const currentPrice=getPrice(symbol);
-  const pl=(action==='SELL')?(price-holdings[symbol]?.avgPrice||price)*qty:0;
-  trades.unshift({time:new Date().toLocaleTimeString(), symbol, action, qty, price, pl});
-  renderTrades();
-}
-
-document.addEventListener("DOMContentLoaded",()=>{
-  updateBalance(); renderHoldings(); renderTrades();
-  document.getElementById("addFundsBtn").addEventListener("click",()=>{
-    const amt=parseFloat(document.getElementById("balanceInput").value)||0;
-    if(amt<=0) return alert("Enter valid amount");
-    balance+=amt; updateBalance(); document.getElementById("balanceInput").value="";
-  });
-  document.getElementById("removeFundsBtn").addEventListener("click",()=>{
-    const amt=parseFloat(document.getElementById("balanceInput").value)||0;
-    if(amt<=0) return alert("Enter valid amount");
-    if(amt>balance) return alert("Cannot remove more than current balance!");
-    balance-=amt; updateBalance(); document.getElementById("balanceInput").value="";
-  });
-});
-
-// Buy/Sell buttons
-buyBtn.addEventListener("click", buyStock);
-sellBtn.addEventListener("click", sellStock);
-
-// ===== Chart.js setup =====
-const ctx = document.getElementById("stockChart").getContext("2d");
-let chart
+</body>
+</html>

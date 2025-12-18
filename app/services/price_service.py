@@ -1,11 +1,17 @@
 # app/services/price_service.py
 import json
-from typing import List
+from typing import List, Optional
+from datetime import datetime, timedelta
+import random
+
 from app.database.db import SessionLocal
 from app.models.crypto import Crypto
 from app.utils.redis_client import get_redis
+from app.utils.cache import get_crypto_history as cache_get_history, set_crypto_history as cache_set_history
 
-
+# ==============================
+# Live crypto prices
+# ==============================
 async def get_all_crypto_prices() -> List[dict]:
     """
     Returns live prices for all supported cryptos.
@@ -14,7 +20,6 @@ async def get_all_crypto_prices() -> List[dict]:
     """
     result: List[dict] = []
 
-    # Get Redis client
     redis = await get_redis()
 
     with SessionLocal() as db:
@@ -29,7 +34,7 @@ async def get_all_crypto_prices() -> List[dict]:
         for crypto, data in zip(cryptos, data_list):
             price = 0.0
             change_pct = "0%"
-            market_cap = 0.0  # optional, if stored in Redis
+            market_cap = 0.0
 
             if data:
                 try:
@@ -52,7 +57,6 @@ async def get_all_crypto_prices() -> List[dict]:
                 "market_cap": market_cap
             })
 
-        # Batch set missing defaults with 30s expiry
         if missing_defaults:
             pipe = redis.pipeline()
             for k, v in missing_defaults.items():
@@ -60,3 +64,35 @@ async def get_all_crypto_prices() -> List[dict]:
             await pipe.execute()
 
     return result
+
+# ==============================
+# Historical candle data
+# ==============================
+async def get_crypto_history(symbol: str, time_range: str = "1M") -> Optional[List[dict]]:
+    """
+    Returns historical OHLC/candle data for a crypto.
+    First checks Redis cache, else generates mock fallback data and caches it.
+    """
+    # 1️⃣ Try to get from cache
+    cached = await cache_get_history(symbol)
+    if cached:
+        return cached.get("candles")
+
+    # 2️⃣ Fallback: generate mock candle data
+    num_points = {
+        "1D": 24, "7D": 7, "1M": 30, "3M": 90,
+        "6M": 180, "1Y": 365, "3Y": 365*3, "5Y": 365*5, "ALL": 365
+    }.get(time_range, 30)
+
+    now = datetime.utcnow()
+    candles = []
+    price = 100 + random.random() * 20
+    for i in reversed(range(num_points)):
+        ts = now - timedelta(days=i)
+        close = price + random.uniform(-5, 5)
+        candles.append({"time": int(ts.timestamp() * 1000), "close": round(close, 2)})
+
+    # 3️⃣ Cache generated data for future use
+    await cache_set_history(symbol, candles)
+
+    return candles
