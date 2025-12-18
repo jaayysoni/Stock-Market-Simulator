@@ -27,6 +27,7 @@ async def live_crypto_prices(
 
     return {"success": True, "data": prices_sorted[:limit]}
 
+
 # ==============================
 # Historical price endpoint
 # ==============================
@@ -39,7 +40,22 @@ async def crypto_history(
     Return historical OHLC/candle data for a crypto.
     Uses Redis cache first, falls back to mock data if needed.
     """
-    symbol = symbol.upper()
-    candles = await get_crypto_history(symbol, time_range)  # service handles caching & fallback
+    normalized_symbol = symbol.upper()
+    
+    # Fetch historical candles from service (handles caching/fallback)
+    candles = await get_crypto_history(normalized_symbol, time_range)
+    
+    # Ensure response always has "time" in ms and "close" as float
+    formatted_candles = [
+        {
+            "time": int(candle["time"]),  # milliseconds
+            "close": float(candle["close"])
+        } for candle in candles
+    ] if candles else []
 
-    return {"success": True, "symbol": symbol, "range": time_range, "candles": candles}
+    return {
+        "success": True,
+        "symbol": normalized_symbol,
+        "range": time_range,
+        "candles": formatted_candles
+    }

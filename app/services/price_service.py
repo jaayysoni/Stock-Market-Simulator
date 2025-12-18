@@ -68,31 +68,44 @@ async def get_all_crypto_prices() -> List[dict]:
 # ==============================
 # Historical candle data
 # ==============================
+RANGE_DAYS = {
+    "1D": 1,
+    "7D": 7,
+    "1M": 30,
+    "3M": 90,
+    "6M": 180,
+    "1Y": 365,
+    "3Y": 365*3,
+    "5Y": 365*5,
+    "ALL": 365
+}
+
 async def get_crypto_history(symbol: str, time_range: str = "1M") -> Optional[List[dict]]:
     """
     Returns historical OHLC/candle data for a crypto.
-    First checks Redis cache, else generates mock fallback data and caches it.
+    Full history is cached; returned data is sliced according to `time_range`.
     """
-    # 1️⃣ Try to get from cache
-    cached = await cache_get_history(symbol)
+    redis = await get_redis()
+    cache_key = f"crypto_history:{symbol.upper()}"
+    cached = await cache_get_history(cache_key)  # full history
+
     if cached:
-        return cached.get("candles")
+        full_candles = cached.get("candles", [])
+    else:
+        # fallback: generate full mock history (max 5Y)
+        full_candles = []
+        now = datetime.utcnow()
+        price = 100 + random.random() * 20
+        for i in reversed(range(RANGE_DAYS.get("5Y", 1825))):
+            ts = now - timedelta(days=i)
+            close = price + random.uniform(-5, 5)
+            full_candles.append({"time": int(ts.timestamp() * 1000), "close": round(close, 2)})
 
-    # 2️⃣ Fallback: generate mock candle data
-    num_points = {
-        "1D": 24, "7D": 7, "1M": 30, "3M": 90,
-        "6M": 180, "1Y": 365, "3Y": 365*3, "5Y": 365*5, "ALL": 365
-    }.get(time_range, 30)
+        # cache full history
+        await cache_set_history(cache_key, full_candles)
 
-    now = datetime.utcnow()
-    candles = []
-    price = 100 + random.random() * 20
-    for i in reversed(range(num_points)):
-        ts = now - timedelta(days=i)
-        close = price + random.uniform(-5, 5)
-        candles.append({"time": int(ts.timestamp() * 1000), "close": round(close, 2)})
-
-    # 3️⃣ Cache generated data for future use
-    await cache_set_history(symbol, candles)
+    # slice according to requested range
+    n_days = RANGE_DAYS.get(time_range, 30)
+    candles = full_candles[-n_days:] if n_days < len(full_candles) else full_candles
 
     return candles

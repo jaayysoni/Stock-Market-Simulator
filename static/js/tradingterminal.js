@@ -14,7 +14,6 @@ const sellBtn = document.getElementById("sellBtn");
 const holdingsBody = document.getElementById("holdingsBody");
 const tradesBody = document.getElementById("tradesBody");
 const chartTitle = document.getElementById("chartTitle");
-const chartContainer = document.getElementById("chartContainer"); // new container
 
 /* ========= STATE ========= */
 let balance = 100000;
@@ -32,7 +31,7 @@ let stockChart = null;
    =============================== */
 function formatDate(ts) {
   const d = new Date(ts);
-  return d.toLocaleDateString();
+  return d.toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
 function normalizeSymbol(symbol) {
@@ -58,15 +57,14 @@ async function loadChart(symbol, range = "1M") {
   chartTitle.textContent = `${currentSymbol} • ${range}`;
 
   try {
-    const res = await fetch(
-      `${API_BASE}/history?symbol=${currentSymbol}&time_range=${range}`
-    );
+    // ✅ Use time_range to match backend parameter
+    const res = await fetch(`${API_BASE}/history?symbol=${currentSymbol}&time_range=${range}`);
     if (!res.ok) throw new Error("History not available");
 
     const data = await res.json();
     let candles = data.candles;
 
-    // Fallback mock data
+    // Fallback mock data if empty
     if (!candles || candles.length === 0) {
       candles = Array.from({ length: 30 }, (_, i) => ({
         time: Date.now() - (29 - i) * 86400000,
@@ -75,7 +73,7 @@ async function loadChart(symbol, range = "1M") {
     }
 
     const labels = candles.map(c => formatDate(c.time));
-    const prices = candles.map(c => c.close);
+    const prices = candles.map(c => parseFloat(c.close.toFixed(2)));
 
     renderChart(labels, prices);
   } catch (err) {
@@ -95,10 +93,11 @@ function renderChart(labels, prices) {
       labels,
       datasets: [
         {
-          label: "Close Price",
+          label: "Close Price (USD)",
           data: prices,
           borderWidth: 2,
-          pointRadius: 0,
+          pointRadius: 3,
+          pointHoverRadius: 6,
           tension: 0.25,
           borderColor: "#00ff99",
           backgroundColor: "rgba(0, 255, 153, 0.1)"
@@ -107,14 +106,23 @@ function renderChart(labels, prices) {
     },
     options: {
       responsive: true,
-      maintainAspectRatio: false, // fills container height
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { display: false },
-        y: {
-          ticks: { color: "#c9d1d9" },
-          grid: { color: "#30363d" }
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              return ` $${context.raw.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
+            },
+            title: function(context) {
+              return context[0].label;
+            }
+          }
         }
+      },
+      scales: {
+        x: { ticks: { color: "#c9d1d9" }, grid: { color: "#30363d" } },
+        y: { ticks: { color: "#c9d1d9" }, grid: { color: "#30363d" } }
       }
     }
   });
@@ -186,7 +194,7 @@ function buyStock() {
   const qty = parseInt(qtyInput.value);
   if (!symbol || !qty) return alert("Invalid input");
 
-  const price = 100;
+  const price = 100; // placeholder
   const cost = qty * price;
 
   if (balance < cost) return alert("Insufficient balance");
@@ -213,7 +221,7 @@ function sellStock() {
   if (!holdings[symbol] || holdings[symbol].qty < qty)
     return alert("Not enough holdings");
 
-  const price = 100;
+  const price = 100; // placeholder
   balance += qty * price;
   holdings[symbol].qty -= qty;
 
@@ -247,7 +255,6 @@ document.addEventListener("DOMContentLoaded", () => {
   renderHoldings();
   renderTrades();
 
-  // 🔑 READ SYMBOL FROM URL
   const params = new URLSearchParams(window.location.search);
   const urlSymbol = params.get("symbol");
 
