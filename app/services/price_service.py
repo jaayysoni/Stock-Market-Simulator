@@ -19,7 +19,6 @@ async def get_all_crypto_prices() -> List[dict]:
     Sets default values for missing keys with expiry.
     """
     result: List[dict] = []
-
     redis = await get_redis()
 
     with SessionLocal() as db:
@@ -41,12 +40,22 @@ async def get_all_crypto_prices() -> List[dict]:
                     data_json = json.loads(data)
                     price = float(data_json.get("c", 0))
                     change_pct = data_json.get("P", "0%")
-                    market_cap = float(data_json.get("market_cap", 0))
+                    # Calculate market_cap from circulating_supply if not in Redis
+                    market_cap = float(data_json.get("market_cap", 0)) or \
+                                 price * getattr(crypto, "circulating_supply", 0)
                 except (json.JSONDecodeError, ValueError):
                     pass
             else:
+                # Use last known price if available, else default to 0
+                last_price = getattr(crypto, "last_known_price", 0)
                 key = f"crypto:{crypto.binance_symbol.lower()}"
-                missing_defaults[key] = json.dumps({"c": 0, "P": "0%", "market_cap": 0})
+                missing_defaults[key] = json.dumps({
+                    "c": last_price,
+                    "P": "0%",
+                    "market_cap": last_price * getattr(crypto, "circulating_supply", 0)
+                })
+                price = last_price
+                market_cap = price * getattr(crypto, "circulating_supply", 0)
 
             result.append({
                 "name": crypto.name,
@@ -64,6 +73,7 @@ async def get_all_crypto_prices() -> List[dict]:
             await pipe.execute()
 
     return result
+
 
 # ==============================
 # Historical candle data

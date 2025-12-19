@@ -1,262 +1,138 @@
 /* ===============================
-   Trading Terminal JS
+   Live Binance WS + 1-Day 30-Minute Data
+   Only Push If Price Changed + Throttle
+   Page Auto-Reload Every 30 Seconds
    =============================== */
 
-/* ========= CONFIG ========= */
-const API_BASE = "/crypto";
-
-/* ========= DOM ELEMENTS ========= */
-const balanceEl = document.getElementById("balance");
-const stockInput = document.getElementById("simStockInput");
-const qtyInput = document.getElementById("simQtyInput");
-const buyBtn = document.getElementById("buyBtn");
-const sellBtn = document.getElementById("sellBtn");
-const holdingsBody = document.getElementById("holdingsBody");
-const tradesBody = document.getElementById("tradesBody");
-const chartTitle = document.getElementById("chartTitle");
-
-/* ========= STATE ========= */
-let balance = 100000;
-let holdings = {
-  BTCUSDT: { qty: 1, avgPrice: 42000 },
-  ETHUSDT: { qty: 5, avgPrice: 2200 }
-};
-let trades = [];
-let currentSymbol = null;
-let currentRange = "1M";
-let stockChart = null;
-
-/* ===============================
-   UTILITIES
-   =============================== */
-function formatDate(ts) {
-  const d = new Date(ts);
-  return d.toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' });
-}
-
-function normalizeSymbol(symbol) {
-  if (!symbol) return null;
-  return symbol.toUpperCase().endsWith("USDT")
-    ? symbol.toUpperCase()
-    : symbol.toUpperCase() + "USDT";
-}
-
-function updateBalance() {
-  balanceEl.textContent = "₹" + balance.toFixed(2);
-}
-
-/* ===============================
-   CHART FUNCTIONS
-   =============================== */
-async function loadChart(symbol, range = "1M") {
-  const normalized = normalizeSymbol(symbol);
-  if (!normalized) return;
-
-  currentSymbol = normalized;
-  currentRange = range;
-  chartTitle.textContent = `${currentSymbol} • ${range}`;
-
-  try {
-    // ✅ Use time_range to match backend parameter
-    const res = await fetch(`${API_BASE}/history?symbol=${currentSymbol}&time_range=${range}`);
-    if (!res.ok) throw new Error("History not available");
-
-    const data = await res.json();
-    let candles = data.candles;
-
-    // Fallback mock data if empty
-    if (!candles || candles.length === 0) {
-      candles = Array.from({ length: 30 }, (_, i) => ({
-        time: Date.now() - (29 - i) * 86400000,
-        close: 100 + Math.random() * 20
-      }));
-    }
-
-    const labels = candles.map(c => formatDate(c.time));
-    const prices = candles.map(c => parseFloat(c.close.toFixed(2)));
-
-    renderChart(labels, prices);
-  } catch (err) {
-    console.error(err);
-    alert("Chart data not available");
-  }
-}
-
-function renderChart(labels, prices) {
-  const ctx = document.getElementById("stockChart").getContext("2d");
-
-  if (stockChart) stockChart.destroy();
-
-  stockChart = new Chart(ctx, {
-    type: "line",
-    data: {
-      labels,
-      datasets: [
-        {
-          label: "Close Price (USD)",
-          data: prices,
-          borderWidth: 2,
-          pointRadius: 3,
-          pointHoverRadius: 6,
-          tension: 0.25,
-          borderColor: "#00ff99",
-          backgroundColor: "rgba(0, 255, 153, 0.1)"
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: function(context) {
-              return ` $${context.raw.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
-            },
-            title: function(context) {
-              return context[0].label;
-            }
-          }
-        }
-      },
-      scales: {
-        x: { ticks: { color: "#c9d1d9" }, grid: { color: "#30363d" } },
-        y: { ticks: { color: "#c9d1d9" }, grid: { color: "#30363d" } }
-      }
-    }
-  });
-}
-
-/* ===============================
-   HISTORY BUTTONS
-   =============================== */
-document.querySelectorAll(".history-btn").forEach(btn => {
-  btn.addEventListener("click", () => {
-    if (!currentSymbol) return alert("Select a crypto first");
-    loadChart(currentSymbol, btn.dataset.range);
-  });
-});
-
-/* ===============================
-   HOLDINGS & TRADES
-   =============================== */
-function renderHoldings() {
-  holdingsBody.innerHTML = "";
-
-  Object.keys(holdings).forEach(symbol => {
-    const h = holdings[symbol];
-    const row = document.createElement("tr");
-
-    row.innerHTML = `
-      <td class="clickable" data-symbol="${symbol}">${symbol}</td>
-      <td>${h.qty}</td>
-      <td>${h.avgPrice.toFixed(2)}</td>
-      <td>—</td>
-      <td class="profit">—</td>
-      <td>
-        <button class="sim-btn buy trade-btn" data-symbol="${symbol}">Trade</button>
-      </td>
-    `;
-
-    holdingsBody.appendChild(row);
-  });
-
-  document.querySelectorAll(".clickable").forEach(el => {
-    el.addEventListener("click", () => {
-      stockInput.value = el.dataset.symbol;
-      loadChart(el.dataset.symbol, "1D");
-    });
-  });
-}
-
-function renderTrades() {
-  tradesBody.innerHTML = "";
-  trades.forEach(tr => {
-    const row = document.createElement("tr");
-    row.innerHTML = `
-      <td>${tr.time}</td>
-      <td>${tr.symbol}</td>
-      <td>${tr.action}</td>
-      <td>${tr.qty}</td>
-      <td>${tr.price}</td>
-      <td class="${tr.pl >= 0 ? "profit" : "loss"}">${tr.pl.toFixed(2)}</td>
-    `;
-    tradesBody.appendChild(row);
-  });
-}
-
-/* ===============================
-   BUY / SELL
-   =============================== */
-function buyStock() {
-  const symbol = normalizeSymbol(stockInput.value.trim());
-  const qty = parseInt(qtyInput.value);
-  if (!symbol || !qty) return alert("Invalid input");
-
-  const price = 100; // placeholder
-  const cost = qty * price;
-
-  if (balance < cost) return alert("Insufficient balance");
-
-  balance -= cost;
-  holdings[symbol] = holdings[symbol]
-    ? {
-        qty: holdings[symbol].qty + qty,
-        avgPrice:
-          ((holdings[symbol].avgPrice * holdings[symbol].qty) + cost) /
-          (holdings[symbol].qty + qty)
-      }
-    : { qty, avgPrice: price };
-
-  logTrade(symbol, "BUY", qty, price);
-  updateBalance();
-  renderHoldings();
-}
-
-function sellStock() {
-  const symbol = normalizeSymbol(stockInput.value.trim());
-  const qty = parseInt(qtyInput.value);
-
-  if (!holdings[symbol] || holdings[symbol].qty < qty)
-    return alert("Not enough holdings");
-
-  const price = 100; // placeholder
-  balance += qty * price;
-  holdings[symbol].qty -= qty;
-
-  if (holdings[symbol].qty === 0) delete holdings[symbol];
-
-  logTrade(symbol, "SELL", qty, price);
-  updateBalance();
-  renderHoldings();
-}
-
-function logTrade(symbol, action, qty, price) {
-  trades.unshift({
-    time: new Date().toLocaleTimeString(),
-    symbol,
-    action,
-    qty,
-    price,
-    pl: 0
-  });
-  renderTrades();
-}
-
-/* ===============================
-   EVENTS
-   =============================== */
-buyBtn.addEventListener("click", buyStock);
-sellBtn.addEventListener("click", sellStock);
-
-document.addEventListener("DOMContentLoaded", () => {
-  updateBalance();
-  renderHoldings();
-  renderTrades();
-
-  const params = new URLSearchParams(window.location.search);
-  const urlSymbol = params.get("symbol");
-
-  loadChart(urlSymbol || "BTC", "1M");
-});
+   const chartTitle = document.getElementById("chartTitle");
+   const ctx = document.getElementById("stockChart").getContext("2d");
+   
+   let currentSymbol = "BTCUSDT";
+   let stockChart = null;
+   let labels = [];
+   let prices = [];
+   let latestPrice = null;
+   let lastPushedPrice = null; // track last charted price
+   const UPDATE_INTERVAL = 2000; // 2 seconds
+   
+   /* ===============================
+      INIT CHART
+      =============================== */
+   function initChart() {
+     stockChart = new Chart(ctx, {
+       type: "line",
+       data: {
+         labels: labels,
+         datasets: [{
+           label: currentSymbol,
+           data: prices,
+           borderWidth: 2,
+           tension: 0.25,
+           pointRadius: 2,
+           borderColor: "#00ff99",
+           backgroundColor: "rgba(0,255,153,0.1)"
+         }]
+       },
+       options: {
+         responsive: true,
+         maintainAspectRatio: false,
+         plugins: { legend: { display: false } },
+         scales: {
+           x: { grid: { color: "#30363d" }, ticks: { color: "#c9d1d9" } },
+           y: { grid: { color: "#30363d" }, ticks: { color: "#c9d1d9" } }
+         }
+       }
+     });
+   }
+   
+   /* ===============================
+      FETCH 1-DAY 30-MINUTE DATA (01:00 → 24:00)
+      =============================== */
+   async function fetchThirtyMinData() {
+     try {
+       const url = `https://api.binance.com/api/v3/klines?symbol=${currentSymbol}&interval=30m&limit=48`;
+       const resp = await fetch(url);
+       const data = await resp.json();
+   
+       const today = new Date();
+       today.setHours(0,0,0,0); // 00:00 today
+   
+       data.forEach(candle => {
+         const time = new Date(candle[0]);
+         // only include candles from 01:00 onwards
+         if (time.getDate() === today.getDate() && time.getHours() >= 1) {
+           const close = parseFloat(candle[4]);
+           labels.push(time.toLocaleTimeString("en-IN", { hour12: false, hour:'2-digit', minute:'2-digit' }));
+           prices.push(close);
+         }
+       });
+   
+       stockChart.update();
+   
+       if (prices.length) {
+         chartTitle.textContent = `${currentSymbol} • LIVE PRICE: ₹${prices[prices.length - 1].toLocaleString("en-IN")}`;
+         lastPushedPrice = prices[prices.length - 1]; // initialize last pushed price
+       }
+     } catch (err) {
+       console.error("Error fetching 30-min data:", err);
+     }
+   }
+   
+   /* ===============================
+      PUSH LATEST PRICE EVERY 2 SEC IF CHANGED
+      =============================== */
+   function startChartUpdater() {
+     setInterval(() => {
+       if (latestPrice !== null && latestPrice !== lastPushedPrice) {
+         const now = new Date();
+         labels.push(now.toLocaleTimeString("en-IN", { hour12: false, hour:'2-digit', minute:'2-digit' }));
+         prices.push(latestPrice);
+   
+         if (prices.length > 100) {
+           prices.shift();
+           labels.shift();
+         }
+   
+         stockChart.update();
+         chartTitle.textContent = `${currentSymbol} • LIVE PRICE: ₹${latestPrice.toLocaleString("en-IN")}`;
+         lastPushedPrice = latestPrice; // update last pushed
+       }
+     }, UPDATE_INTERVAL);
+   }
+   
+   /* ===============================
+      CONNECT TO BINANCE WS
+      =============================== */
+   function connectWS() {
+     const ws = new WebSocket(`wss://stream.binance.com:9443/ws/btcusdt@trade`);
+   
+     ws.onopen = () => console.log("WebSocket connected");
+     ws.onclose = () => {
+       console.log("WebSocket disconnected, reconnecting in 3s...");
+       setTimeout(connectWS, 3000);
+     };
+     ws.onerror = (err) => console.error("WebSocket error:", err);
+   
+     ws.onmessage = (event) => {
+       const data = JSON.parse(event.data);
+       const price = parseFloat(data.p);
+       if (!isNaN(price)) {
+         latestPrice = price; // update buffer
+       }
+     };
+   }
+   
+   /* ===============================
+      INIT
+      =============================== */
+   document.addEventListener("DOMContentLoaded", async () => {
+     initChart();
+     await fetchThirtyMinData(); // fetch historical 30-min closes from 01:00
+     connectWS();                 // start live updates
+     startChartUpdater();         // push to chart every 2 sec if changed
+   
+     // Auto-refresh the whole page every 30 seconds
+     setTimeout(() => {
+       window.location.reload();
+     }, 30000);
+   });
