@@ -2,6 +2,7 @@
 from fastapi import APIRouter, Query
 from typing import List
 from app.services.price_service import get_all_crypto_prices, get_crypto_history
+import os
 
 router = APIRouter(tags=["Crypto"])
 
@@ -59,3 +60,12 @@ async def crypto_history(
         "range": time_range,
         "candles": formatted_candles
     }
+
+
+@router.get("/config/ws-url")
+async def get_ws_url():
+    """
+    Returns the Binance WebSocket URL from environment variables.
+    """
+    ws_url = os.getenv("BINANCE_WS_URL", "wss://stream.binance.com:9443")
+    return {"ws_url": ws_url}

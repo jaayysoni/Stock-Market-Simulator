@@ -33,7 +33,7 @@ function createCryptoRow(rank, crypto) {
     row.classList.add("crypto-row");
 
     // ✅ store symbol in dataset (no click here)
-    row.dataset.symbol = crypto.symbol;
+    row.dataset.symbol = `${crypto.symbol}USDT`;
     row.style.cursor = "pointer";
 
     const rankDiv = document.createElement("div");
