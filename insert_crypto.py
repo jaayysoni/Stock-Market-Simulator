@@ -1,43 +1,111 @@
-import csv
-from sqlalchemy.exc import IntegrityError
-from app.database.db import Base, engine, SessionLocal
+# insert_crypto.py
+from app.database.session import SessionLocal
 from app.models.crypto import Crypto
 
-Base.metadata.create_all(bind=engine)
-print("✅ Crypto table ensured")
+db = SessionLocal()
 
-CSV_FILE = "/Users/jaysoni/Downloads/crypto.csv"
+cryptos = [
+    {"name": "Bitcoin", "symbol": "BTC", "binance_symbol": "BTCUSDT"},
+    {"name": "Ethereum", "symbol": "ETH", "binance_symbol": "ETHUSDT"},
+    {"name": "XRP", "symbol": "XRP", "binance_symbol": "XRPUSDT"},
+    {"name": "BNB", "symbol": "BNB", "binance_symbol": "BNBUSDT"},
+    {"name": "USDC", "symbol": "USDC", "binance_symbol": "USDCUSDT"},
+    {"name": "Solana", "symbol": "SOL", "binance_symbol": "SOLUSDT"},
+    {"name": "TRON", "symbol": "TRX", "binance_symbol": "TRXUSDT"},
+    {"name": "Dogecoin", "symbol": "DOGE", "binance_symbol": "DOGEUSDT"},
+    {"name": "Cardano", "symbol": "ADA", "binance_symbol": "ADAUSDT"},
+    {"name": "Wrapped Beacon ETH", "symbol": "WBETH", "binance_symbol": "WBETHUSDT"},
+    {"name": "Wrapped Bitcoin", "symbol": "WBTC", "binance_symbol": "WBTCUSDT"},
+    {"name": "Bitcoin Cash", "symbol": "BCH", "binance_symbol": "BCHUSDT"},
+    {"name": "Chainlink", "symbol": "LINK", "binance_symbol": "LINKUSDT"},
+    {"name": "Stellar", "symbol": "XLM", "binance_symbol": "XLMUSDT"},
+    {"name": "Zcash", "symbol": "ZEC", "binance_symbol": "ZECUSDT"},
+    {"name": "Ethena USDe", "symbol": "USDE", "binance_symbol": "USDEUSDT"},
+    {"name": "Litecoin", "symbol": "LTC", "binance_symbol": "LTCUSDT"},
+    {"name": "Avalanche", "symbol": "AVAX", "binance_symbol": "AVAXUSDT"},
+    {"name": "Sui", "symbol": "SUI", "binance_symbol": "SUIUSDT"},
+    {"name": "Hedera", "symbol": "HBAR", "binance_symbol": "HBARUSDT"},
+    {"name": "Shiba Inu", "symbol": "SHIB", "binance_symbol": "SHIBUSDT"},
+    {"name": "World Liberty Financial", "symbol": "WLFI", "binance_symbol": "WLFIUSDT"},
+    {"name": "Toncoin", "symbol": "TON", "binance_symbol": "TONUSDT"},
+    {"name": "Polkadot", "symbol": "DOT", "binance_symbol": "DOTUSDT"},
+    {"name": "Uniswap", "symbol": "UNI", "binance_symbol": "UNIUSDT"},
+    {"name": "Aave", "symbol": "AAVE", "binance_symbol": "AAVEUSDT"},
+    {"name": "Bittensor", "symbol": "TAO", "binance_symbol": "TAOUSDT"},
+    {"name": "USD1", "symbol": "USD1", "binance_symbol": "USD1USDT"},
+    {"name": "NEAR Protocol", "symbol": "NEAR", "binance_symbol": "NEARUSDT"},
+    {"name": "Ethereum Classic", "symbol": "ETC", "binance_symbol": "ETCUSDT"},
+    {"name": "Ethena", "symbol": "ENA", "binance_symbol": "ENAUSDT"},
+    {"name": "Aster", "symbol": "ASTER", "binance_symbol": "ASTERUSDT"},
+    {"name": "Pepe", "symbol": "PEPE", "binance_symbol": "PEPEUSDT"},
+    {"name": "Internet Computer", "symbol": "ICP", "binance_symbol": "ICPUSDT"},
+    {"name": "Pump.fun", "symbol": "PUMP", "binance_symbol": "PUMPUSDT"},
+    {"name": "Wrapped SOL", "symbol": "SOL", "binance_symbol": "SOLUSDT"},
+    {"name": "Ondo", "symbol": "ONDO", "binance_symbol": "ONDOUSDT"},
+    {"name": "Worldcoin", "symbol": "WLD", "binance_symbol": "WLDUSDT"},
+    {"name": "PAX Gold", "symbol": "PAXG", "binance_symbol": "PAXGUSDT"},
+    {"name": "Aptos", "symbol": "APT", "binance_symbol": "APTUSDT"},
+    {"name": "BFUSD", "symbol": "BFUSD", "binance_symbol": "BFUSDUSDT"},
+    {"name": "POL (ex-MATIC)", "symbol": "POL", "binance_symbol": "POLUSDT"},
+    {"name": "Binance Bridged USDC (BNB Smart Chain)", "symbol": "USDC", "binance_symbol": "USDCUSDT"},
+    {"name": "Sky", "symbol": "SKY", "binance_symbol": "SKYUSDT"},
+    {"name": "Quant", "symbol": "QNT", "binance_symbol": "QNTUSDT"},
+    {"name": "Arbitrum", "symbol": "ARB", "binance_symbol": "ARBUSDT"},
+    {"name": "Algorand", "symbol": "ALGO", "binance_symbol": "ALGOUSDT"},
+    {"name": "Binance Staked SOL", "symbol": "BNSOL", "binance_symbol": "BNSOLUSDT"},
+    {"name": "Official Trump", "symbol": "TRUMP", "binance_symbol": "TRUMPUSDT"},
+    {"name": "Cosmos Hub", "symbol": "ATOM", "binance_symbol": "ATOMUSDT"},
+    {"name": "Filecoin", "symbol": "FIL", "binance_symbol": "FILUSDT"},
+    {"name": "VeChain", "symbol": "VET", "binance_symbol": "VETUSDT"},
+    {"name": "NEXO", "symbol": "NEXO", "binance_symbol": "NEXOUSDT"},
+    {"name": "Sei", "symbol": "SEI", "binance_symbol": "SEIUSDT"},
+    {"name": "Render", "symbol": "RENDER", "binance_symbol": "RENDERUSDT"},
+    {"name": "PancakeSwap", "symbol": "CAKE", "binance_symbol": "CAKEUSDT"},
+    {"name": "Bonk", "symbol": "BONK", "binance_symbol": "BONKUSDT"},
+    {"name": "Pudgy Penguins", "symbol": "PENGU", "binance_symbol": "PENGUUSDT"},
+    {"name": "First Digital USD", "symbol": "FDUSD", "binance_symbol": "FDUSDUSDT"},
+    {"name": "Arbitrum Bridged WBTC (Arbitrum One)", "symbol": "WBTC", "binance_symbol": "WBTCUSDT"},
+    {"name": "Jupiter", "symbol": "JUP", "binance_symbol": "JUPUSDT"},
+    {"name": "Morpho", "symbol": "MORPHO", "binance_symbol": "MORPHOUSDT"},
+    {"name": "Artificial Superintelligence Alliance", "symbol": "FET", "binance_symbol": "FETUSDT"},
+    {"name": "Optimism", "symbol": "OP", "binance_symbol": "OPUSDT"},
+    {"name": "Dash", "symbol": "DASH", "binance_symbol": "DASHUSDT"},
+    {"name": "Curve DAO", "symbol": "CRV", "binance_symbol": "CRVUSDT"},
+    {"name": "Virtuals Protocol", "symbol": "VIRTUAL", "binance_symbol": "VIRTUALUSDT"},
+    {"name": "Injective", "symbol": "INJ", "binance_symbol": "INJUSDT"},
+    {"name": "Lido DAO", "symbol": "LDO", "binance_symbol": "LDOUSDT"},
+    {"name": "Stacks", "symbol": "STX", "binance_symbol": "STXUSDT"},
+    {"name": "Ether.fi", "symbol": "ETHFI", "binance_symbol": "ETHFIUSDT"},
+    {"name": "Tezos", "symbol": "XTZ", "binance_symbol": "XTZUSDT"},
+    {"name": "Starknet", "symbol": "STRK", "binance_symbol": "STRKUSDT"},
+    {"name": "Celestia", "symbol": "TIA", "binance_symbol": "TIAUSDT"},
+    {"name": "TrueUSD", "symbol": "TUSD", "binance_symbol": "TUSDUSDT"},
+    {"name": "The Graph", "symbol": "GRT", "binance_symbol": "GRTUSDT"},
+    {"name": "FLOKI", "symbol": "FLOKI", "binance_symbol": "FLOKIUSDT"},
+    {"name": "DoubleZero", "symbol": "2Z", "binance_symbol": "2ZUSDT"},
+    {"name": "Kaia", "symbol": "KAIA", "binance_symbol": "KAIAUSDT"},
+    {"name": "IOTA", "symbol": "IOTA", "binance_symbol": "IOTAUSDT"},
+    {"name": "Ethereum Name Service", "symbol": "ENS", "binance_symbol": "ENSUSDT"},
+    {"name": "Trust Wallet", "symbol": "TWT", "binance_symbol": "TWTUSDT"},
+    {"name": "dogwifhat", "symbol": "WIF", "binance_symbol": "WIFUSDT"},
+    {"name": "Pyth Network", "symbol": "PYTH", "binance_symbol": "PYTHUSDT"},
+    {"name": "Sun Token", "symbol": "SUN", "binance_symbol": "SUNUSDT"},
+    {"name": "Basic Attention", "symbol": "BAT", "binance_symbol": "BATUSDT"},
+    {"name": "Conflux", "symbol": "CFX", "binance_symbol": "CFXUSDT"},
+    {"name": "Pendle", "symbol": "PENDLE", "binance_symbol": "PENDLEUSDT"},
+    {"name": "JUST", "symbol": "JST", "binance_symbol": "JSTUSDT"},
+    {"name": "Decred", "symbol": "DCR", "binance_symbol": "DCRUSDT"},
+    {"name": "The Sandbox", "symbol": "SAND", "binance_symbol": "SANDUSDT"},
+    {"name": "Binance-Peg Dogecoin", "symbol": "DOGE", "binance_symbol": "DOGEUSDT"},
+    {"name": "Terra Luna Classic", "symbol": "LUNC", "binance_symbol": "LUNCUSDT"},
+    {"name": "Sonic", "symbol": "S", "binance_symbol": "SUSDT"},
+]
 
-def insert_crypto_from_csv():
-    db = SessionLocal()
-    inserted = 0
-    skipped = 0
+for c in cryptos:
+    exists = db.query(Crypto).filter_by(symbol=c["symbol"]).first()
+    if not exists:
+        db.add(Crypto(**c))
 
-    try:
-        with open(CSV_FILE, newline='', encoding='utf-8') as csvfile:
-            reader = csv.reader(csvfile)
-
-            for row in reader:
-                if len(row) < 3:
-                    continue
-
-                coin = Crypto(
-                    name=row[0].strip(),
-                    universal_symbol=row[1].strip(),
-                    binance_symbol=row[2].strip()
-                )
-
-                try:
-                    db.add(coin)
-                    db.commit()
-                    inserted += 1
-                except IntegrityError:
-                    db.rollback()
-                    skipped += 1
-
-        print(f"✅ Inserted: {inserted}, Skipped duplicates: {skipped}")
-
-    finally:
-        db.close()
-
-insert_crypto_from_csv()
+db.commit()
+db.close()
+print("✅ Crypto master data inserted successfully!")

@@ -1,32 +1,17 @@
 # app/models/transaction.py
 
-from sqlalchemy import (
-    Column,
-    Integer,
-    String,
-    Float,
-    ForeignKey,
-    DateTime,
-    CheckConstraint
-)
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, CheckConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database.db import Base
-
 
 class Transaction(Base):
     __tablename__ = "transactions"
 
     id = Column(Integer, primary_key=True, index=True)
 
-    # FK to single user table
-    user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
-
-    # FK to crypto table
-    crypto_id = Column(Integer, ForeignKey("crypto.id"), nullable=False)
-
-    # Binance symbol (BTCUSDT, ETHUSDT, etc.) for display only
-    symbol = Column(String, nullable=False, index=True)
+    # FK to crypto table using symbol
+    crypto_symbol = Column(String, ForeignKey("cryptos.symbol"), nullable=False, index=True)
 
     # BUY / SELL only
     transaction_type = Column(
@@ -41,13 +26,12 @@ class Transaction(Base):
     # Executed price
     price = Column(Float, nullable=False)
 
-    # DB-controlled timestamp (renamed to match JS expectation)
+    # DB-controlled timestamp
     timestamp = Column(
         DateTime(timezone=True),
         server_default=func.now(),
         nullable=False
     )
 
-    # Relationships
-    user = relationship("User", back_populates="transactions")
-    crypto = relationship("Crypto", back_populates="transactions")
+    # Relationship to Crypto
+    crypto = relationship("Crypto")

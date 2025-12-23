@@ -2,56 +2,17 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, HTMLResponse
-from starlette.middleware.sessions import SessionMiddleware
-from dotenv import load_dotenv
 import os
 import asyncio
 
-# ----------------- Internal Imports -----------------
 from app.database.db import engine, Base
-from app.models import user, transaction, crypto, portfolio
-from app.routers import (
-    auth_router,
-    crypto_router,
-    trade_router,
-    google_oauth_router,
-    portfolio_router
-)
-from app.services.crypto_ws import start_crypto_ws   # ✅ 1 WS per coin
+from app.models import transaction, crypto
+from app.routers import dashboard_router, portfolio_router, terminal_router, transaction_router
+from app.services.crypto_ws import start_crypto_ws
 from app.utils.redis_client import get_redis, close_redis
-from app.config import settings
 
-# ----------------- Dashboard Router -----------------
-from fastapi import APIRouter
-from app.utils.cache import get_cached_data
-
-dashboard_router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
-
-@dashboard_router.get("/prices")
-async def get_prices():
-    """Fetch all crypto prices from Redis"""
-    from app.database.db import SessionLocal
-    db = SessionLocal()
-    try:
-        symbols = db.query(crypto.Crypto.binance_symbol).all()
-        result = []
-        for s in symbols:
-            key = f"crypto:{s[0].lower()}"
-            data = await get_cached_data(key)
-            if data:
-                result.append({
-                    "symbol": s[0],
-                    "price": float(data['c'])
-                })
-        return result
-    finally:
-        db.close()
-
-# ----------------- Load Environment -----------------
-load_dotenv()
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# ----------------- FastAPI App -----------------
 app = FastAPI(
     title="Crypto Trading Simulator",
     description="Simulate crypto trading with virtual money, view transactions, and more.",
@@ -61,38 +22,25 @@ app = FastAPI(
 # ----------------- Middleware -----------------
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8000", "http://127.0.0.1:8000"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-)
-
-app.add_middleware(
-    SessionMiddleware,
-    secret_key=os.getenv("SECRET_KEY", settings.SECRET_KEY),
-    same_site="lax",
-    https_only=False
 )
 
 # ----------------- Static Files -----------------
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
 
 # ----------------- Routers -----------------
-app.include_router(auth_router.router, prefix="/auth", tags=["Authentication"])
-app.include_router(crypto_router.router, prefix="/crypto", tags=["Crypto"])
-app.include_router(trade_router.router, prefix="/api/transactions", tags=["Transactions"])
-app.include_router(portfolio_router.router, prefix="/api/portfolio", tags=["Portfolio"])
-app.include_router(google_oauth_router.router, prefix="/oauth", tags=["Google OAuth"])
-app.include_router(dashboard_router)  # ✅ Dashboard endpoint
+app.include_router(dashboard_router.router)
+app.include_router(portfolio_router.router, prefix="/portfolio", tags=["Portfolio"])
+app.include_router(terminal_router.router, tags=["Trading Terminal"])
+app.include_router(transaction_router.router, prefix="/transactions", tags=["Transactions"])
 
 # ----------------- Pages -----------------
 @app.get("/", include_in_schema=False)
 def root():
-    return FileResponse(os.path.join(BASE_DIR, "static/login.html"))
-
-@app.get("/signup", include_in_schema=False)
-def signup_page():
-    return FileResponse(os.path.join(BASE_DIR, "static/signup.html"))
+    return FileResponse(os.path.join(BASE_DIR, "static/dashboard.html"))
 
 @app.get("/dashboard", include_in_schema=False, response_class=HTMLResponse)
 def dashboard_page():
@@ -100,35 +48,24 @@ def dashboard_page():
     with open(path, "r", encoding="utf-8") as f:
         return HTMLResponse(content=f.read())
 
-@app.get("/transactions", include_in_schema=False)
-def transactions_page():
-    return FileResponse(os.path.join(BASE_DIR, "static/transaction.html"))
-
 @app.get("/tradingterminal", include_in_schema=False)
 def trading_terminal_page():
     return FileResponse(os.path.join(BASE_DIR, "static/tradingterminal.html"))
 
-@app.get("/trade", include_in_schema=False)
-def trade_page():
-    """
-    Serve the trading terminal page.
-    The JS on this page will read `?symbol=` from the URL.
-    """
-    return FileResponse(os.path.join(BASE_DIR, "static/tradingterminal.html"))
+@app.get("/transactions", include_in_schema=False)
+def transactions_page():
+    return FileResponse(os.path.join(BASE_DIR, "static/transaction.html"))
 
 # ----------------- Startup Event -----------------
 @app.on_event("startup")
 async def startup_event():
-    """Initialize DB, Redis, and start Binance WebSocket (1 WS per crypto)"""
-
-    # 1️⃣ Ensure database tables
     try:
         Base.metadata.create_all(bind=engine)
         print("✅ Database tables ensured")
     except Exception as e:
         print("❌ Error creating database tables:", e)
 
-    # 2️⃣ Initialize Redis
+    # Initialize Redis
     for attempt in range(3):
         try:
             await get_redis()
@@ -140,7 +77,7 @@ async def startup_event():
     else:
         raise RuntimeError("❌ Redis is required for price streaming")
 
-    # 3️⃣ Start Binance WS (1 per crypto)
+    # Start Binance WebSocket manager for all cryptos
     asyncio.create_task(start_crypto_ws())
     print("🚀 Binance WebSocket started for ALL cryptos")
 

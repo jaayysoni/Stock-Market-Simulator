@@ -2,14 +2,18 @@
 import json
 from typing import Any, Optional
 from datetime import datetime
-from app.utils.redis_client import get_redis  # only use get_redis for async access
+from app.utils.redis_client import get_redis  # async access only
 
-HISTORY_KEY_PREFIX = "CRYPTO:HISTORY:"
+# =========================
+# Key prefixes
+# =========================
+SYMBOL_KEY_PREFIX = "CRYPTO:SYMBOL:"    # per-symbol WS cache
+ALL_PRICES_KEY = "CRYPTO:PRICES:ALL"   # aggregated snapshot for dashboard
+ALL_PRICES_TTL = 5                      # seconds
 
 # =========================
 # Generic cache helpers
 # =========================
-
 async def set_cached_data(key: str, data: Any, ttl: int = 30):
     """Cache data as JSON in Redis with optional TTL in seconds."""
     r = await get_redis()
@@ -19,9 +23,7 @@ async def get_cached_data(key: str) -> Optional[Any]:
     """Retrieve cached JSON data from Redis."""
     r = await get_redis()
     data = await r.get(key)
-    if data:
-        return json.loads(data)
-    return None
+    return json.loads(data) if data else None
 
 async def delete_cached_data(key: str):
     """Delete a cache key."""
@@ -29,50 +31,34 @@ async def delete_cached_data(key: str):
     await r.delete(key)
 
 # =========================
-# Crypto price cache helpers
+# Per-symbol WS cache
 # =========================
+async def set_symbol_price(symbol: str, data: Any, ttl: int = 10):
+    """Cache live price for a single symbol (from WebSocket)."""
+    key = f"{SYMBOL_KEY_PREFIX}{symbol.upper()}"
+    await set_cached_data(key, data, ttl=ttl)
 
-CRYPTO_PRICE_CACHE_KEY = "CRYPTO:PRICES:ALL"
-CRYPTO_PRICE_TTL = 5  # seconds
+async def get_symbol_price(symbol: str) -> Optional[Any]:
+    """Retrieve live price for a single symbol from cache."""
+    key = f"{SYMBOL_KEY_PREFIX}{symbol.upper()}"
+    return await get_cached_data(key)
 
+async def invalidate_symbol_price(symbol: str):
+    """Delete cached WS price for a given symbol."""
+    key = f"{SYMBOL_KEY_PREFIX}{symbol.upper()}"
+    await delete_cached_data(key)
+
+# =========================
+# Global snapshot cache (all cryptos for dashboard)
+# =========================
 async def set_crypto_prices(data: Any):
-    """Cache all crypto prices."""
-    await set_cached_data(CRYPTO_PRICE_CACHE_KEY, data, ttl=CRYPTO_PRICE_TTL)
+    """Cache snapshot of all crypto prices (for dashboard)."""
+    await set_cached_data(ALL_PRICES_KEY, data, ttl=ALL_PRICES_TTL)
 
 async def get_crypto_prices() -> Optional[Any]:
-    """Get cached crypto prices."""
-    return await get_cached_data(CRYPTO_PRICE_CACHE_KEY)
+    """Get cached snapshot of all crypto prices."""
+    return await get_cached_data(ALL_PRICES_KEY)
 
 async def invalidate_crypto_prices():
-    """Force refresh of crypto prices."""
-    await delete_cached_data(CRYPTO_PRICE_CACHE_KEY)
-
-# =========================
-# Crypto history cache helpers
-# =========================
-
-async def set_crypto_history(symbol: str, candles: list):
-    """Cache historical data for a crypto symbol."""
-    key = f"{HISTORY_KEY_PREFIX}{symbol.upper()}"
-    payload = {
-        "symbol": symbol.upper(),
-        "last_updated": datetime.utcnow().strftime("%Y-%m-%d"),
-        "candles": candles
-    }
-    r = await get_redis()
-    await r.set(key, json.dumps(payload))
-
-async def get_crypto_history(symbol: str) -> Optional[Any]:
-    """Retrieve cached historical data for a crypto symbol."""
-    key = f"{HISTORY_KEY_PREFIX}{symbol.upper()}"
-    r = await get_redis()
-    data = await r.get(key)
-    if not data:
-        return None
-    return json.loads(data)
-
-async def invalidate_crypto_history(symbol: str):
-    """Delete cached history for a given symbol."""
-    key = f"{HISTORY_KEY_PREFIX}{symbol.upper()}"
-    r = await get_redis()
-    await r.delete(key)
+    """Force refresh of global crypto prices."""
+    await delete_cached_data(ALL_PRICES_KEY)
