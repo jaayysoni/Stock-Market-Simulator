@@ -5,7 +5,9 @@ from fastapi.responses import FileResponse, JSONResponse
 from typing import List, Dict
 from sqlalchemy.orm import Session
 from sqlalchemy import func, case
+from collections import defaultdict, deque
 import os
+from fastapi import APIRouter
 import asyncio
 
 # ----------------- DB / MODELS -----------------
@@ -110,70 +112,76 @@ async def get_dashboard_prices(
 # =================================================
 #                PORTFOLIO API
 # =================================================
+router = APIRouter()
 
-@app.get("/portfolio/holdings", tags=["Portfolio"])
+@router.get("/portfolio/holdings", tags=["Portfolio"])
 async def get_portfolio_holdings():
     """
-    Returns unsold crypto holdings for universal user (user_id=1)
+    Returns unsold crypto holdings using FIFO (universal user)
     """
-    db = SessionLocal()
+    db: Session = SessionLocal()
     try:
-        rows = db.query(
-            Transaction.symbol,
-            func.sum(
-                case(
-                    (Transaction.transaction_type == "BUY", Transaction.quantity),
-                    else_=-Transaction.quantity
-                )
-            ).label("quantity")
-        ).filter(
-            Transaction.user_id == 1
-        ).group_by(
-            Transaction.symbol
-        ).having(
-            func.sum(
-                case(
-                    (Transaction.transaction_type == "BUY", Transaction.quantity),
-                    else_=-Transaction.quantity
-                )
-            ) > 0
-        ).all()
+        # 1️⃣ Fetch ALL transactions ordered by time (no users)
+        transactions = (
+            db.query(Transaction)
+            .order_by(Transaction.timestamp.asc(), Transaction.id.asc())
+            .all()
+        )
 
-        if not rows:
-            return {"holdings": []}
+        # 2️⃣ FIFO processing per crypto
+        portfolio_lots = defaultdict(deque)
 
+        for tx in transactions:
+            symbol = tx.crypto_symbol  # ✅ FIXED
+
+            if tx.transaction_type == "BUY":
+                portfolio_lots[symbol].append({
+                    "quantity": tx.quantity,
+                    "price": tx.price
+                })
+
+            elif tx.transaction_type == "SELL":
+                qty_to_sell = tx.quantity
+                while qty_to_sell > 0 and portfolio_lots[symbol]:
+                    buy_lot = portfolio_lots[symbol][0]
+
+                    if buy_lot["quantity"] <= qty_to_sell:
+                        qty_to_sell -= buy_lot["quantity"]
+                        portfolio_lots[symbol].popleft()
+                    else:
+                        buy_lot["quantity"] -= qty_to_sell
+                        qty_to_sell = 0
+
+        # 3️⃣ Build holdings from remaining lots
+        holdings = []
         prices_data = await get_crypto_prices() or []
 
-        portfolio = []
-        for r in rows:
-            avg_price = db.query(
-                func.sum(Transaction.quantity * Transaction.price)
-                / func.sum(Transaction.quantity)
-            ).filter(
-                Transaction.user_id == 1,
-                Transaction.symbol == r.symbol,
-                Transaction.transaction_type == "BUY"
-            ).scalar()
+        for symbol, lots in portfolio_lots.items():
+            total_qty = sum(lot["quantity"] for lot in lots)
 
-            live_price = next(
-                (p["price"] for p in prices_data if p.get("binance_symbol") == r.symbol),
-                None
-            )
+            if total_qty > 0:
+                avg_price = sum(
+                    lot["quantity"] * lot["price"] for lot in lots
+                ) / total_qty
 
-            profit_loss = (
-                round((live_price - avg_price) * r.quantity, 2)
-                if live_price is not None else None
-            )
+                live_price = next(
+                    (p["price"] for p in prices_data if p.get("binance_symbol") == symbol),
+                    None
+                )
 
-            portfolio.append({
-                "symbol": r.symbol,
-                "quantity": round(r.quantity, 8),
-                "avg_price": round(avg_price, 2),
-                "live_price": live_price,
-                "profit_loss": profit_loss
-            })
+                holdings.append({
+                    "symbol": symbol,
+                    "quantity": round(total_qty, 8),
+                    "avg_price": round(avg_price, 2),
+                    "live_price": live_price,
+                    "profit_loss": (
+                        round((live_price - avg_price) * total_qty, 2)
+                        if live_price is not None else None
+                    )
+                })
 
-        return {"holdings": portfolio}
+        return {"holdings": holdings}
+
     finally:
         db.close()
 
@@ -233,3 +241,6 @@ async def startup_event():
 async def shutdown_event():
     print("👋 Shutting down, closing Redis")
     await close_redis()
+
+
+app.include_router(router, prefix="/api")
