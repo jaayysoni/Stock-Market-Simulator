@@ -121,9 +121,11 @@ fetchCryptoPrices();
 setInterval(fetchCryptoPrices, 3000);
 
 // ===== Row click for trading =====
-document.addEventListener("click", e => {
+document.addEventListener("click", (e) => {
     const row = e.target.closest(".crypto-row");
-    if (!row || row.classList.contains("header")) return;
-
-    window.location.href = `/trade?symbol=${row.dataset.symbol}`;
-});
+    if (!row) return;
+  
+    const symbol = row.dataset.symbol; // BTCUSDT, ETHUSDT, etc.
+  
+    window.location.href = `/static/tradingterminal.html?symbol=${symbol}`;
+  });

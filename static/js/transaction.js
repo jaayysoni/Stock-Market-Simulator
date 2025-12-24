@@ -23,11 +23,10 @@ function renderTransactions(filter = "", sort = "date-desc") {
   container.innerHTML = "";
 
   if (!transactions.length) {
-    container.textContent = "No transactions yet.";
+    container.textContent = "No transactions found.";
     return;
   }
 
-  // Filter
   let filtered = transactions.filter(tx => {
     if (!filter) return true;
     return (
@@ -36,7 +35,6 @@ function renderTransactions(filter = "", sort = "date-desc") {
     );
   });
 
-  // Sort
   filtered.sort((a, b) => {
     if (sort === "date-desc") return new Date(b.timestamp) - new Date(a.timestamp);
     if (sort === "date-asc") return new Date(a.timestamp) - new Date(b.timestamp);
@@ -45,73 +43,39 @@ function renderTransactions(filter = "", sort = "date-desc") {
     return 0;
   });
 
-  if (!filtered.length) {
-    container.textContent = "No matching transactions.";
-    return;
-  }
-
   const grouped = groupByMonth(filtered);
 
   Object.keys(grouped).forEach(month => {
     const section = document.createElement("div");
     section.className = "month-section";
     section.innerHTML = `<div class="month-title">${month}</div>`;
+
     const table = document.createElement("table");
     table.className = "transaction-table";
-    table.innerHTML = `<thead>
-      <tr>
-        <th>Type</th><th>Crypto / Details</th><th>Quantity / Amount</th><th>Price</th><th>Date & Time</th><th>Status</th>
-      </tr>
-    </thead>`;
+    table.innerHTML = `
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Crypto</th>
+          <th>Quantity / Amount</th>
+          <th>Price</th>
+          <th>Date & Time</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+    `;
+
     const tbody = document.createElement("tbody");
 
     grouped[month].forEach(tx => {
       const tr = document.createElement("tr");
-      const type = tx.transaction_type?.toLowerCase() || "unknown";
-      const priceVal = Number(tx.price) || null;
-      const amtVal = Number(tx.amount) || null;
-
-      let typeClass = "";
-      let details = "";
-      let quantityAmount = "";
-      let price = "";
-
-      switch (type) {
-        case "buy":
-          typeClass = "buy";
-          details = tx.crypto_symbol || "-";
-          quantityAmount = tx.quantity || "-";
-          price = priceVal ? `₹${priceVal.toLocaleString("en-IN")}` : "-";
-          break;
-        case "sell":
-          typeClass = "sell";
-          details = tx.crypto_symbol || "-";
-          quantityAmount = tx.quantity || "-";
-          price = priceVal ? `₹${priceVal.toLocaleString("en-IN")}` : "-";
-          break;
-        case "money-add":
-          typeClass = "money-add";
-          details = "Money Added";
-          quantityAmount = amtVal ? `₹${amtVal.toLocaleString("en-IN")}` : "-";
-          price = "-";
-          break;
-        case "money-remove":
-          typeClass = "money-remove";
-          details = "Money Deducted";
-          quantityAmount = amtVal ? `₹${amtVal.toLocaleString("en-IN")}` : "-";
-          price = "-";
-          break;
-        default:
-          details = tx.crypto_symbol || "-";
-          quantityAmount = tx.quantity || "-";
-          price = priceVal ? `₹${priceVal.toLocaleString("en-IN")}` : "-";
-      }
+      const type = tx.transaction_type || "unknown";
 
       tr.innerHTML = `
-        <td class="${typeClass}">${type.replace("-", " ")}</td>
-        <td>${details}</td>
-        <td>${quantityAmount}</td>
-        <td>${price}</td>
+        <td class="${type}">${type.replace("-", " ")}</td>
+        <td>${tx.crypto_symbol || "-"}</td>
+        <td>${tx.quantity || tx.amount || "-"}</td>
+        <td>${tx.price ? "₹" + Number(tx.price).toLocaleString("en-IN") : "-"}</td>
         <td>${formatDateTime(tx.timestamp)}</td>
         <td>${tx.status || "completed"}</td>
       `;
@@ -124,77 +88,29 @@ function renderTransactions(filter = "", sort = "date-desc") {
   });
 }
 
-// ===== Verify Login =====
-async function verifyLogin() {
-  try {
-    const res = await fetch("/auth/me", {
-      method: "GET",
-      credentials: "include",
-      headers: { "Accept": "application/json", "Cache-Control": "no-store" }
-    });
-    if (res.status === 401) {
-      window.location.href = "/static/login.html";
-      return false;
-    }
-    const user = await res.json();
-    document.getElementById("userWelcome").textContent = `Welcome, ${user.email}`;
-    return true;
-  } catch (err) {
-    console.error("Auth check error:", err);
-    window.location.href = "/static/login.html";
-    return false;
-  }
-}
-
-// ===== Fetch Transactions =====
+// ===== Fetch ALL Transactions (PUBLIC) =====
 async function fetchTransactions() {
   const container = document.getElementById("transactions-container");
-  container.innerHTML = `<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>`;
+  container.innerHTML = "Loading transactions...";
 
   try {
-    const baseUrl = window.location.origin;
-    const res = await fetch(`${baseUrl}/api/transactions`, {
+    const res = await fetch("/api/transactions", {
       method: "GET",
-      credentials: "include",
       cache: "no-store",
-      headers: { "Accept": "application/json", "Cache-Control": "no-store" }
+      headers: { "Accept": "application/json" }
     });
 
     if (!res.ok) {
-      if (res.status === 401) window.location.href = "/static/login.html";
-      else container.textContent = "⚠️ Failed to load transactions.";
+      container.textContent = "⚠️ Failed to load transactions.";
       return;
     }
 
-    const data = await res.json().catch(() => []);
-    console.log("Fetched transactions:", data);
-
-    transactions = Array.isArray(data)
-      ? data.map(tx => ({
-          transaction_type: tx.transaction_type?.toLowerCase() || "unknown",
-          crypto_symbol: tx.crypto_symbol || null,
-          quantity: tx.quantity || null,
-          price: tx.price || null,
-          amount: tx.amount || null,
-          timestamp: tx.timestamp,
-          status: tx.status || "completed"
-        }))
-      : [];
-
+    transactions = await res.json();
     renderTransactions();
   } catch (err) {
-    console.error("Failed to fetch transactions:", err);
-    container.textContent = "⚠️ Failed to load transactions. Please try again.";
+    console.error(err);
+    container.textContent = "⚠️ Error loading transactions.";
   }
-}
-
-// ===== Logout =====
-function logout() {
-  fetch("/auth/logout", { method: "POST", credentials: "include" })
-    .finally(() => {
-      document.cookie = "access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      window.location.href = "/static/login.html";
-    });
 }
 
 // ===== Search + Sort =====
@@ -206,10 +122,5 @@ document.getElementById("transaction-sort").addEventListener("change", e => {
 });
 
 // ===== Initial Load =====
-(async () => {
-  const loggedIn = await verifyLogin();
-  if (loggedIn) {
-    await fetchTransactions();
-    setInterval(fetchTransactions, 30000);
-  }
-})();
+fetchTransactions();
+setInterval(fetchTransactions, 30000);
