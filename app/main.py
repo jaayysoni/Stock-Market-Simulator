@@ -15,6 +15,7 @@ from app.database.db import engine, Base, SessionLocal
 from app.database.session import get_db
 from app.models.crypto import Crypto
 from app.models.transaction import Transaction
+from app.utils.cache import get_symbol_price
 
 # ----------------- SERVICES / UTILS -----------------
 from app.services.crypto_ws import start_crypto_ws
@@ -121,7 +122,7 @@ async def get_portfolio_holdings():
     """
     db: Session = SessionLocal()
     try:
-        # 1️⃣ Fetch ALL transactions ordered by time (no users)
+        # 1️⃣ Fetch all transactions ordered by time (no users)
         transactions = (
             db.query(Transaction)
             .order_by(Transaction.timestamp.asc(), Transaction.id.asc())
@@ -132,7 +133,7 @@ async def get_portfolio_holdings():
         portfolio_lots = defaultdict(deque)
 
         for tx in transactions:
-            symbol = tx.crypto_symbol  # ✅ FIXED
+            symbol = tx.crypto_symbol.upper()  # Ensure uppercase
 
             if tx.transaction_type == "BUY":
                 portfolio_lots[symbol].append({
@@ -152,33 +153,39 @@ async def get_portfolio_holdings():
                         buy_lot["quantity"] -= qty_to_sell
                         qty_to_sell = 0
 
-        # 3️⃣ Build holdings from remaining lots
+        # 3️⃣ Build holdings with live prices
         holdings = []
-        prices_data = await get_crypto_prices() or []
 
         for symbol, lots in portfolio_lots.items():
             total_qty = sum(lot["quantity"] for lot in lots)
+            if total_qty <= 0:
+                continue
 
-            if total_qty > 0:
-                avg_price = sum(
-                    lot["quantity"] * lot["price"] for lot in lots
-                ) / total_qty
+            avg_price = sum(
+                lot["quantity"] * lot["price"] for lot in lots
+            ) / total_qty
 
-                live_price = next(
-                    (p["price"] for p in prices_data if p.get("binance_symbol") == symbol),
-                    None
+            # 🔥 Query live price from Redis WS cache using symbol + 'USDT'
+            symbol_usdt = f"{symbol}USDT"
+            price_data = await get_symbol_price(symbol_usdt)
+            live_price = None
+            if price_data:
+                live_price = float(
+                    price_data.get("c") or
+                    price_data.get("p") or
+                    price_data.get("price", 0)
                 )
 
-                holdings.append({
-                    "symbol": symbol,
-                    "quantity": round(total_qty, 8),
-                    "avg_price": round(avg_price, 2),
-                    "live_price": live_price,
-                    "profit_loss": (
-                        round((live_price - avg_price) * total_qty, 2)
-                        if live_price is not None else None
-                    )
-                })
+            holdings.append({
+                "symbol": symbol,
+                "quantity": round(total_qty, 8),
+                "avg_price": round(avg_price, 2),
+                "live_price": live_price,
+                "profit_loss": (
+                    round((live_price - avg_price) * total_qty, 2)
+                    if live_price is not None else 0
+                )
+            })
 
         return {"holdings": holdings}
 
