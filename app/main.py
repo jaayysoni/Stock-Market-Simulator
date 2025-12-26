@@ -271,12 +271,19 @@ def get_balance(db: Session = Depends(get_db)):
 
 
 @balance_router.post("/balance/update", tags=["Balance"])
-def update_balance(
-    payload: dict,
-    db: Session = Depends(get_db)
-):
+def update_balance(payload: dict, db: Session = Depends(get_db)):
+    """
+    Update virtual balance by adding or removing funds.
+    Payload: { "action": "add" | "remove", "amount": float }
+    """
     action = payload.get("action")
-    amount = payload.get("amount", 0)
+    try:
+        amount = float(payload.get("amount", 0))
+    except (TypeError, ValueError):
+        return JSONResponse(
+            status_code=400,
+            content={"error": "Amount must be a number"}
+        )
 
     if amount <= 0:
         return JSONResponse(
@@ -284,7 +291,7 @@ def update_balance(
             content={"error": "Amount must be positive"}
         )
 
-    # 🔒 Ensure balance always exists
+    # Ensure balance exists
     balance = db.query(Balance).first()
     if not balance:
         balance = Balance(amount=100000.0)
@@ -294,7 +301,6 @@ def update_balance(
 
     if action == "add":
         balance.amount += amount
-
     elif action == "remove":
         if balance.amount < amount:
             return JSONResponse(
@@ -302,11 +308,10 @@ def update_balance(
                 content={"error": "Insufficient balance"}
             )
         balance.amount -= amount
-
     else:
         return JSONResponse(
             status_code=400,
-            content={"error": "Invalid action"}
+            content={"error": "Invalid action, must be 'add' or 'remove'"}
         )
 
     db.commit()

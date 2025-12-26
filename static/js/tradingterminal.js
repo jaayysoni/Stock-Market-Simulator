@@ -448,3 +448,129 @@ document.addEventListener("DOMContentLoaded", () => {
   
   // Initial load for today's trades
   document.addEventListener("DOMContentLoaded", fetchTodaysTrades);
+
+
+
+  // Virtual balance update 
+
+document.addEventListener("DOMContentLoaded", () => {
+    const balanceEl = document.getElementById("balance");
+    const balanceInput = document.getElementById("balanceInput");
+    const addBtn = document.getElementById("addFundsBtn");
+    const removeBtn = document.getElementById("removeFundsBtn");
+
+    // ===== Load balance from backend =====
+    async function loadBalance() {
+        try {
+            const res = await fetch("/api/balance");
+            const data = await res.json();
+            if (res.ok) {
+                balanceEl.textContent = `₹${data.balance.toLocaleString("en-IN")}`;
+            } else {
+                console.error("Failed to fetch balance:", data);
+            }
+        } catch (err) {
+            console.error("Error loading balance:", err);
+        }
+    }
+
+    // ===== Update balance (Add/Remove Funds) =====
+    async function updateBalance(action) {
+        const amount = parseFloat(balanceInput.value);
+        if (!amount || amount <= 0) {
+            alert("❌ Enter a valid amount");
+            return;
+        }
+
+        try {
+            const res = await fetch("/api/balance/update", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ action, amount })
+            });
+            const data = await res.json();
+
+            if (!res.ok) {
+                alert("❌ " + (data.error || "Failed to update balance"));
+                return;
+            }
+
+            alert(`✅ Balance updated: ₹${data.balance.toLocaleString("en-IN")}`);
+            balanceInput.value = "";
+            loadBalance();
+        } catch (err) {
+            console.error("Error updating balance:", err);
+            alert("❌ Server error");
+        }
+    }
+
+    // ===== Event Listeners for Add/Remove =====
+    addBtn.addEventListener("click", () => updateBalance("add"));
+    removeBtn.addEventListener("click", () => updateBalance("remove"));
+
+    // ===== Buy/Sell Integration =====
+    const buyBtn = document.getElementById("buyBtn");
+    const sellBtn = document.getElementById("sellBtn");
+    const qtyInput = document.getElementById("simQtyInput");
+    const stockInput = document.getElementById("simStockInput");
+
+    if (typeof currentSymbol !== "undefined") {
+        stockInput.value = currentSymbol.replace("USDT", "");
+        stockInput.disabled = true;
+    }
+
+    async function executeOrder(side) {
+        const quantity = parseFloat(qtyInput.value);
+        const symbol = stockInput.value.toUpperCase();
+
+        if (!quantity || quantity <= 0) {
+            alert("❌ Enter a valid quantity");
+            return;
+        }
+        if (!symbol) {
+            alert("❌ Symbol not detected");
+            return;
+        }
+
+        const endpoint = side === "BUY" ? "/api/order/buy" : "/api/order/sell";
+
+        try {
+            const res = await fetch(endpoint, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ symbol: symbol + "USDT", quantity })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                alert("❌ " + (data.error || "Order failed"));
+                return;
+            }
+
+            alert(
+                `✅ ${side} ORDER EXECUTED\n` +
+                `Symbol: ${data.symbol}\n` +
+                `Qty: ${data.quantity}\n` +
+                `Price: ₹${data.price.toLocaleString("en-IN")}\n` +
+                `Balance: ₹${data.balance.toLocaleString("en-IN")}`
+            );
+
+            qtyInput.value = "";
+
+            // Refresh balance and holdings
+            loadBalance();
+            if (typeof fetchHoldings === "function") fetchHoldings();
+
+        } catch (err) {
+            console.error("Order error:", err);
+            alert("❌ Server error");
+        }
+    }
+
+    buyBtn.addEventListener("click", () => executeOrder("BUY"));
+    sellBtn.addEventListener("click", () => executeOrder("SELL"));
+
+    // ===== Initial Load =====
+    loadBalance();
+});
