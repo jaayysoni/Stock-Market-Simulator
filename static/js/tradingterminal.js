@@ -335,3 +335,116 @@ document.addEventListener("DOMContentLoaded", () => {
     fetchHoldings();
     setInterval(fetchHoldings, 5000); // trading terminal refresh
   });
+
+/* =================================================
+   BUY / SELL FRONTEND INTEGRATION (FULL)
+   ================================================= */
+
+   document.addEventListener("DOMContentLoaded", () => {
+    const buyBtn = document.getElementById("buyBtn");
+    const sellBtn = document.getElementById("sellBtn");
+    const qtyInput = document.getElementById("simQtyInput");
+    const stockInput = document.getElementById("simStockInput");
+  
+    // 🔒 Lock crypto input from URL
+    stockInput.value = currentSymbol.replace("USDT", "");
+    stockInput.disabled = true;
+  
+    buyBtn.addEventListener("click", () => executeOrder("BUY"));
+    sellBtn.addEventListener("click", () => executeOrder("SELL"));
+  });
+  
+  async function executeOrder(side) {
+    const qtyInput = document.getElementById("simQtyInput");
+    const quantity = parseFloat(qtyInput.value);
+  
+    if (!quantity || quantity <= 0) {
+      alert("❌ Enter a valid quantity");
+      return;
+    }
+  
+    if (!currentSymbol) {
+      alert("❌ Symbol not detected");
+      return;
+    }
+  
+    const endpoint = side === "BUY" ? "/api/order/buy" : "/api/order/sell";
+  
+    try {
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          symbol: currentSymbol,
+          quantity: quantity
+        })
+      });
+  
+      const data = await res.json();
+  
+      if (!res.ok) {
+        alert("❌ " + (data.error || data.detail?.[0]?.msg || "Order failed"));
+        return;
+      }
+  
+      // ✅ SUCCESS: Show alert
+      alert(
+        `✅ ${side} ORDER EXECUTED\n\n` +
+        `Symbol: ${data.symbol}\n` +
+        `Qty: ${data.quantity}\n` +
+        `Price: ₹${data.price.toLocaleString("en-IN")}\n` +
+        `${side === "BUY" ? `Spent: ₹${data.spent.toLocaleString("en-IN")}` : `Received: ₹${data.received.toLocaleString("en-IN")}`}`
+      );
+  
+      // Clear input
+      qtyInput.value = "";
+  
+      // 🔄 Refresh all relevant data
+      loadVirtualBalance();   // Update balance
+      fetchHoldings();        // Update holdings
+      fetchTodaysTrades();    // Update today’s trades table
+  
+    } catch (err) {
+      console.error("Order error:", err);
+      alert("❌ Server error");
+    }
+  }
+  
+  /* =================================================
+     FETCH TODAY'S TRADES (Optional)
+     ================================================= */
+  async function fetchTodaysTrades() {
+    try {
+      const res = await fetch("/api/transactions"); // make sure your API endpoint returns today's transactions
+      if (!res.ok) throw new Error("Failed to fetch trades");
+      const data = await res.json();
+  
+      const tbody = document.getElementById("tradesBody");
+      tbody.innerHTML = "";
+  
+      if (!data || data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; opacity:0.7;">No trades yet.</td></tr>`;
+        return;
+      }
+  
+      data.forEach(tx => {
+        const pl = tx.profit_loss ?? 0;
+        const plClass = pl >= 0 ? "profit" : "loss";
+  
+        tbody.innerHTML += `
+          <tr>
+            <td>${new Date(tx.timestamp).toLocaleString("en-IN", { hour12: false })}</td>
+            <td>${tx.crypto_symbol}</td>
+            <td>${tx.transaction_type}</td>
+            <td>${tx.quantity}</td>
+            <td>₹${tx.price.toLocaleString("en-IN")}</td>
+            <td class="${plClass}">₹${pl.toFixed(2)}</td>
+          </tr>`;
+      });
+    } catch (err) {
+      console.error("Error fetching today's trades:", err);
+    }
+  }
+  
+  // Initial load for today's trades
+  document.addEventListener("DOMContentLoaded", fetchTodaysTrades);

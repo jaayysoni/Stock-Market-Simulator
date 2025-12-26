@@ -315,3 +315,168 @@ def update_balance(
     return {"balance": round(balance.amount, 2)}
 
 app.include_router(balance_router, prefix="/api")
+
+
+# =================================================
+#              ORDER (BUY / SELL) API
+# =================================================
+from fastapi import APIRouter, Depends
+from fastapi.responses import JSONResponse
+from sqlalchemy.orm import Session
+from sqlalchemy import func
+from pydantic import BaseModel
+from app.database.session import get_db
+from app.models.transaction import Transaction
+from app.models.balance import Balance
+from app.utils.cache import get_symbol_price
+
+order_router = APIRouter()
+
+
+# ----------------------------
+# Pydantic Model
+# ----------------------------
+class OrderRequest(BaseModel):
+    symbol: str
+    quantity: float
+
+
+# ----------------------------
+# BUY CRYPTO
+# ----------------------------
+@order_router.post("/order/buy", tags=["Order"])
+async def buy_crypto(order: OrderRequest, db: Session = Depends(get_db)):
+    symbol = order.symbol.upper()
+    quantity = order.quantity
+
+    if not symbol or quantity <= 0:
+        return JSONResponse(status_code=400, content={"error": "Invalid buy request"})
+
+    # 1️⃣ Get live price from Redis WS cache
+    price_data = await get_symbol_price(symbol)
+    if not price_data:
+        return JSONResponse(status_code=400, content={"error": "Live price not available"})
+
+    price = float(price_data.get("c") or price_data.get("p") or price_data.get("price", 0))
+    total_cost = price * quantity
+
+    # 2️⃣ Ensure balance exists
+    balance = db.query(Balance).first()
+    if not balance:
+        balance = Balance(amount=100000.0)
+        db.add(balance)
+        db.commit()
+        db.refresh(balance)
+
+    # 3️⃣ Balance check
+    if balance.amount < total_cost:
+        return JSONResponse(
+            status_code=400,
+            content={
+                "error": "Insufficient balance",
+                "required": round(total_cost, 2),
+                "available": round(balance.amount, 2)
+            }
+        )
+
+    # 4️⃣ Deduct balance
+    balance.amount -= total_cost
+
+    # 5️⃣ Insert BUY transaction
+    tx = Transaction(
+        transaction_type="BUY",
+        crypto_symbol=symbol.replace("USDT", ""),
+        quantity=quantity,
+        price=price
+    )
+    db.add(tx)
+    db.commit()
+
+    return {
+        "message": "Order executed",
+        "side": "BUY",
+        "symbol": symbol,
+        "quantity": round(quantity, 8),
+        "price": round(price, 2),
+        "spent": round(total_cost, 2),
+        "balance": round(balance.amount, 2)
+    }
+
+
+# ----------------------------
+# SELL CRYPTO
+# ----------------------------
+@order_router.post("/order/sell", tags=["Order"])
+async def sell_crypto(order: OrderRequest, db: Session = Depends(get_db)):
+    symbol = order.symbol.upper()
+    quantity = order.quantity
+
+    if not symbol or quantity <= 0:
+        return JSONResponse(status_code=400, content={"error": "Invalid sell request"})
+
+    base_symbol = symbol.replace("USDT", "")
+
+    # 1️⃣ Calculate available quantity
+    bought_qty = (
+        db.query(func.coalesce(func.sum(Transaction.quantity), 0))
+        .filter(Transaction.crypto_symbol == base_symbol, Transaction.transaction_type == "BUY")
+        .scalar()
+    )
+
+    sold_qty = (
+        db.query(func.coalesce(func.sum(Transaction.quantity), 0))
+        .filter(Transaction.crypto_symbol == base_symbol, Transaction.transaction_type == "SELL")
+        .scalar()
+    )
+
+    available_qty = bought_qty - sold_qty
+
+    if available_qty < quantity:
+        return JSONResponse(
+            status_code=400,
+            content={"error": "Not enough holdings", "available": round(available_qty, 8)}
+        )
+
+    # 2️⃣ Get live price
+    price_data = await get_symbol_price(symbol)
+    if not price_data:
+        return JSONResponse(status_code=400, content={"error": "Live price not available"})
+
+    price = float(price_data.get("c") or price_data.get("p") or price_data.get("price", 0))
+    total_credit = price * quantity
+
+    # 3️⃣ Credit balance
+    balance = db.query(Balance).first()
+    if not balance:
+        balance = Balance(amount=100000.0)
+        db.add(balance)
+        db.commit()
+        db.refresh(balance)
+
+    balance.amount += total_credit
+
+    # 4️⃣ Insert SELL transaction
+    tx = Transaction(
+        transaction_type="SELL",
+        crypto_symbol=base_symbol,
+        quantity=quantity,
+        price=price
+    )
+    db.add(tx)
+    db.commit()
+
+    return {
+        "message": "Order executed",
+        "side": "SELL",
+        "symbol": symbol,
+        "quantity": round(quantity, 8),
+        "price": round(price, 2),
+        "received": round(total_credit, 2),
+        "balance": round(balance.amount, 2)
+    }
+
+
+# ----------------------------
+# Include router in main app
+# ----------------------------
+app.include_router(order_router, prefix="/api")
