@@ -211,3 +211,127 @@
      connectWS(currentSymbol);
      startChartUpdater();
    });
+
+// ===========================
+// Virtual Balance (Dashboard)
+// ===========================
+
+async function loadVirtualBalance() {
+  try {
+      const res = await fetch("/api/balance"); // ✅ correct API
+      if (!res.ok) throw new Error("Failed to fetch balance: " + res.status);
+
+      const data = await res.json();
+      const balanceEl = document.getElementById("balance");
+
+      if (balanceEl) {
+          const balance = typeof data.balance === "number" ? data.balance : 0;
+          balanceEl.textContent =
+              "₹ " + balance.toLocaleString("en-IN", { minimumFractionDigits: 2 });
+      }
+  } catch (err) {
+      console.error("Failed to load balance:", err);
+      const balanceEl = document.getElementById("balance");
+      if (balanceEl) balanceEl.textContent = "₹ --";
+  }
+}
+
+// Initial load
+document.addEventListener("DOMContentLoaded", () => {
+  loadVirtualBalance();
+
+  // Refresh balance every 5 seconds
+  setInterval(loadVirtualBalance, 5000);
+});
+
+
+// showing holding using portfolio api from main.py 
+/* =================================================
+   TRADING TERMINAL – HOLDINGS (PORTFOLIO API)
+   Reference: portfolio.js
+   ================================================= */
+
+   async function fetchHoldings() {
+    try {
+      const res = await fetch("/api/portfolio/holdings");
+      if (!res.ok) throw new Error("API error");
+  
+      const data = await res.json();
+      const tbody = document.getElementById("holdingsBody");
+      tbody.innerHTML = "";
+  
+      if (!data.holdings || data.holdings.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" style="text-align:center; opacity:0.7;">
+              No holdings yet.
+            </td>
+          </tr>`;
+        return;
+      }
+  
+      data.holdings.forEach(item => {
+        const qty = Number(item.quantity) || 0;
+        const avgPrice = Number(item.avg_price) || 0;
+        const livePrice =
+          item.live_price !== null && item.live_price !== undefined
+            ? Number(item.live_price)
+            : null;
+  
+        const invested = qty * avgPrice;
+        const currentValue = livePrice !== null
+          ? livePrice * qty
+          : invested;
+  
+        const pl = currentValue - invested;
+        const plPercent =
+          invested > 0 ? ((pl / invested) * 100).toFixed(2) : "0.00";
+  
+        tbody.innerHTML += `
+          <tr>
+            <td>${item.symbol}</td>
+            <td>${qty.toFixed(6)}</td>
+            <td>₹${avgPrice.toFixed(2)}</td>
+            <td>${livePrice !== null ? `₹${livePrice.toFixed(2)}` : "--"}</td>
+            <td class="${pl >= 0 ? "profit" : "loss"}">
+              ₹${pl.toFixed(2)} (${plPercent}%)
+            </td>
+            <td>
+              <button class="sim-btn buy"
+                onclick="quickTrade('${item.symbol}', 'BUY')">Buy</button>
+              <button class="sim-btn sell"
+                onclick="quickTrade('${item.symbol}', 'SELL')">Sell</button>
+            </td>
+          </tr>
+        `;
+      });
+  
+    } catch (err) {
+      console.error("❌ Error fetching holdings:", err);
+    }
+  }
+  
+  /* -------------------------------
+     QUICK TRADE FROM HOLDINGS
+  -------------------------------- */
+  function quickTrade(symbol, side) {
+    const stockInput = document.getElementById("simStockInput");
+    const qtyInput = document.getElementById("simQtyInput");
+  
+    stockInput.value = symbol;
+    qtyInput.focus();
+  
+    if (side === "BUY") {
+      document.getElementById("buyBtn").click();
+    } else {
+      document.getElementById("sellBtn").click();
+    }
+  }
+  
+  /* -------------------------------
+     INITIAL LOAD + AUTO REFRESH
+  -------------------------------- */
+  document.addEventListener("DOMContentLoaded", () => {
+    fetchHoldings();
+    setInterval(fetchHoldings, 5000); // trading terminal refresh
+  });

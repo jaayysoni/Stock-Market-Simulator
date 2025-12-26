@@ -129,3 +129,46 @@ document.addEventListener("click", (e) => {
   
     window.location.href = `/static/tradingterminal.html?symbol=${symbol}`;
   });
+
+
+
+
+
+// ===========================
+// Virtual Balance (Dashboard)
+// ===========================
+
+async function loadVirtualBalance() {
+    try {
+        // ✅ Fetch balance from FastAPI
+        const res = await fetch("/api/balance");
+
+        if (!res.ok) {
+            throw new Error("Failed to fetch balance: " + res.status);
+        }
+
+        const data = await res.json();
+
+        // ✅ Find the balance element
+        const balanceEl = document.getElementById("balance");
+        if (balanceEl) {
+            const balance = typeof data.balance === "number" ? data.balance : 0;
+            balanceEl.textContent =
+                "₹ " + balance.toLocaleString("en-IN", { minimumFractionDigits: 2 });
+        }
+    } catch (err) {
+        console.error("Failed to load balance:", err);
+
+        // Show placeholder if error occurs
+        const balanceEl = document.getElementById("balance");
+        if (balanceEl) balanceEl.textContent = "₹ --";
+    }
+}
+
+// ===== Initial load =====
+document.addEventListener("DOMContentLoaded", () => {
+    loadVirtualBalance();
+
+    // Refresh balance every 5 seconds
+    setInterval(loadVirtualBalance, 5000);
+});

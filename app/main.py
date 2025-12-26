@@ -8,6 +8,7 @@ from sqlalchemy import func, case
 from collections import defaultdict, deque
 import os
 from fastapi import APIRouter
+from app.models.balance import Balance
 import asyncio
 
 # ----------------- DB / MODELS -----------------
@@ -251,3 +252,66 @@ async def shutdown_event():
 
 
 app.include_router(router, prefix="/api")
+
+balance_router = APIRouter()
+
+
+
+@balance_router.get("/balance", tags=["Balance"])
+def get_balance(db: Session = Depends(get_db)):
+    balance = db.query(Balance).first()
+
+    if not balance:
+        balance = Balance(amount=100000.0)
+        db.add(balance)
+        db.commit()
+        db.refresh(balance)
+
+    return {"balance": round(balance.amount, 2)}
+
+
+@balance_router.post("/balance/update", tags=["Balance"])
+def update_balance(
+    payload: dict,
+    db: Session = Depends(get_db)
+):
+    action = payload.get("action")
+    amount = payload.get("amount", 0)
+
+    if amount <= 0:
+        return JSONResponse(
+            status_code=400,
+            content={"error": "Amount must be positive"}
+        )
+
+    # 🔒 Ensure balance always exists
+    balance = db.query(Balance).first()
+    if not balance:
+        balance = Balance(amount=100000.0)
+        db.add(balance)
+        db.commit()
+        db.refresh(balance)
+
+    if action == "add":
+        balance.amount += amount
+
+    elif action == "remove":
+        if balance.amount < amount:
+            return JSONResponse(
+                status_code=400,
+                content={"error": "Insufficient balance"}
+            )
+        balance.amount -= amount
+
+    else:
+        return JSONResponse(
+            status_code=400,
+            content={"error": "Invalid action"}
+        )
+
+    db.commit()
+    db.refresh(balance)
+
+    return {"balance": round(balance.amount, 2)}
+
+app.include_router(balance_router, prefix="/api")
