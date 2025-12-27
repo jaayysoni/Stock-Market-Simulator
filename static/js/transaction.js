@@ -7,6 +7,14 @@ function formatDateTime(dt) {
   return isNaN(d) ? dt : d.toLocaleString("en-IN", { hour12: false });
 }
 
+function formatPriceUSD(price) {
+  if (price === null || price === undefined) return "-";
+  price = parseFloat(price);
+  if (price >= 1) return `$${price.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
+  if (price >= 0.01) return `$${price.toLocaleString(undefined, { minimumFractionDigits: 4 })}`;
+  return `$${price.toLocaleString(undefined, { minimumFractionDigits: 6 })}`;
+}
+
 function groupByMonth(transactions) {
   return transactions.reduce((acc, tx) => {
     const t = tx.timestamp ? new Date(tx.timestamp) : new Date();
@@ -68,16 +76,21 @@ function renderTransactions(filter = "", sort = "date-desc") {
     const tbody = document.createElement("tbody");
 
     grouped[month].forEach(tx => {
-      const tr = document.createElement("tr");
-      const type = tx.transaction_type || "unknown";
+      const type = tx.transaction_type ? tx.transaction_type.toUpperCase() : "UNKNOWN";
+      const quantity = tx.quantity ?? tx.amount ?? "-";
+      const price = tx.price ? formatPriceUSD(tx.price) : "-";
 
+      // Assign class for color: green for BUY, red for SELL
+      const typeClass = type === "BUY" ? "buy" : type === "SELL" ? "sell" : "";
+
+      const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td class="${type}">${type.replace("-", " ")}</td>
+        <td class="${typeClass}">${type}</td>
         <td>${tx.crypto_symbol || "-"}</td>
-        <td>${tx.quantity || tx.amount || "-"}</td>
-        <td>${tx.price ? "₹" + Number(tx.price).toLocaleString("en-IN") : "-"}</td>
+        <td>${quantity}</td>
+        <td>${price}</td>
         <td>${formatDateTime(tx.timestamp)}</td>
-        <td>${tx.status || "completed"}</td>
+        <td>${tx.status || "COMPLETED"}</td>
       `;
       tbody.appendChild(tr);
     });
