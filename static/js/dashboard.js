@@ -21,13 +21,29 @@ function formatPrice(price) {
     if (price === null || price === undefined) return "--";
     price = parseFloat(price);
 
+    let formatted;
     if (price >= 1) {
-        return price.toLocaleString(undefined, { minimumFractionDigits: 2 });
+        formatted = price.toLocaleString(undefined, { minimumFractionDigits: 2 });
+    } else if (price >= 0.01) {
+        formatted = price.toLocaleString(undefined, { minimumFractionDigits: 4 });
+    } else {
+        formatted = price.toLocaleString(undefined, { minimumFractionDigits: 6 });
     }
-    if (price >= 0.01) {
-        return price.toLocaleString(undefined, { minimumFractionDigits: 4 });
-    }
-    return price.toLocaleString(undefined, { minimumFractionDigits: 6 });
+
+    return `$${formatted}`;
+}
+
+// ===== Percentage formatter (REQUIRED) =====
+function formatChange(change) {
+    if (change === null || change === undefined) return "0%";
+
+    let value = change.toString().trim();
+    value = value.replace("%", "");
+
+    const num = parseFloat(value);
+    if (isNaN(num)) return "0%";
+
+    return `${num.toFixed(2)}%`;
 }
 
 // ===== Create row =====
@@ -36,19 +52,17 @@ function createCryptoRow(rank, crypto) {
 
     const row = document.createElement("div");
     row.className = "crypto-row";
-    row.dataset.symbol = crypto.symbol; // BTCUSDT for trade
+    row.dataset.symbol = crypto.symbol;
 
-    // Always use crypto.name from API if available
     const displayName = crypto.name?.trim() ? crypto.name : symbol;
 
     row.innerHTML = `
         <div class="rank">${rank}</div>
         <div class="name">${displayName}</div>
         <div class="symbol">${symbol}</div>
-        <div class="price" id="price-${symbol}">${formatPrice(crypto.price)}</div>
-        <div class="change ${crypto.change?.startsWith("-") ? "negative" : "positive"}"
-             id="change-${symbol}">
-             ${crypto.change ?? "0%"}
+        <div class="price">${formatPrice(crypto.price)}</div>
+        <div class="change ${crypto.change?.startsWith("-") ? "negative" : "positive"}">
+            ${formatChange(crypto.change)}
         </div>
     `;
 
@@ -73,7 +87,6 @@ function renderCryptoTable(cryptos) {
     `;
     container.appendChild(header);
 
-    // Sort cryptos by price descending
     const sortedCryptos = cryptos.sort((a, b) => (b.price || 0) - (a.price || 0));
 
     sortedCryptos.forEach((c, i) => {
@@ -84,31 +97,27 @@ function renderCryptoTable(cryptos) {
 // ===== Market Overview =====
 function updateMarketOverview(data) {
     MARKET_OVERVIEW_COINS.forEach(coin => {
-        const item = data.find(
-            d => baseSymbol(d.symbol) === coin.symbol
-        );
-
+        const item = data.find(d => baseSymbol(d.symbol) === coin.symbol);
         if (!item) return;
 
         document.getElementById(coin.idPrice).textContent =
             formatPrice(item.price);
 
         const ch = document.getElementById(coin.idChange);
-        ch.textContent = item.change ?? "0%";
+        ch.textContent = formatChange(item.change);
         ch.className = `change ${
             item.change?.startsWith("-") ? "negative" : "positive"
         }`;
     });
 }
 
-// ===== Fetch & render (always sorted) =====
+// ===== Fetch & render =====
 async function fetchCryptoPrices() {
     try {
         const res = await fetch(API_URL);
         const data = await res.json();
         if (!data?.length) return;
 
-        // Always re-render to maintain sorting
         renderCryptoTable(data);
         updateMarketOverview(data);
     } catch (e) {
@@ -116,23 +125,19 @@ async function fetchCryptoPrices() {
     }
 }
 
-// ===== Poll every 3 seconds =====
 fetchCryptoPrices();
 setInterval(fetchCryptoPrices, 3000);
 
 // ===== Row click for trading =====
 document.addEventListener("click", (e) => {
     const row = e.target.closest(".crypto-row");
-    if (!row) return;
-  
-    const symbol = row.dataset.symbol; // BTCUSDT, ETHUSDT, etc.
-  
+    if (!row || row.classList.contains("header")) return;
+
+    const symbol = row.dataset.symbol;
+    if (!symbol) return;
+
     window.location.href = `/static/tradingterminal.html?symbol=${symbol}`;
-  });
-
-
-
-
+});
 
 // ===========================
 // Virtual Balance (Dashboard)
@@ -140,35 +145,24 @@ document.addEventListener("click", (e) => {
 
 async function loadVirtualBalance() {
     try {
-        // ✅ Fetch balance from FastAPI
         const res = await fetch("/api/balance");
-
-        if (!res.ok) {
-            throw new Error("Failed to fetch balance: " + res.status);
-        }
+        if (!res.ok) throw new Error(res.status);
 
         const data = await res.json();
-
-        // ✅ Find the balance element
         const balanceEl = document.getElementById("balance");
+
         if (balanceEl) {
             const balance = typeof data.balance === "number" ? data.balance : 0;
             balanceEl.textContent =
-                "₹ " + balance.toLocaleString("en-IN", { minimumFractionDigits: 2 });
+                "$" + balance.toLocaleString(undefined, { minimumFractionDigits: 2 });
         }
     } catch (err) {
-        console.error("Failed to load balance:", err);
-
-        // Show placeholder if error occurs
         const balanceEl = document.getElementById("balance");
-        if (balanceEl) balanceEl.textContent = "₹ --";
+        if (balanceEl) balanceEl.textContent = "$ --";
     }
 }
 
-// ===== Initial load =====
 document.addEventListener("DOMContentLoaded", () => {
     loadVirtualBalance();
-
-    // Refresh balance every 5 seconds
     setInterval(loadVirtualBalance, 5000);
 });
