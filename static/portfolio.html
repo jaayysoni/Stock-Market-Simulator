@@ -65,7 +65,6 @@
     <ul>
       <li><a href="/static/dashboard.html">Dashboard</a></li>
       <li><a href="/static/tradingterminal.html">Trading-Terminal</a></li>
-      <li><a href="/static/login.html">Logout</a></li>
     </ul>
   </nav>
 </header>
@@ -75,10 +74,6 @@
     <div class="summary-box">
       <h3>Total Profit / Loss</h3>
       <p id="total-pl-amount" class="profit">₹0.00 (+0.00%)</p>
-    </div>
-    <div class="summary-box">
-      <h3>24H Profit / Loss</h3>
-      <p id="daily-pl-amount" class="profit">₹0.00 (+0.00%)</p>
     </div>
   </div>
 </section>
@@ -90,10 +85,10 @@
         <tr>
           <th>Stock</th>
           <th>Quantity</th>
-          <th>Avg. Buy Price (₹)</th>
-          <th>Total Investment (₹)</th>
-          <th>Current Price (₹)</th>
-          <th id="pl-header">Profit / Loss (₹)</th>
+          <th>Avg. Buy Price ($)</th>
+          <th>Total Investment ($)</th>
+          <th>Current Price ($)</th>
+          <th id="pl-header">Profit / Loss ($)</th>
         </tr>
       </thead>
       <tbody id="portfolio-body"></tbody>
@@ -101,10 +96,10 @@
         <tr>
           <td><strong>Totals</strong></td>
           <td id="sum-quantity">0</td>
-          <td id="sum-avg-price">₹0.00</td>
-          <td id="sum-investment">₹0.00</td>
-          <td id="sum-current">₹0.00</td>
-          <td id="sum-profit-loss" class="profit">₹0.00</td>
+          <td id="sum-avg-price">0.00</td>
+          <td id="sum-investment">0.00</td>
+          <td id="sum-current">0.00</td>
+          <td id="sum-profit-loss" class="profit">0.00</td>
         </tr>
       </tfoot>
     </table>

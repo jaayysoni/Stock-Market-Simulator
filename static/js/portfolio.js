@@ -1,3 +1,11 @@
+// ===== USD formatter =====
+function formatUSD(value) {
+    return "$" + Number(value).toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+}
+
 async function fetchPortfolio() {
     try {
         const res = await fetch("/api/portfolio/holdings");
@@ -15,6 +23,7 @@ async function fetchPortfolio() {
         let totalQuantity = 0;
         let totalInvestment = 0;
         let totalCurrentValue = 0;
+        let dailyPLValue = 0;
 
         data.holdings.forEach(item => {
             const totalInv = item.quantity * item.avg_price;
@@ -23,49 +32,67 @@ async function fetchPortfolio() {
                 : totalInv;
             const pl = currentValue - totalInv;
 
+            // 🔹 Daily P/L using 24h change %
+            const changePercent = parseFloat(
+                (item.change ?? "0").toString().replace("%", "")
+            );
+            const dailyPL = isNaN(changePercent)
+                ? 0
+                : (currentValue * changePercent) / 100;
+
             totalQuantity += item.quantity;
             totalInvestment += totalInv;
             totalCurrentValue += currentValue;
+            dailyPLValue += dailyPL;
 
             tbody.innerHTML += `
                 <tr>
                     <td>${item.symbol}</td>
                     <td>${item.quantity.toFixed(6)}</td>
-                    <td>₹${item.avg_price.toFixed(2)}</td>
-                    <td>₹${totalInv.toFixed(2)}</td>
-                    <td>${item.live_price ? `₹${item.live_price.toFixed(2)}` : '--'}</td>
-                    <td>₹${currentValue.toFixed(2)}</td>
-                    <td class="${pl >= 0 ? 'profit' : 'loss'}">₹${pl.toFixed(2)}</td>
+                    <td>${formatUSD(item.avg_price)}</td>
+                    <td>${formatUSD(totalInv)}</td>
+                    <td>${item.live_price ? formatUSD(item.live_price) : "--"}</td>
+                    <td class="${pl >= 0 ? 'profit' : 'loss'}">${formatUSD(pl)}</td>
                 </tr>
             `;
         });
 
-        // Totals row
+        // ===== Totals =====
         document.getElementById("sum-quantity").textContent =
             totalQuantity.toFixed(4);
+
         document.getElementById("sum-investment").textContent =
-            `₹${totalInvestment.toFixed(2)}`;
+            formatUSD(totalInvestment);
+
         document.getElementById("sum-current").textContent =
-            `₹${totalCurrentValue.toFixed(2)}`;
+            formatUSD(totalCurrentValue);
 
         const totalPL = totalCurrentValue - totalInvestment;
         const plElement = document.getElementById("sum-profit-loss");
-        plElement.textContent = `₹${totalPL.toFixed(2)}`;
+        plElement.textContent = formatUSD(totalPL);
         plElement.className = totalPL >= 0 ? "profit" : "loss";
 
-        // Summary box
+        // ===== Summary (Total P/L) =====
         const totalPLPercent =
             totalInvestment > 0
                 ? (totalPL / totalInvestment) * 100
                 : 0;
+
         const summaryEl = document.getElementById("total-pl-amount");
         summaryEl.textContent =
-            `₹${totalPL.toFixed(2)} (${totalPLPercent.toFixed(2)}%)`;
+            `${formatUSD(totalPL)} (${totalPLPercent.toFixed(2)}%)`;
         summaryEl.className = totalPL >= 0 ? "profit" : "loss";
 
-        // Daily P/L placeholder
-        document.getElementById("daily-pl-amount").textContent =
-            "₹0.00 (+0.00%)";
+        // ===== Summary (24H P/L) =====
+        const dailyPLPercent =
+            totalCurrentValue > 0
+                ? (dailyPLValue / totalCurrentValue) * 100
+                : 0;
+
+        const dailyEl = document.getElementById("daily-pl-amount");
+        dailyEl.textContent =
+            `${formatUSD(dailyPLValue)} (${dailyPLPercent.toFixed(2)}%)`;
+        dailyEl.className = dailyPLValue >= 0 ? "profit" : "loss";
 
     } catch (err) {
         console.error("❌ Error fetching portfolio:", err);
