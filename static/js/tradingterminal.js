@@ -261,12 +261,11 @@ document.addEventListener("DOMContentLoaded", () => {
       tbody.innerHTML = "";
   
       if (!data.holdings || data.holdings.length === 0) {
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="6" style="text-align:center; opacity:0.7;">
-              No holdings yet.
-            </td>
-          </tr>`;
+        tbody.innerHTML = `<tr>
+        <td colspan="5" style="text-align:center; opacity:0.7;">
+          No trades yet.
+        </td>
+      </tr>`;
         return;
       }
   
@@ -277,31 +276,13 @@ document.addEventListener("DOMContentLoaded", () => {
           item.live_price !== null && item.live_price !== undefined
             ? Number(item.live_price)
             : null;
-  
-        const invested = qty * avgPrice;
-        const currentValue = livePrice !== null
-          ? livePrice * qty
-          : invested;
-  
-        const pl = currentValue - invested;
-        const plPercent =
-          invested > 0 ? ((pl / invested) * 100).toFixed(2) : "0.00";
-  
+
         tbody.innerHTML += `
           <tr>
             <td>${item.symbol}</td>
             <td>${qty.toFixed(6)}</td>
-            <td>₹${avgPrice.toFixed(2)}</td>
-            <td>${livePrice !== null ? `₹${livePrice.toFixed(2)}` : "--"}</td>
-            <td class="${pl >= 0 ? "profit" : "loss"}">
-              ₹${pl.toFixed(2)} (${plPercent}%)
-            </td>
-            <td>
-              <button class="sim-btn buy"
-                onclick="quickTrade('${item.symbol}', 'BUY')">Buy</button>
-              <button class="sim-btn sell"
-                onclick="quickTrade('${item.symbol}', 'SELL')">Sell</button>
-            </td>
+            <td>₹${formatPrice(avgPrice)}</td>
+            <td>${livePrice !== null ? `₹${formatPrice(livePrice)}` : "--"}</td>
           </tr>
         `;
       });
@@ -310,7 +291,13 @@ document.addEventListener("DOMContentLoaded", () => {
       console.error("❌ Error fetching holdings:", err);
     }
   }
+  function formatPrice(price) {
+    if (price === null || price === undefined) return "--";
   
+    if (price >= 1) return price.toFixed(2);          // BTC, ETH, SOL
+    if (price >= 0.01) return price.toFixed(4);       // mid-priced tokens
+    return price.toFixed(8);                           // SHIB, PEPE, etc
+  }
   /* -------------------------------
      QUICK TRADE FROM HOLDINGS
   -------------------------------- */
@@ -438,7 +425,6 @@ document.addEventListener("DOMContentLoaded", () => {
             <td>${tx.transaction_type}</td>
             <td>${tx.quantity}</td>
             <td>₹${tx.price.toLocaleString("en-IN")}</td>
-            <td class="${plClass}">₹${pl.toFixed(2)}</td>
           </tr>`;
       });
     } catch (err) {

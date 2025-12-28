@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Trading Terminal — Dashboard</title>
+  <title>Crypto Trading Simulator</title>
 
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -27,7 +27,7 @@
 
   <!-- Balance Box -->
   <div class="balance-box">
-    Virtual Balance: <span id="balance">₹100000</span>
+    Virtual Balance: <span id="balance">$100000</span>
   </div>
 
   <div class="funds-controls" style="display:flex; gap:8px; margin-top:8px;">
@@ -46,15 +46,22 @@
   </div>
 
   <!-- Removed historical buttons since we only show live 1D -->
-</div>
-  <!-- Trade Form -->
-  <div class="trade-form">
-    <input type="text" id="simStockInput" class="sim-input" placeholder="Crypto"/>
-    <input type="number" id="simQtyInput" class="sim-input" placeholder="Qty"/>
+<!-- Trade Form -->
+<div class="trade-form">
 
-    <button id="buyBtn" class="sim-btn buy">Buy</button>
-    <button id="sellBtn" class="sim-btn sell">Sell</button>
-  </div>
+  <!-- NEW: Crypto selector (does NOT replace simStockInput) -->
+  <select id="cryptoSelect" class="sim-input">
+    <option value="">Select Crypto</option>
+  </select>
+
+  <!-- EXISTING (unchanged ID) -->
+  <input type="text" id="simStockInput" class="sim-input" placeholder="Crypto"/>
+
+  <input type="number" id="simQtyInput" class="sim-input" placeholder="Qty"/>
+
+  <button id="buyBtn" class="sim-btn buy">Buy</button>
+  <button id="sellBtn" class="sim-btn sell">Sell</button>
+</div>
 
   <!-- Holdings Table -->
   <h3>Holdings</h3>
@@ -65,15 +72,13 @@
         <th>Quantity</th>
         <th>Avg Price</th>
         <th>Current Price</th>
-        <th>P/L</th>
-        <th>Trade</th>
       </tr>
     </thead>
     <tbody id="holdingsBody"></tbody>
   </table>
 
   <!-- Today's Trades -->
-  <h3>Today's Trades</h3>
+  <h3>All Trades</h3>
   <table class="sim-table" id="tradesTable">
     <thead>
       <tr>
@@ -82,18 +87,12 @@
         <th>Action</th>
         <th>Qty</th>
         <th>Price</th>
-        <th>P/L</th>
       </tr>
     </thead>
     <tbody id="tradesBody"></tbody>
   </table>
 
 </section>
-
-<!-- Full Screen Button -->
-<button id="fullscreenBtn" class="fullscreen-btn">
-  📈 Full Screen Chart
-</button>
 
 </body>
 </html>
