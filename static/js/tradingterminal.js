@@ -387,9 +387,9 @@ document.addEventListener("DOMContentLoaded", () => {
       qtyInput.value = "";
   
       // 🔄 Refresh all relevant data
-      loadVirtualBalance();   // Update balance
-      fetchHoldings();        // Update holdings
-      fetchTodaysTrades();    // Update today’s trades table
+      loadVirtualBalance();
+      fetchHoldings();
+      fetchTodaysTrades();
   
     } catch (err) {
       console.error("Order error:", err);
@@ -553,9 +553,6 @@ document.addEventListener("DOMContentLoaded", () => {
             alert("❌ Server error");
         }
     }
-
-    buyBtn.addEventListener("click", () => executeOrder("BUY"));
-    sellBtn.addEventListener("click", () => executeOrder("SELL"));
 
     // ===== Initial Load =====
     loadBalance();
