@@ -3,6 +3,9 @@ import json
 from typing import Any, Optional
 from datetime import datetime
 from app.utils.redis_client import get_redis  # async access only
+import logging
+
+logger = logging.getLogger(__name__)
 
 # =========================
 # Key prefixes
@@ -18,17 +21,23 @@ async def set_cached_data(key: str, data: Any, ttl: int = 30):
     """Cache data as JSON in Redis with optional TTL in seconds."""
     r = await get_redis()
     await r.set(key, json.dumps(data), ex=ttl)
+    logger.debug(f"Redis SET key={key} ttl={ttl}")
 
 async def get_cached_data(key: str) -> Optional[Any]:
     """Retrieve cached JSON data from Redis."""
     r = await get_redis()
     data = await r.get(key)
+    if data:
+        logger.debug(f"Redis HIT key={key}")
+    else:
+        logger.debug(f"Redis MISS key={key}")
     return json.loads(data) if data else None
 
 async def delete_cached_data(key: str):
     """Delete a cache key."""
     r = await get_redis()
     await r.delete(key)
+    logger.debug(f"Redis DEL key={key}")
 
 # =========================
 # Per-symbol WS cache
