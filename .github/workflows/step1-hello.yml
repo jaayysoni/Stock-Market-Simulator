@@ -1,4 +1,4 @@
-name: Step 1 - Hello GitHub Actions
+name: Step 2 - Python Setup CI
 
 on:
   push:
@@ -6,9 +6,22 @@ on:
       - main
 
 jobs:
-  hello:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Print message
-        run: echo "GitHub Actions is working"
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"  # You can use 3.10 or 3.11
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Test Python version
+        run: python --version
