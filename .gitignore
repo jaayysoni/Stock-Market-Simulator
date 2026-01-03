@@ -7,6 +7,7 @@ venv/
 env/
 *.sqlite3
 *.db
+!app.db      # Track app.db in Git
 
 # Environment
 .env
