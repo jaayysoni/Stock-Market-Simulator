@@ -58,3 +58,4 @@ jobs:
           sleep 5
           curl -f http://127.0.0.1:8000 || exit 1
           pkill uvicorn
+# Minimal CI workflow for Python 3.13
