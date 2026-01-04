@@ -2,51 +2,82 @@
 
 ## Overview
 
-The **Crypto Trading Simulator** is a high-performance, real-time trading platform built with Python and FastAPI. Key highlights include:
+The Crypto Trading Simulator is a high-performance, real-time trading platform built with Python and FastAPI. It demonstrates backend engineering expertise in handling real-time data, scalable API design, and performance optimization.
 
-- **Real-time updates:** Tracks live cryptocurrency prices and portfolio values using ~90 WebSocket connections and real-time APIs.  
-- **Interactive trading experience:** Instant updates on prices, balances, and transactions.  
-- **Backend expertise showcase:** Demonstrates skills in real-time data handling, performance optimization, and scalable API design.  
-- **Risk-free learning environment:** Users can simulate trading strategies without real financial exposure.
+Key highlights include:
+- **Real-time updates:** Tracks live cryptocurrency prices and portfolio values using ~90 WebSocket connections and APIs.  
+- **Interactive experience:** Instant updates on prices, balances, and transactions.  
+- **Backend-focused design:** Showcases async handling, caching, and scalable system architecture.  
+- **Risk-free environment:** Users can practice trading strategies without financial exposure.  
+- **Ideal for:** Developers exploring backend systems, real-time applications, and cloud deployments.
+
+## Application Screenshots
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/596fc5f9-b8ed-4da8-aa21-09726e47cf98" width="800">
+  <br>
+  <strong>Dashboard View</strong>
+</p>
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/fa4f08b3-1df4-4244-b55a-3c04e86d8208" width="800">
+  <br>
+  <strong>Transactions</strong>
+</p>
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/721c8edf-4bc0-42b7-852c-bfd6f9072e9c" width="800">
+  <br>
+  <strong>Portfolio</strong>
+</p>
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/8a035427-f95f-4332-982e-52133ebd5c15" width="800">
+  <br>
+  <strong>Trading Terminal View</strong>
+</p>
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/9d0790c9-d7b3-4cb3-bb9d-dbc4221f7f06" width="800">
+  <br>
+  <strong>Trading Terminal — Successful Order Execution</strong>
+</p>
+
 
 ## Problem Statement
 
-Cryptocurrency markets are **highly volatile and largely unregulated**, meaning prices can swing dramatically without warning and there’s no government protection or oversight for traders. This instability makes crypto trading **inherently risky**, especially for beginners who may not fully understand market dynamics or risk management.
+Cryptocurrency markets are highly volatile and largely unregulated, making trading risky for beginners. Studies show over 80% of new traders lose capital within their first year, while only a small fraction achieve consistent profitability.
 
-- A large majority of retail crypto traders lose money: studies show that **over 80% of new traders lose capital within their first year**, with many losing nearly all of their investment.
-- Only a small fraction of traders — roughly **10–20% — achieve consistent profitability** over time, while the rest face losses due to volatility, leverage, and emotional decision‑making.
-- On average, beginner traders can experience **significant losses**, especially in highly leveraged futures or day trading, where many lose **70–90% of capital** in their first year.
-
-Most educational platforms and tools either lack **real-time data** or fail to expose users to the **true risk environment** of live markets. The **Crypto Trading Simulator** fills this gap by providing a **real-time, hands‑on environment** where users can experience price volatility and trading risks *without using real money*, giving them a practical sense of how unpredictable and unstable crypto markets can be.
+Most educational tools lack real-time data or fail to expose users to actual market risks. The Crypto Trading Simulator provides a risk-free, real-time environment where users can experience price volatility and trading challenges without using real money.
 
 ## Objective
 
-The primary objectives of the **Crypto Trading Simulator** are:
+The primary objectives of the Crypto Trading Simulator are to:
 
-- Provide a **real-time, risk-free environment** for users to practice cryptocurrency trading.  
-- Expose users to **live market volatility and price fluctuations** using ~90 WebSocket connections and real-time APIs.  
-- Help users **understand the risks** involved in trading unregulated and unstable markets.  
-- Demonstrate **backend development expertise**, including performance optimization, scalable API design, and real-time data handling.  
-- Create an **interactive, engaging platform** for both beginners and enthusiasts to explore trading strategies without financial loss.
+- Provide a **real-time, risk-free environment** to practice cryptocurrency trading.  
+- Expose users to **live market volatility** and real-time data using WebSockets and APIs.  
+- Demonstrate **backend expertise**: scalable APIs, async handling, caching, and performance optimization.  
+- Offer an **interactive platform** for exploring trading strategies without financial risk.
 
 ## Methodology
 
-The **Crypto Trading Simulator** was developed using an **Agile, iterative approach**, focusing on incremental development and testing. Key aspects of the methodology include:
+The Crypto Trading Simulator was developed using an **Agile, iterative approach** with a focus on backend performance and real-time data handling. Key aspects include:
 
-- **Backend-first architecture:** Built using **Python 3.13.2** and FastAPI to handle real-time trading data and WebSocket connections efficiently.  
-- **Real-time data handling:** Integrated ~90 WebSocket connections and APIs to provide live price updates and portfolio tracking.  
-- **Performance optimization:** Implemented caching strategies and asynchronous handling to ensure low-latency, scalable updates.  
-- **Testing and validation:** Conducted rigorous testing to ensure data consistency, prevent race conditions, and handle high-frequency updates.  
-- **Deployment and CI/CD:** Hosted on Render (Singapore region) with a CI/CD pipeline using GitHub Actions for seamless updates and continuous integration.
+- **Backend-first design:** Built with Python 3.13.2 and FastAPI for scalable, low-latency operations.  
+- **Real-time processing:** ~90 WebSocket connections and APIs provide live price updates and portfolio tracking.  
+- **Performance optimization:** Caching and asynchronous handling ensure efficient, responsive updates.  
+- **Testing & validation:** Ensured data consistency, prevented race conditions, and handled high-frequency updates.  
+- **Deployment & CI/CD:** Cloud-ready deployment with CI/CD pipelines for seamless updates and integration.
 
 ## Features
 
 ### User-Facing Features
-- **Live Dashboard:** Displays real-time prices and 24-hour price changes for the **top 90 most traded cryptocurrencies**.  
-- **Portfolio Tracking:** Shows current prices, total value, and **profit/loss (P/L)** for individual holdings or the overall portfolio.  
-- **Transaction History:** Records all buy and sell operations across all time, providing a **complete trade log**.  
-- **Virtual Money Management:** Users can **add or deduct unlimited virtual money** freely to practice different trading strategies.  
-- **Trading Terminal:** Interactive live chart for any selected cryptocurrency, allowing users to **analyze price trends and trade virtually**.
+
+- **Live Dashboard:** Real-time prices and 24-hour changes for the top 90 cryptocurrencies.  
+- **Portfolio Tracking:** Shows current prices, total value, and profit/loss (P/L).  
+- **Transaction History:** Complete log of all buy/sell operations.  
+- **Virtual Money Management:** Add or deduct unlimited virtual funds to test strategies.  
+- **Trading Terminal:** Interactive charts for analyzing price trends and executing virtual trades.
 
 ### Technical Features
 - Built with **Python 3.13.2** and **FastAPI** for high-performance backend operations.  
@@ -186,12 +217,6 @@ Crypto-Trading-Simulator/
 ├── README.md                     # Project README
 ```
 
+## License
 
-
-
-
-
-
-
-
-
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
