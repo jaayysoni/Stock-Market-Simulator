@@ -116,7 +116,7 @@
        stockChart.update();
    
        chartTitle.textContent =
-         `${symbol.replace("USDT", "")} • LIVE PRICE: ₹${latestPrice.toLocaleString("en-IN")}`;
+         `${symbol.replace("USDT", "")} • LIVE PRICE: $${latestPrice.toLocaleString("en-IN")}`;
    
      } catch (err) {
        console.error("❌ Candle fetch error:", err);
@@ -151,7 +151,7 @@
        stockChart.update();
    
        chartTitle.textContent =
-         `${currentSymbol.replace("USDT", "")} • LIVE PRICE: ₹${latestPrice.toLocaleString("en-IN")}`;
+         `${currentSymbol.replace("USDT", "")} • LIVE PRICE: $${latestPrice.toLocaleString("en-IN")}`;
    
        lastPushedPrice = latestPrice;
      }, UPDATE_INTERVAL);
@@ -227,12 +227,12 @@ async function loadVirtualBalance() {
       if (balanceEl) {
           const balance = typeof data.balance === "number" ? data.balance : 0;
           balanceEl.textContent =
-              "₹ " + balance.toLocaleString("en-IN", { minimumFractionDigits: 2 });
+              "$ " + balance.toLocaleString("en-US", { minimumFractionDigits: 2 });
       }
   } catch (err) {
       console.error("Failed to load balance:", err);
       const balanceEl = document.getElementById("balance");
-      if (balanceEl) balanceEl.textContent = "₹ --";
+      if (balanceEl) balanceEl.textContent = "$ --";
   }
 }
 
@@ -281,8 +281,8 @@ document.addEventListener("DOMContentLoaded", () => {
           <tr>
             <td>${item.symbol}</td>
             <td>${qty.toFixed(6)}</td>
-            <td>₹${formatPrice(avgPrice)}</td>
-            <td>${livePrice !== null ? `₹${formatPrice(livePrice)}` : "--"}</td>
+            <td>$${formatPrice(avgPrice)}</td>
+            <td>${livePrice !== null ? `$${formatPrice(livePrice)}` : "--"}</td>
           </tr>
         `;
       });
@@ -379,8 +379,8 @@ document.addEventListener("DOMContentLoaded", () => {
         `✅ ${side} ORDER EXECUTED\n\n` +
         `Symbol: ${data.symbol}\n` +
         `Qty: ${data.quantity}\n` +
-        `Price: ₹${data.price.toLocaleString("en-IN")}\n` +
-        `${side === "BUY" ? `Spent: ₹${data.spent.toLocaleString("en-IN")}` : `Received: ₹${data.received.toLocaleString("en-IN")}`}`
+        `Price: $${data.price.toLocaleString("en-IN")}\n` +
+        `${side === "BUY" ? `Spent: $${data.spent.toLocaleString("en-IN")}` : `Received: $${data.received.toLocaleString("en-IN")}`}`
       );
   
       // Clear input
@@ -424,7 +424,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <td>${tx.crypto_symbol}</td>
             <td>${tx.transaction_type}</td>
             <td>${tx.quantity}</td>
-            <td>₹${tx.price.toLocaleString("en-IN")}</td>
+            <td>$${tx.price.toLocaleString("en-IN")}</td>
           </tr>`;
       });
     } catch (err) {
@@ -451,7 +451,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const res = await fetch("/api/balance");
             const data = await res.json();
             if (res.ok) {
-                balanceEl.textContent = `₹${data.balance.toLocaleString("en-IN")}`;
+                balanceEl.textContent = `$${data.balance.toLocaleString("en-IN")}`;
             } else {
                 console.error("Failed to fetch balance:", data);
             }
@@ -481,7 +481,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            alert(`✅ Balance updated: ₹${data.balance.toLocaleString("en-IN")}`);
+            alert(`✅ Balance updated: $${data.balance.toLocaleString("en-IN")}`);
             balanceInput.value = "";
             loadBalance();
         } catch (err) {
@@ -538,8 +538,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 `✅ ${side} ORDER EXECUTED\n` +
                 `Symbol: ${data.symbol}\n` +
                 `Qty: ${data.quantity}\n` +
-                `Price: ₹${data.price.toLocaleString("en-IN")}\n` +
-                `Balance: ₹${data.balance.toLocaleString("en-IN")}`
+                `Price: $${data.price.toLocaleString("en-IN")}\n` +
+                `Balance: $${data.balance.toLocaleString("en-IN")}`
             );
 
             qtyInput.value = "";
