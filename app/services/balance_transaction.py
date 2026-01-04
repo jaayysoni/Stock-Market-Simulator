@@ -31,7 +31,7 @@ def add_transaction(db: Session, tx_type: str, amount: float, description: str) 
     Returns:
         Updated balance (float)
     """
-    # 1️⃣ Get current balance (universal user)
+    #Get current balance (universal user)
     balance_obj = db.query(Balance).first()
     if not balance_obj:
         balance_obj = Balance(amount=100000.0)  # initial virtual money
@@ -39,7 +39,7 @@ def add_transaction(db: Session, tx_type: str, amount: float, description: str) 
         db.commit()
         db.refresh(balance_obj)
 
-    # 2️⃣ Update balance
+    #Update balance
     if tx_type in ["BUY", "DEDUCT"]:
         balance_obj.amount -= amount
     elif tx_type in ["SELL", "ADD"]:
@@ -49,7 +49,7 @@ def add_transaction(db: Session, tx_type: str, amount: float, description: str) 
 
     db.add(balance_obj)
 
-    # 3️⃣ Record transaction
+    #Record transaction
     tx = BalanceTransaction(
         transaction_type=tx_type,
         amount=amount,

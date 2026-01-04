@@ -17,7 +17,7 @@ from app.utils.cache import set_symbol_price, get_crypto_prices, set_crypto_pric
 class CombinedCryptoWebSocket:
     def __init__(self, symbols: List[str]):
         self.symbols = [s.lower() for s in symbols]
-        self.ws_url = settings.BINANCE_WS_URL  # e.g., "wss://stream.binance.com:9443"
+        self.ws_url = settings.BINANCE_WS_URL
 
     def _build_stream_url(self) -> str:
         """
@@ -29,7 +29,7 @@ class CombinedCryptoWebSocket:
 
     async def run(self):
         url = self._build_stream_url()
-        print(f"🚀 WS connecting to combined stream ({len(self.symbols)} symbols)")
+        print(f"✅WS connecting to combined stream ({len(self.symbols)} symbols)")
 
         while True:
             try:

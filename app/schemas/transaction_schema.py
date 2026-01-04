@@ -20,7 +20,7 @@ class TransactionCreate(BaseModel):
     quantity: float
     price: Optional[float] = None
     crypto_id: Optional[int] = None
-    timestamp: Optional[datetime] = None  # ✅ change here
+    timestamp: Optional[datetime] = None
 
     @field_validator("transaction_type", mode="before")
     def normalize_transaction_type(cls, v):
@@ -40,7 +40,7 @@ class TransactionRead(BaseModel):
     price: float
     created_at: Optional[datetime] = None
     crypto_id: Optional[int] = None
-    timestamp: Optional[datetime] = None  # ✅ change here
+    timestamp: Optional[datetime] = None
 
     model_config = {"from_attributes": True}
 

@@ -1,27 +1,54 @@
-from fastapi import FastAPI, Depends
+# =========================
+# Standard Library
+# =========================
+import os
+import asyncio
+from typing import List, Dict
+from collections import defaultdict, deque
+
+# =========================
+# FastAPI & Starlette
+# =========================
+from fastapi import FastAPI, Depends, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
-from typing import List, Dict
+
+# =========================
+# SQLAlchemy
+# =========================
 from sqlalchemy.orm import Session
 from sqlalchemy import func, case
-from collections import defaultdict, deque
-import os
-from fastapi import APIRouter
-from app.models.balance import Balance
-import asyncio
 
-# ----------------- DB / MODELS -----------------
-from app.database.db import engine, Base, SessionLocal
+# =========================
+# Pydantic
+# =========================
+from pydantic import BaseModel
+
+# =========================
+# Database
+# =========================
+from app.database.db import Base, engine, SessionLocal
 from app.database.session import get_db
-from app.models.crypto import Crypto
-from app.models.transaction import Transaction
-from app.utils.cache import get_symbol_price
 
-# ----------------- SERVICES / UTILS -----------------
+# =========================
+# Models
+# =========================
+from app.models.balance import Balance
+from app.models.transaction import Transaction
+from app.models.crypto import Crypto
+
+# =========================
+# Services & Utils
+# =========================
 from app.services.crypto_ws import start_crypto_ws
-from app.utils.cache import get_crypto_prices
+from app.utils.cache import get_symbol_price, get_crypto_prices
 from app.utils.redis_client import get_redis, close_redis
+
+# =========================
+# Routers
+# =========================
+order_router = APIRouter()
 
 # ----------------- APP INIT -----------------
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -123,14 +150,14 @@ async def get_portfolio_holdings():
     """
     db: Session = SessionLocal()
     try:
-        # 1️⃣ Fetch all transactions ordered by time (no users)
+        #Fetch all transactions ordered by time (no users)
         transactions = (
             db.query(Transaction)
             .order_by(Transaction.timestamp.asc(), Transaction.id.asc())
             .all()
         )
 
-        # 2️⃣ FIFO processing per crypto
+        #FIFO processing per crypto
         portfolio_lots = defaultdict(deque)
 
         for tx in transactions:
@@ -154,7 +181,7 @@ async def get_portfolio_holdings():
                         buy_lot["quantity"] -= qty_to_sell
                         qty_to_sell = 0
 
-        # 3️⃣ Build holdings with live prices
+        #Build holdings with live prices
         holdings = []
 
         for symbol, lots in portfolio_lots.items():
@@ -166,7 +193,7 @@ async def get_portfolio_holdings():
                 lot["quantity"] * lot["price"] for lot in lots
             ) / total_qty
 
-            # 🔥 Query live price from Redis WS cache using symbol + 'USDT'
+            #Query live price from Redis WS cache using symbol + 'USDT'
             symbol_usdt = f"{symbol}USDT"
             price_data = await get_symbol_price(symbol_usdt)
             live_price = None
@@ -243,11 +270,11 @@ async def startup_event():
         raise RuntimeError("❌ Redis is required")
 
     asyncio.create_task(start_crypto_ws())
-    print("🚀 Binance WebSocket started")
+    print("✅ Binance WebSocket started")
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    print("👋 Shutting down, closing Redis")
+    print("Shutting down, closing Redis")
     await close_redis()
 
 
@@ -322,21 +349,6 @@ def update_balance(payload: dict, db: Session = Depends(get_db)):
 app.include_router(balance_router, prefix="/api")
 
 
-# =================================================
-#              ORDER (BUY / SELL) API
-# =================================================
-from fastapi import APIRouter, Depends
-from fastapi.responses import JSONResponse
-from sqlalchemy.orm import Session
-from sqlalchemy import func
-from pydantic import BaseModel
-from app.database.session import get_db
-from app.models.transaction import Transaction
-from app.models.balance import Balance
-from app.utils.cache import get_symbol_price
-
-order_router = APIRouter()
-
 
 # ----------------------------
 # Pydantic Model
@@ -357,7 +369,7 @@ async def buy_crypto(order: OrderRequest, db: Session = Depends(get_db)):
     if not symbol or quantity <= 0:
         return JSONResponse(status_code=400, content={"error": "Invalid buy request"})
 
-    # 1️⃣ Get live price from Redis WS cache
+    #Get live price from Redis WS cache
     price_data = await get_symbol_price(symbol)
     if not price_data:
         return JSONResponse(status_code=400, content={"error": "Live price not available"})
@@ -365,7 +377,7 @@ async def buy_crypto(order: OrderRequest, db: Session = Depends(get_db)):
     price = float(price_data.get("c") or price_data.get("p") or price_data.get("price", 0))
     total_cost = price * quantity
 
-    # 2️⃣ Ensure balance exists
+    #Ensure balance exists
     balance = db.query(Balance).first()
     if not balance:
         balance = Balance(amount=100000.0)
@@ -373,7 +385,7 @@ async def buy_crypto(order: OrderRequest, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(balance)
 
-    # 3️⃣ Balance check
+    #Balance check
     if balance.amount < total_cost:
         return JSONResponse(
             status_code=400,
@@ -384,10 +396,10 @@ async def buy_crypto(order: OrderRequest, db: Session = Depends(get_db)):
             }
         )
 
-    # 4️⃣ Deduct balance
+    #Deduct balance
     balance.amount -= total_cost
 
-    # 5️⃣ Insert BUY transaction
+    #Insert BUY transaction
     tx = Transaction(
         transaction_type="BUY",
         crypto_symbol=symbol.replace("USDT", ""),
@@ -421,7 +433,7 @@ async def sell_crypto(order: OrderRequest, db: Session = Depends(get_db)):
 
     base_symbol = symbol.replace("USDT", "")
 
-    # 1️⃣ Calculate available quantity
+    #Calculate available quantity
     bought_qty = (
         db.query(func.coalesce(func.sum(Transaction.quantity), 0))
         .filter(Transaction.crypto_symbol == base_symbol, Transaction.transaction_type == "BUY")
@@ -442,7 +454,7 @@ async def sell_crypto(order: OrderRequest, db: Session = Depends(get_db)):
             content={"error": "Not enough holdings", "available": round(available_qty, 8)}
         )
 
-    # 2️⃣ Get live price
+    #Get live price
     price_data = await get_symbol_price(symbol)
     if not price_data:
         return JSONResponse(status_code=400, content={"error": "Live price not available"})
@@ -450,7 +462,7 @@ async def sell_crypto(order: OrderRequest, db: Session = Depends(get_db)):
     price = float(price_data.get("c") or price_data.get("p") or price_data.get("price", 0))
     total_credit = price * quantity
 
-    # 3️⃣ Credit balance
+    #Credit balance
     balance = db.query(Balance).first()
     if not balance:
         balance = Balance(amount=100000.0)
@@ -460,7 +472,7 @@ async def sell_crypto(order: OrderRequest, db: Session = Depends(get_db)):
 
     balance.amount += total_credit
 
-    # 4️⃣ Insert SELL transaction
+    #Insert SELL transaction
     tx = Transaction(
         transaction_type="SELL",
         crypto_symbol=base_symbol,

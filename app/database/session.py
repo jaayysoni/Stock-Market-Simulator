@@ -2,7 +2,7 @@
 
 from sqlalchemy.orm import sessionmaker
 from contextlib import contextmanager
-from app.database.db import engine  # ✅ unified engine
+from app.database.db import engine
 
 # -------------------- Unified Session --------------------
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

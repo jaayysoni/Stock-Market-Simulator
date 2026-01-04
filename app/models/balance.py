@@ -6,4 +6,5 @@ class Balance(Base):
     __tablename__ = "balance"
     
     id = Column(Integer, primary_key=True, index=True)
-    amount = Column(Float, default=100000.0)  # starting virtual money
+    amount = Column(Float, default=100000.0)  
+    # starting virtual money as default
