@@ -1,15 +1,31 @@
 # Crypto Trading Simulator
 
+[![Python](https://img.shields.io/badge/-Python-3776AB?style=flat&logo=python)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/-FastAPI-009688?style=flat&logo=fastapi)](https://fastapi.tiangolo.com/)
+[![SQLite](https://img.shields.io/badge/-SQLite-003B57?style=flat&logo=sqlite)](https://www.sqlite.org/)
+[![Redis](https://img.shields.io/badge/-Redis-DC382D?style=flat&logo=redis)](https://redis.io/)
+[![HTML5](https://img.shields.io/badge/-HTML5-E34F26?style=flat&logo=html5)](https://developer.mozilla.org/en-US/docs/Web/HTML)
+[![CSS3](https://img.shields.io/badge/-CSS3-1572B6?style=flat&logo=css3)](https://developer.mozilla.org/en-US/docs/Web/CSS)
+[![JavaScript](https://img.shields.io/badge/-JavaScript-F7DF1E?style=flat&logo=javascript&logoColor=000000)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
+[![API](https://img.shields.io/badge/-API-4FC08D?style=flat&logo=api)]()
+[![WebSockets](https://img.shields.io/badge/-WebSockets-000000?style=flat&logo=websockets)](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API)
+[![Render](https://img.shields.io/badge/-Render-2EC866?style=flat&logo=render)](https://render.com/)
+[![GitHub Actions](https://img.shields.io/badge/-CI/CD-2088FF?style=flat&logo=githubactions)](https://github.com/features/actions)
+[![GitHub Actions](https://img.shields.io/badge/-GitHub%20Actions-2088FF?style=flat&logo=githubactions)](https://github.com/features/actions)
+[![Git](https://img.shields.io/badge/-Git-F05032?style=flat&logo=git)](https://git-scm.com/)
+
 ## Overview
 
-The Crypto Trading Simulator is a high-performance, real-time trading platform built with Python and FastAPI. It demonstrates backend engineering expertise in handling real-time data, scalable API design, and performance optimization.
+The **Crypto Trading Simulator** is a real-time trading platform built with **Python and FastAPI**, designed to demonstrate strong **backend engineering fundamentals** such as real-time data processing, scalable API design, and performance optimization.
 
-Key highlights include:
-- **Real-time updates:** Tracks live cryptocurrency prices and portfolio values using ~90 WebSocket connections and APIs.  
-- **Interactive experience:** Instant updates on prices, balances, and transactions.  
-- **Backend-focused design:** Showcases async handling, caching, and scalable system architecture.  
-- **Risk-free environment:** Users can practice trading strategies without financial exposure.  
-- **Ideal for:** Developers exploring backend systems, real-time applications, and cloud deployments.
+This project focuses on **how real-world trading systems work behind the scenes**, including live price streaming, portfolio updates, and transaction handling — all in a **risk-free simulated environment**.
+
+**Key highlights:**
+- **Real-time system:** Streams live cryptocurrency prices and portfolio updates using ~90 concurrent WebSocket connections.
+- **High-performance backend:** Built with async FastAPI, efficient request handling, and caching for low-latency updates.
+- **Interactive trading flow:** Instant updates to balances, portfolios, and transaction history.
+- **Backend-first architecture:** Clear separation of business logic, services, and infrastructure components.
+- **Learning-focused and production-ready:** Ideal for showcasing backend, real-time systems, and cloud deployment skills.
 
 ## Application Screenshots
 
@@ -46,79 +62,94 @@ Key highlights include:
 
 ## Problem Statement
 
-Cryptocurrency markets are highly volatile and largely unregulated, making trading risky for beginners. Studies show over 80% of new traders lose capital within their first year, while only a small fraction achieve consistent profitability.
+Learning how trading systems work is challenging because most educational platforms either lack **real-time market data** or do not reflect the **performance and complexity of real trading environments**.
 
-Most educational tools lack real-time data or fail to expose users to actual market risks. The Crypto Trading Simulator provides a risk-free, real-time environment where users can experience price volatility and trading challenges without using real money.
+As a result, developers and beginners rarely get hands-on exposure to:
+- Live price volatility
+- Real-time portfolio updates
+- High-frequency data flows
+
+The **Crypto Trading Simulator** addresses this gap by providing a **real-time, risk-free trading environment** that mirrors key backend challenges found in production trading systems, without involving real money.
 
 ## Objective
 
-The primary objectives of the Crypto Trading Simulator are to:
+The primary objective of the **Crypto Trading Simulator** is to design and implement a **real-time backend system** that mirrors the core technical challenges of modern trading platforms.
 
-- Provide a **real-time, risk-free environment** to practice cryptocurrency trading.  
-- Expose users to **live market volatility** and real-time data using WebSockets and APIs.  
-- Demonstrate **backend expertise**: scalable APIs, async handling, caching, and performance optimization.  
-- Offer an **interactive platform** for exploring trading strategies without financial risk.
+Specifically, this project aims to:
+- Build a **real-time, risk-free trading environment** for simulating cryptocurrency trades.
+- Process **live market data** using WebSockets and external APIs.
+- Demonstrate strong **backend engineering skills**, including async request handling, caching, and scalable API design.
+- Deliver an **interactive system** where portfolio data, balances, and transactions update instantly.
 
 ## Methodology
 
-The Crypto Trading Simulator was developed using an **Agile, iterative approach** with a focus on backend performance and real-time data handling. Key aspects include:
+The Crypto Trading Simulator was developed with a strong focus on **backend performance, reliability, and real-time data handling**, following an iterative development process.
 
-- **Backend-first design:** Built with Python 3.13.2 and FastAPI for scalable, low-latency operations.  
-- **Real-time processing:** ~90 WebSocket connections and APIs provide live price updates and portfolio tracking.  
-- **Performance optimization:** Caching and asynchronous handling ensure efficient, responsive updates.  
-- **Testing & validation:** Ensured data consistency, prevented race conditions, and handled high-frequency updates.  
-- **Deployment & CI/CD:** Cloud-ready deployment with CI/CD pipelines for seamless updates and integration.
+Key implementation details include:
+- **Backend-first architecture:** Implemented using Python 3.13.2 and FastAPI to support asynchronous, low-latency APIs.
+- **Real-time data flow:** Utilized ~90 concurrent WebSocket connections and external APIs to stream live cryptocurrency prices and portfolio updates.
+- **Performance optimization:** Applied caching and async processing to minimize redundant API calls and ensure responsive updates.
+- **Data consistency and safety:** Handled high-frequency updates while preventing race conditions and ensuring accurate portfolio and transaction states.
+- **Deployment and automation:** Deployed to the cloud with automated CI/CD using GitHub Actions for reliable and repeatable releases.
 
 ## Features
 
 ### User-Facing Features
 
-- **Live Dashboard:** Real-time prices and 24-hour changes for the top 90 cryptocurrencies.  
-- **Portfolio Tracking:** Shows current prices, total value, and profit/loss (P/L).  
-- **Transaction History:** Complete log of all buy/sell operations.  
-- **Virtual Money Management:** Add or deduct unlimited virtual funds to test strategies.  
-- **Trading Terminal:** Interactive charts for analyzing price trends and executing virtual trades.
+- **Live Market Dashboard:** Displays real-time prices and 24-hour changes for the top 90 cryptocurrencies.
+- **Portfolio Tracking:** Automatically updates current holdings, total portfolio value, and profit/loss (P/L).
+- **Transaction History:** Maintains a complete, timestamped record of all buy and sell operations.
+- **Virtual Funds Management:** Allows users to add or adjust virtual balances to simulate different trading strategies.
+- **Trading Terminal:** Provides interactive charts and controls for analyzing price movements and executing simulated trades.
 
 ### Technical Features
-- Built with **Python 3.13.2** and **FastAPI** for high-performance backend operations.  
-- Handles **~90 WebSocket connections** for real-time price streaming of top cryptocurrencies.  
-- Integrates multiple **real-time APIs** for accurate market data.  
-- **Asynchronous and optimized** backend for low-latency updates.  
-- Caching implemented to **reduce redundant API calls** and improve system efficiency.  
-- Deployed on **Render (Singapore region)** with CI/CD pipeline using GitHub Actions.
 
+- Built using **Python 3.13.2** and **FastAPI**, leveraging async capabilities for high-performance backend operations.
+- Manages **~90 concurrent WebSocket connections** to stream live cryptocurrency prices in real time.
+- Integrates multiple **external real-time APIs** to fetch and synchronize accurate market data.
+- Implements an **asynchronous, non-blocking architecture** to ensure low-latency updates under frequent data changes.
+- Uses **Redis-based caching** to reduce redundant API calls and improve overall system efficiency.
+- **Deployed to the cloud** on Render (Singapore region) with an automated **CI/CD pipeline using GitHub Actions**.
+
+  
 ## Tech Stack
 
-| Layer / Purpose       | Technology / Tool                  |
-|-----------------------|------------------------------------|
-| Backend               | Python 3.13.2, FastAPI             |
-| Real-Time Data        | WebSockets (~90 connections), APIs |
-| Database              | SQLite                             |
-| Caching               | Redis                              |
-| Frontend              | HTML, CSS, JavaScript              |
-| Charts / Visualization| Trading Terminal Live Charts       |
-| Hosting / Deployment  | Render (Singapore region)          |
-| CI/CD                 | GitHub Actions                     |
-| Version Control       | Git                                |
+| Layer / Purpose        | Technology / Tool                                   |
+|------------------------|-----------------------------------------------------|
+| Backend                | Python 3.13.2, FastAPI                              |
+| Real-Time Communication| WebSockets (~90 concurrent connections), APIs       |
+| Database               | SQLite                                              |
+| Caching                | Redis                                               |
+| Frontend               | HTML, CSS, JavaScript                               |
+| Charts & Visualization | Client-side interactive trading charts              |
+| Hosting & Deployment   | Render (Singapore region)                           |
+| CI/CD                  | GitHub Actions                                      |
+| Version Control        | Git                                                  |
 
 
 ## Software Requirements
 
-- **Python 3.13.2** – Backend development and real-time API handling.  
-- **Redis** – Caching for real-time data and WebSocket performance.  
-- **SQLite** – Local database for storing portfolio and transaction data.  
-- **Git** – Version control and repository management.  
-- **Web Browser** – For accessing the frontend dashboard, trading terminal, and portfolio.  
-- **Render Account (optional)** – For deployment of live simulator (Singapore region).
+To run the Crypto Trading Simulator locally or deploy it, the following are required:
 
+- **Python 3.13.2** – Core backend runtime for FastAPI and async processing.
+- **Redis** – Used for caching and improving real-time WebSocket performance.
+- **SQLite** – Lightweight database for storing portfolio and transaction data.
+- **Git** – For source control and project management.
+- **Modern Web Browser** – To access the dashboard, trading terminal, and portfolio views.
+- **Render Account (optional)** – Required only for deploying the application to the cloud.
+
+  
 ## Hardware Requirements
 
-- **Processor:** Intel i3 / AMD Ryzen 3 or higher  
-- **RAM:** 4 GB minimum (8 GB recommended for smooth performance)  
-- **Storage:** 2 GB free space (for Python, Redis, and SQLite)  
-- **Internet Connection:** Stable connection for real-time price updates and WebSocket streaming  
-- **Browser:** Safari, Chrome, Firefox, Edge (latest versions recommended)
+To run the Crypto Trading Simulator smoothly, the following minimum hardware is recommended:
 
+- **Processor:** Intel i3 / AMD Ryzen 3 or higher  
+- **RAM:** 4 GB minimum (8 GB recommended for optimal performance)  
+- **Storage:** 2 GB free space (to accommodate Python, Redis, and SQLite)  
+- **Internet Connection:** Stable connection for real-time price updates and WebSocket streaming  
+- **Browser:** Latest version of Safari, Chrome, Firefox, or Edge
+
+  
 ## Installation & Running Instructions
 
 Follow these steps to set up and run the Crypto Trading Simulator locally:
@@ -212,11 +243,10 @@ Crypto-Trading-Simulator/
 ├── insert_crypto.py              # Script to seed crypto data
 ├── requirements.txt              # Python dependencies
 ├── app.db                        # SQLite database file
-├── Dockerfile                    # Docker configuration
-├── docker-compose.yml            # Docker Compose configuration
 ├── README.md                     # Project README
 ```
 
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
