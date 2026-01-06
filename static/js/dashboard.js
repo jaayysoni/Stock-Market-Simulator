@@ -166,3 +166,75 @@ document.addEventListener("DOMContentLoaded", () => {
     loadVirtualBalance();
     setInterval(loadVirtualBalance, 5000);
 });
+
+
+
+
+// ===== Search Top 90 Cryptos (works with auto-refresh) =====
+function attachCryptoSearch() {
+    const searchInput = document.getElementById("search-input");
+    const container = document.getElementById("top-winners-body");
+
+    if (!searchInput || !container) return;
+
+    // This function applies the filter based on current input
+    const applyFilter = () => {
+        const query = searchInput.value.trim().toLowerCase();
+        const rows = container.querySelectorAll(".crypto-row:not(.header)");
+
+        rows.forEach(row => {
+            const name = row.querySelector(".name").textContent.toLowerCase();
+            const symbol = row.querySelector(".symbol").textContent.toLowerCase();
+
+            row.style.display = (name.includes(query) || symbol.includes(query)) ? "" : "none";
+        });
+    };
+
+    // Trigger filtering on input
+    searchInput.addEventListener("input", applyFilter);
+
+    // Also re-apply filter after each table render
+    // Override your renderCryptoTable to include this
+    const originalRender = window.renderCryptoTable;
+    window.renderCryptoTable = function(cryptos) {
+        originalRender(cryptos); // render table as usual
+        applyFilter();            // then apply current search filter
+    };
+}
+
+// Call this once
+attachCryptoSearch();
+
+
+
+
+
+// ===== Market Overview Card Clicks =====
+function attachMarketOverviewClicks() {
+    const cards = document.querySelectorAll(".index-card");
+
+    cards.forEach(card => {
+        card.style.cursor = "pointer"; // indicate it's clickable
+
+        card.addEventListener("click", () => {
+            const symbol = card.dataset.symbol; // get symbol from data-attribute
+            if (!symbol) return;
+
+            // Map symbols from your overview to real trading symbols
+            const symbolMap = {
+                "BSE": "BTC",
+                "NSE": "ETH",
+                "BANKNIFTY": "DOGE",
+                "NIFTY50": "SHIB"
+            };
+
+            const tradingSymbol = symbolMap[symbol] || symbol;
+            window.location.href = `/static/tradingterminal.html?symbol=${tradingSymbol}`;
+        });
+    });
+}
+
+// Attach after DOM is ready
+document.addEventListener("DOMContentLoaded", () => {
+    attachMarketOverviewClicks();
+});
