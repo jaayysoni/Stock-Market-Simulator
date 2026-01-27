@@ -1,0 +1,21 @@
+version: "3.9"
+
+services:
+  api:
+    build: .
+    container_name: crypto-simulator-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+      - ./app.db:/app/app.db
+    depends_on:
+      - redis
+    environment:
+      - REDIS_URL=redis://redis:6379
+
+  redis:
+    image: redis:7-alpine
+    container_name: crypto-simulator-redis
+    ports:
+      - "6379:6379"
