@@ -11,8 +11,13 @@ services:
       - ./app.db:/app/app.db
     depends_on:
       - redis
-    environment:
-      - REDIS_URL=redis://redis:6379
+    env_file:
+      - .env
+    command: >
+      uvicorn app.main:app
+      --host 0.0.0.0
+      --port 8000
+      --reload
 
   redis:
     image: redis:7-alpine
