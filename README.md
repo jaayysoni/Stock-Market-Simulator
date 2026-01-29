@@ -1,4 +1,5 @@
 # Crypto Trading Simulator
+[![Live Demo](https://img.shields.io/badge/Live-Demo-green)](https://crypto.jaayysoni.com)
 
 [![Python](https://img.shields.io/badge/-Python-3776AB?style=flat&logo=python)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/-FastAPI-009688?style=flat&logo=fastapi)](https://fastapi.tiangolo.com/)
@@ -9,7 +10,7 @@
 [![JavaScript](https://img.shields.io/badge/-JavaScript-F7DF1E?style=flat&logo=javascript&logoColor=000000)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
 [![API](https://img.shields.io/badge/-API-4FC08D?style=flat&logo=api)]()
 [![WebSockets](https://img.shields.io/badge/-WebSockets-000000?style=flat&logo=websockets)](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API)
-[![Render](https://img.shields.io/badge/-Render-2EC866?style=flat&logo=render)](https://render.com/)
+[![AWS](https://img.shields.io/badge/-AWS-FF9900?style=flat&logo=amazonaws&logoColor=FFFFFF)](https://aws.amazon.com/)
 [![GitHub Actions](https://img.shields.io/badge/-CI/CD-2088FF?style=flat&logo=githubactions)](https://github.com/features/actions)
 [![GitHub Actions](https://img.shields.io/badge/-GitHub%20Actions-2088FF?style=flat&logo=githubactions)](https://github.com/features/actions)
 [![Git](https://img.shields.io/badge/-Git-F05032?style=flat&logo=git)](https://git-scm.com/)
@@ -19,6 +20,16 @@
 The **Crypto Trading Simulator** is a real-time trading platform built with **Python and FastAPI**, designed to demonstrate strong **backend engineering fundamentals** such as real-time data processing, scalable API design, and performance optimization.
 
 This project focuses on **how real-world trading systems work behind the scenes**, including live price streaming, portfolio updates, and transaction handling — all in a **risk-free simulated environment**.
+
+## Live Demo / Deployment
+
+The Crypto Trading Simulator is deployed and running on **AWS EC2** with **Nginx** as a reverse proxy and **Let's Encrypt SSL** for HTTPS:
+
+- **URL:** [https://crypto.jaayysoni.com](https://crypto.jaayysoni.com)
+- **Hosting Provider:** AWS EC2 (Amazon Linux 2023)
+- **Web Server:** Nginx
+- **SSL Certificate:** Let’s Encrypt (HTTPS enabled)
+- **Cloud Skills Demonstrated:** EC2 setup, security groups, firewall configuration, domain mapping, HTTPS configuration
 
 **Key highlights:**
 - **Real-time system:** Streams live cryptocurrency prices and portfolio updates using ~90 concurrent WebSocket connections.
@@ -109,7 +120,18 @@ Key implementation details include:
 - Integrates multiple **external real-time APIs** to fetch and synchronize accurate market data.
 - Implements an **asynchronous, non-blocking architecture** to ensure low-latency updates under frequent data changes.
 - Uses **Redis-based caching** to reduce redundant API calls and improve overall system efficiency.
-- **Deployed to the cloud** on Render (Singapore region) with an automated **CI/CD pipeline using GitHub Actions**.
+- **Deployed to the cloud** on AWS EC2 (Mumbai region) with an automated **CI/CD pipeline using GitHub Actions**.
+
+## Cloud Deployment & Architecture
+
+This project demonstrates production-level cloud deployment:
+
+- **Server:** AWS EC2 instance running Amazon Linux 2023
+- **Web Server / Reverse Proxy:** Nginx configured for SSL termination
+- **Domain Management:** Custom domain (crypto.jaayysoni.com) configured to point to EC2 public IP
+- **SSL Certificate:** Let's Encrypt used for HTTPS
+- **CI/CD:** Automated deployment pipeline using GitHub Actions
+- **Performance:** Optimized for real-time WebSocket connections (~90 users) with Redis caching
 
   
 ## Tech Stack
@@ -122,7 +144,7 @@ Key implementation details include:
 | Caching                | Redis                                               |
 | Frontend               | HTML, CSS, JavaScript                               |
 | Charts & Visualization | Client-side interactive trading charts              |
-| Hosting & Deployment   | Render (Singapore region)                           |
+| Hosting & Deployment   | AWS EC2 (Amazon Linux 2023) with Nginx & HTTPS      |
 | CI/CD                  | GitHub Actions                                      |
 | Version Control        | Git                                                  |
 
@@ -136,7 +158,7 @@ To run the Crypto Trading Simulator locally or deploy it, the following are requ
 - **SQLite** – Lightweight database for storing portfolio and transaction data.
 - **Git** – For source control and project management.
 - **Modern Web Browser** – To access the dashboard, trading terminal, and portfolio views.
-- **Render Account (optional)** – Required only for deploying the application to the cloud.
+- **AWS Account (optional)** – Required only if you want to deploy the application to the cloud
 
   
 ## Hardware Requirements
@@ -192,7 +214,7 @@ uvicorn app.main:app --reload
 Crypto-Trading-Simulator/
 │
 ├── app/                         # Backend application
-│   ├── init.py
+│   ├── __init__.py
 │   ├── config.py                # Configuration settings
 │   ├── constants/               # Constant values like coin data
 │   │   └── coin.py
@@ -202,6 +224,7 @@ Crypto-Trading-Simulator/
 │   │   └── session.py
 │   ├── main.py                  # FastAPI entry point
 │   ├── models/                  # Pydantic/SQLAlchemy models
+│   │   ├── __init__.py
 │   │   ├── balance.py
 │   │   ├── crypto.py
 │   │   └── transaction.py
@@ -214,17 +237,26 @@ Crypto-Trading-Simulator/
 │   │   ├── price_service.py
 │   │   └── transaction_services.py
 │   ├── tasks/                   # Background tasks and scheduler
-│   │   ├── init.py
+│   │   ├── __init__.py
 │   │   └── scheduler.py
 │   └── utils/                   # Helper utilities
 │       ├── cache.py
 │       └── redis_client.py
 │
+├── app.db                        # SQLite database file
+├── deploy/                       # Deployment scripts/configs
+│   ├── fastapi_nginx.conf
+│   └── setup_nginx.sh
+├── docker-compose.yml
+├── Dockerfile
 ├── docs/                         # Documentation
 │   ├── api_docs.md
 │   └── setup_guide.md
-│
-├── static/                       # Frontend assets
+├── insert_crypto.py               # Script to seed crypto data
+├── LICENSE
+├── README.md
+├── requirements.txt
+├── static/                        # Frontend assets
 │   ├── css/
 │   │   ├── dashboard.css
 │   │   ├── portfolio.css
@@ -239,14 +271,10 @@ Crypto-Trading-Simulator/
 │   ├── portfolio.html
 │   ├── tradingterminal.html
 │   └── transaction.html
-│
-├── insert_crypto.py              # Script to seed crypto data
-├── requirements.txt              # Python dependencies
-├── app.db                        # SQLite database file
-├── README.md                     # Project README
 ```
 
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
 
